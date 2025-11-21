@@ -1,0 +1,549 @@
+# GraphQL Queries for AI Finance Agent Dashboard
+
+# Get all transactions with filters and pagination
+query ListTransactions(
+  $limit: Int
+  $offset: Int
+  $startDate: Date
+  $endDate: Date
+  $provider: String
+  $txnType: TxnType
+) @auth(level: PUBLIC) {
+  transactions(
+    where: {
+      _and: [
+        { txnDate: { ge: $startDate } }
+        { txnDate: { le: $endDate } }
+        { provider: { eq: $provider } }
+        { txnType: { eq: $txnType } }
+      ]
+    }
+    limit: $limit
+    offset: $offset
+    orderBy: [{ txnDate: DESC }, { createdAt: DESC }]
+  ) {
+    id
+    amount
+    currency
+    txnType
+    channel
+    txnDate
+    txnTimestamp
+    merchantName
+    merchantRaw
+    provider
+    referenceNumber
+    cardLast4
+    accountLast4
+    description
+    createdAt
+    merchant {
+      id
+      name
+      categoryId
+      categoryRef {
+        id
+        name
+        icon
+        color
+      }
+    }
+    email {
+      id
+      senderEmail
+      subject
+      receivedAt
+    }
+  }
+}
+
+# Get transaction by ID
+query GetTransaction($id: Int!) @auth(level: PUBLIC) {
+  transaction(key: { id: $id }) {
+    id
+    amount
+    currency
+    txnType
+    channel
+    txnDate
+    txnTimestamp
+    merchantName
+    merchantRaw
+    provider
+    referenceNumber
+    cardLast4
+    accountLast4
+    description
+    notes
+    idempotencyKey
+    createdAt
+    updatedAt
+    merchant {
+      id
+      name
+      normalizedName
+      categoryId
+      categoryRef {
+        id
+        name
+        icon
+        color
+      }
+      transactionCount
+      totalAmount
+    }
+    email {
+      id
+      gmailMessageId
+      senderEmail
+      senderName
+      subject
+      receivedAt
+      provider
+      labels
+    }
+  }
+}
+
+# Get all merchants with stats and pagination
+query ListMerchants(
+  $limit: Int
+  $offset: Int
+  $categoryId: Int
+  $searchTerm: String
+  $sortBy: String
+  $sortOrder: String
+) @auth(level: PUBLIC) {
+  merchants(
+    where: {
+      _and: [
+        { categoryId: { eq: $categoryId } }
+        {
+          _or: [
+            { name: { contains: $searchTerm } }
+            { normalizedName: { contains: $searchTerm } }
+          ]
+        }
+      ]
+    }
+    limit: $limit
+    offset: $offset
+    orderBy: [
+      { totalAmount: DESC }
+      { name: ASC }
+    ]
+  ) {
+    id
+    name
+    normalizedName
+    categoryId
+    categoryRef {
+      id
+      name
+      icon
+      color
+    }
+    transactionCount
+    totalAmount
+    firstSeenAt
+    createdAt
+  }
+}
+
+# Get merchants count for pagination
+query GetMerchantsCount(
+  $categoryId: Int
+  $searchTerm: String
+) @auth(level: PUBLIC) {
+  merchants(
+    where: {
+      _and: [
+        { categoryId: { eq: $categoryId } }
+        {
+          _or: [
+            { name: { contains: $searchTerm } }
+            { normalizedName: { contains: $searchTerm } }
+          ]
+        }
+      ]
+    }
+  ) {
+    id
+  }
+}
+
+# Get merchant by ID with recent transactions
+query GetMerchant($id: Int!) @auth(level: PUBLIC) {
+  merchant(key: { id: $id }) {
+    id
+    name
+    normalizedName
+    categoryId
+    categoryRef {
+      id
+      name
+      icon
+      color
+    }
+    transactionCount
+    totalAmount
+    firstSeenAt
+    createdAt
+    updatedAt
+    # Note: To get transactions for a merchant, query separately:
+    # transactions(where: { merchantId: { eq: $id } })
+  }
+}
+
+# Get merchant by name
+query GetMerchantByName($name: String!) @auth(level: PUBLIC) {
+  merchants(where: { name: { eq: $name } }, limit: 1) {
+    id
+    name
+    normalizedName
+    categoryId
+    categoryRef {
+      id
+      name
+      icon
+      color
+    }
+    transactionCount
+    totalAmount
+  }
+}
+
+# Dashboard KPIs - Total spending by date range
+query GetSpendingSummary(
+  $startDate: Date
+  $endDate: Date
+) @auth(level: PUBLIC) {
+  transactions(
+    where: {
+      _and: [
+        { txnDate: { ge: $startDate } }
+        { txnDate: { le: $endDate } }
+        { txnType: { eq: PURCHASE } }
+      ]
+    }
+  ) {
+    amount
+    txnDate
+    txnType
+    provider
+  }
+}
+
+# Get top merchants by spending
+query GetTopMerchants(
+  $limit: Int
+  $startDate: Date
+  $endDate: Date
+) @auth(level: PUBLIC) {
+  merchants(
+    limit: $limit
+    orderBy: { totalAmount: DESC }
+  ) {
+    id
+    name
+    categoryId
+    categoryRef {
+      id
+      name
+      icon
+      color
+    }
+    totalAmount
+    transactionCount
+    # Note: To get transactions for merchants in date range,
+    # query transactions separately with merchantId filter
+  }
+}
+
+# Get spending by category
+# Note: To get spending by category, use transactions query with grouping
+# This is a placeholder - implement with transactions query and filter by merchant
+query GetSpendingByCategory(
+  $startDate: Date
+  $endDate: Date
+) @auth(level: PUBLIC) {
+  merchants {
+    id
+    categoryId
+    categoryRef {
+      id
+      name
+      icon
+      color
+    }
+    name
+    totalAmount
+  }
+}
+
+# Get recent emails
+query ListEmails(
+  $limit: Int
+  $offset: Int
+  $provider: String
+  $parsed: Boolean
+) @auth(level: PUBLIC) {
+  emails(
+    where: {
+      _and: [
+        { provider: { eq: $provider } }
+        { parsed: { eq: $parsed } }
+      ]
+    }
+    limit: $limit
+    offset: $offset
+    orderBy: { receivedAt: DESC }
+  ) {
+    id
+    gmailMessageId
+    senderEmail
+    senderName
+    subject
+    receivedAt
+    provider
+    parsed
+    labels
+    createdAt
+    # Note: To get transactions for an email, query separately:
+    # transactions(where: { emailId: { eq: $id } })
+  }
+}
+
+# Get email by ID
+query GetEmail($id: Int!) @auth(level: PUBLIC) {
+  email(key: { id: $id }) {
+    id
+    gmailMessageId
+    gmailHistoryId
+    senderEmail
+    senderName
+    subject
+    receivedAt
+    bodyHash
+    labels
+    provider
+    parsed
+    createdAt
+    updatedAt
+    # Note: To get transactions for an email, query separately:
+    # transactions(where: { emailId: { eq: $id } })
+  }
+}
+
+# Search transactions by merchant name
+query SearchTransactions(
+  $searchTerm: String
+  $limit: Int
+) @auth(level: PUBLIC) {
+  transactions(
+    where: {
+      _or: [
+        { merchantName: { contains: $searchTerm } }
+        { merchantRaw: { contains: $searchTerm } }
+        { description: { contains: $searchTerm } }
+      ]
+    }
+    limit: $limit
+    orderBy: { txnDate: DESC }
+  ) {
+    id
+    amount
+    currency
+    txnType
+    txnDate
+    merchantName
+    description
+    merchant {
+      name
+      categoryId
+      categoryRef {
+        id
+        name
+        icon
+        color
+      }
+    }
+  }
+}
+
+# Get daily spending totals
+query GetDailySpending(
+  $startDate: Date!
+  $endDate: Date!
+) @auth(level: PUBLIC) {
+  transactions(
+    where: {
+      _and: [
+        { txnDate: { ge: $startDate } }
+        { txnDate: { le: $endDate } }
+      ]
+    }
+    orderBy: { txnDate: ASC }
+  ) {
+    txnDate
+    amount
+    txnType
+  }
+}
+
+# Get Gmail sync state (there's only one row with id=1)
+query GetGmailSyncState @auth(level: PUBLIC) {
+  gmailSyncState(key: { id: 1 }) {
+    id
+    lastHistoryId
+    lastSyncedAt
+    watchExpiration
+    updatedAt
+  }
+}
+
+# Get transactions by merchant ID
+query GetTransactionsByMerchant($merchantId: Int!) @auth(level: PUBLIC) {
+  transactions(where: { merchantId: { eq: $merchantId } }) {
+    id
+    merchantId
+  }
+}
+
+# ============================================
+# CATEGORIES QUERIES
+# ============================================
+
+# Get all categories
+query ListCategories @auth(level: PUBLIC) {
+  categories(orderBy: [{ isDefault: DESC }, { name: ASC }]) {
+    id
+    name
+    icon
+    color
+    description
+    isDefault
+    createdAt
+  }
+}
+
+# Get category by ID
+query GetCategory($id: Int!) @auth(level: PUBLIC) {
+  category(key: { id: $id }) {
+    id
+    name
+    icon
+    color
+    description
+    isDefault
+    createdAt
+    updatedAt
+  }
+}
+
+# Get category by name
+query GetCategoryByName($name: String!) @auth(level: PUBLIC) {
+  categories(where: { name: { eq: $name } }, limit: 1) {
+    id
+    name
+    icon
+    color
+    description
+    isDefault
+  }
+}
+
+# System Monitoring Queries
+
+# Get recent emails for monitoring
+query GetRecentEmailsForMonitoring($limit: Int) @auth(level: PUBLIC) {
+  emails(
+    limit: $limit
+    orderBy: [{ receivedAt: DESC }]
+  ) {
+    id
+    gmailMessageId
+    senderEmail
+    senderName
+    subject
+    receivedAt
+    provider
+    parsed
+    createdAt
+  }
+}
+
+# Get recent transactions for monitoring
+query GetRecentTransactionsForMonitoring($limit: Int) @auth(level: PUBLIC) {
+  transactions(
+    limit: $limit
+    orderBy: [{ txnDate: DESC }, { createdAt: DESC }]
+  ) {
+    id
+    amount
+    merchantName
+    provider
+    txnDate
+    createdAt
+  }
+}
+
+# Get all emails (for total count)
+query GetAllEmails @auth(level: PUBLIC) {
+  emails {
+    id
+    receivedAt
+  }
+}
+
+# Get emails after a certain date
+query GetEmailsAfterDate($minDate: Timestamp!) @auth(level: PUBLIC) {
+  emails(
+    where: { receivedAt: { ge: $minDate } }
+    orderBy: [{ receivedAt: DESC }]
+  ) {
+    id
+    receivedAt
+  }
+}
+
+# Get latest email
+query GetLatestEmail @auth(level: PUBLIC) {
+  emails(
+    orderBy: [{ receivedAt: DESC }]
+    limit: 1
+  ) {
+    id
+    receivedAt
+  }
+}
+
+# Get all transactions (for total count)
+query GetAllTransactions @auth(level: PUBLIC) {
+  transactions {
+    id
+    txnDate
+  }
+}
+
+# Get transactions after a certain date
+query GetTransactionsAfterDate($minDate: Date!) @auth(level: PUBLIC) {
+  transactions(
+    where: { txnDate: { ge: $minDate } }
+    orderBy: [{ txnDate: DESC }]
+  ) {
+    id
+    txnDate
+  }
+}
+
+# Get latest transaction
+query GetLatestTransaction @auth(level: PUBLIC) {
+  transactions(
+    orderBy: [{ txnDate: DESC }]
+    limit: 1
+  ) {
+    id
+    txnDate
+  }
+}

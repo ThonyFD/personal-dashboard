@@ -1,0 +1,234 @@
+# GraphQL Mutations for AI Finance Agent Ingestion
+# Note: These mutations only support INSERT operations since Firebase Data Connect
+# requires explicit IDs for upsert. Your application code should handle checking
+# for duplicates using queries before inserting.
+
+# Create a new email
+mutation CreateEmail(
+  $id: Int!
+  $gmailMessageId: String!
+  $gmailHistoryId: Int
+  $senderEmail: String!
+  $senderName: String
+  $subject: String
+  $receivedAt: Timestamp!
+  $bodyHash: String!
+  $labels: [String!]
+  $provider: String
+  $parsed: Boolean
+) @auth(level: PUBLIC) {
+  email_insert(
+    data: {
+      id: $id
+      gmailMessageId: $gmailMessageId
+      gmailHistoryId: $gmailHistoryId
+      senderEmail: $senderEmail
+      senderName: $senderName
+      subject: $subject
+      receivedAt: $receivedAt
+      bodyHash: $bodyHash
+      labels: $labels
+      provider: $provider
+      parsed: $parsed
+    }
+  )
+}
+
+# Update email parsed status
+mutation UpdateEmailParsed(
+  $id: Int!
+  $parsed: Boolean!
+) @auth(level: PUBLIC) {
+  email_update(
+    key: { id: $id }
+    data: { parsed: $parsed }
+  )
+}
+
+# Create merchant
+mutation CreateMerchant(
+  $id: Int!
+  $name: String!
+  $normalizedName: String!
+  $categoryId: Int
+) @auth(level: PUBLIC) {
+  merchant_insert(
+    data: {
+      id: $id
+      name: $name
+      normalizedName: $normalizedName
+      categoryId: $categoryId
+      transactionCount: 0
+      totalAmount: 0
+    }
+  )
+}
+
+# Create transaction
+mutation CreateTransaction(
+  $id: Int!
+  $emailId: Int!
+  $merchantId: Int
+  $txnType: TxnType!
+  $channel: ChannelType!
+  $amount: Float!
+  $currency: String
+  $merchantName: String
+  $merchantRaw: String
+  $txnDate: Date!
+  $txnTimestamp: Timestamp
+  $cardLast4: String
+  $accountLast4: String
+  $provider: String!
+  $referenceNumber: String
+  $description: String
+  $notes: String
+  $idempotencyKey: String!
+) @auth(level: PUBLIC) {
+  transaction_insert(
+    data: {
+      id: $id
+      emailId: $emailId
+      merchantId: $merchantId
+      txnType: $txnType
+      channel: $channel
+      amount: $amount
+      currency: $currency
+      merchantName: $merchantName
+      merchantRaw: $merchantRaw
+      txnDate: $txnDate
+      txnTimestamp: $txnTimestamp
+      cardLast4: $cardLast4
+      accountLast4: $accountLast4
+      provider: $provider
+      referenceNumber: $referenceNumber
+      description: $description
+      notes: $notes
+      idempotencyKey: $idempotencyKey
+    }
+  )
+}
+
+# Update transaction merchant
+mutation UpdateTransactionMerchant(
+  $id: Int!
+  $merchantId: Int!
+) @auth(level: PUBLIC) {
+  transaction_update(
+    key: { id: $id }
+    data: { merchantId: $merchantId }
+  )
+}
+
+# Update transaction notes
+mutation UpdateTransactionNotes(
+  $id: Int!
+  $notes: String!
+) @auth(level: PUBLIC) {
+  transaction_update(
+    key: { id: $id }
+    data: { notes: $notes }
+  )
+}
+
+# Delete transaction
+mutation DeleteTransaction($id: Int!) @auth(level: PUBLIC) {
+  transaction_delete(key: { id: $id })
+}
+
+# Delete email and associated transactions (cascade)
+mutation DeleteEmail($id: Int!) @auth(level: PUBLIC) {
+  email_delete(key: { id: $id })
+}
+
+# Update Gmail sync state (always updates id=1)
+mutation UpdateGmailSyncState(
+  $lastHistoryId: Int!
+  $lastSyncedAt: Timestamp!
+  $watchExpiration: Timestamp
+) @auth(level: PUBLIC) {
+  gmailSyncState_update(
+    key: { id: 1 }
+    data: {
+      lastHistoryId: $lastHistoryId
+      lastSyncedAt: $lastSyncedAt
+      watchExpiration: $watchExpiration
+    }
+  )
+}
+
+# Delete merchant
+mutation DeleteMerchant($id: Int!) @auth(level: PUBLIC) {
+  merchant_delete(key: { id: $id })
+}
+
+# ============================================
+# CATEGORIES MUTATIONS
+# ============================================
+
+# Create category
+mutation CreateCategory(
+  $id: Int!
+  $name: String!
+  $icon: String!
+  $color: String!
+  $description: String
+  $isDefault: Boolean
+) @auth(level: PUBLIC) {
+  category_insert(
+    data: {
+      id: $id
+      name: $name
+      icon: $icon
+      color: $color
+      description: $description
+      isDefault: $isDefault
+    }
+  )
+}
+
+# Update category
+mutation UpdateCategory(
+  $id: Int!
+  $name: String
+  $icon: String
+  $color: String
+  $description: String
+) @auth(level: PUBLIC) {
+  category_update(
+    key: { id: $id }
+    data: {
+      name: $name
+      icon: $icon
+      color: $color
+      description: $description
+    }
+  )
+}
+
+# Delete category
+mutation DeleteCategory($id: Int!) @auth(level: PUBLIC) {
+  category_delete(key: { id: $id })
+}
+
+# Update merchant category ID (use the new foreign key)
+mutation UpdateMerchantCategoryId(
+  $id: Int!
+  $categoryId: Int
+) @auth(level: PUBLIC) {
+  merchant_update(
+    key: { id: $id }
+    data: { categoryId: $categoryId }
+  )
+}
+
+# Update merchant normalized name
+mutation UpdateMerchantNormalizedName(
+  $id: Int!
+  $normalizedName: String!
+) @auth(level: PUBLIC) {
+  merchant_update(
+    key: { id: $id }
+    data: { normalizedName: $normalizedName }
+  )
+}
