@@ -1,0 +1,33 @@
+# Firebase Data Connect configuration
+# This file configures Firebase Data Connect for the AI Finance Agent
+
+specVersion: v1alpha
+serviceName: finance-agent-dataconnect
+
+# PostgreSQL database configuration
+database:
+  type: POSTGRESQL
+  # Instance created automatically by Firebase Data Connect
+  cloudSql:
+    instanceId: finance-agent-db
+    region: us-central1
+
+# Schema files
+schema:
+  source: schema.sql
+
+# API configuration
+api:
+  # REST API endpoint will be auto-generated
+  # GraphQL endpoint will be auto-generated
+  cors:
+    allowedOrigins:
+      - https://*.web.app
+      - https://*.firebaseapp.com
+      - http://localhost:3000
+
+# Connectors (optional - for generated SDKs)
+connectors:
+  - id: dashboard-connector
+    description: Connector for dashboard queries
+    language: typescript

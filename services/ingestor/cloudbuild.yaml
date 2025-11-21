@@ -1,0 +1,15 @@
+steps:
+  - name: 'gcr.io/cloud-builders/docker'
+    args:
+      - 'build'
+      - '-f'
+      - 'Dockerfile.backfill'
+      - '-t'
+      - 'gcr.io/mail-reader-433802/backfill-week:latest'
+      - '.'
+  - name: 'gcr.io/cloud-builders/docker'
+    args:
+      - 'push'
+      - 'gcr.io/mail-reader-433802/backfill-week:latest'
+images:
+  - 'gcr.io/mail-reader-433802/backfill-week:latest'

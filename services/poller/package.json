@@ -1,0 +1,27 @@
+{
+  "name": "gmail-poller",
+  "version": "1.0.0",
+  "description": "Gmail polling service - fallback when push notifications fail",
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "dev": "ts-node src/index.ts",
+    "deploy": "gcloud run deploy gmail-poller --source . --region=us-central1 --allow-unauthenticated --project=mail-reader-433802"
+  },
+  "dependencies": {
+    "@google-cloud/secret-manager": "^5.0.0",
+    "express": "^4.18.2",
+    "googleapis": "^118.0.0",
+    "google-auth-library": "^9.0.0"
+  },
+  "devDependencies": {
+    "@types/express": "^4.17.17",
+    "@types/node": "^20.0.0",
+    "ts-node": "^10.9.1",
+    "typescript": "^5.0.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

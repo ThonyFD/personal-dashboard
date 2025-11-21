@@ -1,0 +1,8 @@
+connectorId: "web-connector"
+
+# Generate Web SDK for dashboard (React app)
+generate:
+  javascriptSdk:
+    outputDir: "../../web/dashboard/src/generated"
+    package: "@dataconnect/web"
+    packageJsonDir: "../../web/dashboard"

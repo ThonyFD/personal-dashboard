@@ -1,0 +1,12 @@
+specVersion: "v1beta"
+serviceId: "personal-dashboard"
+location: "us-central1"
+schema:
+  source: "./schema"
+  datasource:
+    postgresql:
+      database: "fdcdb"
+      cloudSql:
+        instanceId: "personal-dashboard-fdc"
+      schemaValidation: "STRICT"
+connectorDirs: ["./connector"]

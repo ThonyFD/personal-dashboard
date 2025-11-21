@@ -1,0 +1,127 @@
+# AI Finance Agent Schema for Firebase Data Connect
+# Based on the SQL schema from packages/sql/schema.sql
+
+# Enums for transaction types and channels
+enum TxnType {
+  PURCHASE
+  PAYMENT
+  REFUND
+  WITHDRAWAL
+  TRANSFER
+  FEE
+  OTHER
+}
+
+enum ChannelType {
+  CARD
+  BANK_TRANSFER
+  CASH
+  MOBILE_PAYMENT
+  OTHER
+}
+
+# Email table: stores raw email metadata and hash
+type Email @table(name: "emails") {
+  id: Int! @col(name: "id")
+  gmailMessageId: String! @col(name: "gmail_message_id", dataType: "varchar(255)")
+  gmailHistoryId: Int @col(name: "gmail_history_id", dataType: "bigint")
+  senderEmail: String! @col(name: "sender_email", dataType: "varchar(255)")
+  senderName: String @col(name: "sender_name", dataType: "varchar(255)")
+  subject: String @col(name: "subject", dataType: "text")
+  receivedAt: Timestamp! @col(name: "received_at")
+  bodyHash: String! @col(name: "body_hash", dataType: "varchar(64)")
+  labels: [String] @col(name: "labels", dataType: "text[]")
+  provider: String @col(name: "provider", dataType: "varchar(50)")
+  parsed: Boolean @col(name: "parsed") @default(value: false)
+  createdAt: Timestamp! @col(name: "created_at") @default(expr: "request.time")
+  updatedAt: Timestamp! @col(name: "updated_at") @default(expr: "request.time")
+
+  # Note: One-to-many inverse relationship (Email -> Transactions) is defined
+  # in the Transaction type below as: Transaction.email: Email!
+  # You can query transactions via GraphQL: email { transactions_on_email { ... } }
+}
+
+# Category table: category definitions with icons and colors
+type Category @table(name: "categories") {
+  id: Int! @col(name: "id")
+  name: String! @col(name: "name", dataType: "varchar(100)")
+  icon: String! @col(name: "icon", dataType: "varchar(10)")
+  color: String! @col(name: "color", dataType: "varchar(7)")
+  description: String @col(name: "description", dataType: "text")
+  isDefault: Boolean @col(name: "is_default") @default(value: false)
+  createdAt: Timestamp! @col(name: "created_at") @default(expr: "request.time")
+  updatedAt: Timestamp! @col(name: "updated_at") @default(expr: "request.time")
+}
+
+# Merchant table: normalized merchant/vendor information
+type Merchant @table(name: "merchants") {
+  id: Int! @col(name: "id")
+  name: String! @col(name: "name", dataType: "varchar(255)")
+  normalizedName: String! @col(name: "normalized_name", dataType: "varchar(255)")
+  categoryId: Int @col(name: "category_id")
+  firstSeenAt: Timestamp! @col(name: "first_seen_at") @default(expr: "request.time")
+  transactionCount: Int @col(name: "transaction_count") @default(value: 0)
+  totalAmount: Float @col(name: "total_amount", dataType: "decimal(12,2)") @default(value: 0)
+  createdAt: Timestamp! @col(name: "created_at") @default(expr: "request.time")
+  updatedAt: Timestamp! @col(name: "updated_at") @default(expr: "request.time")
+
+  # Many-to-one relationship with Category
+  categoryRef: Category @ref(fields: "categoryId", references: "id")
+
+  # Note: One-to-many inverse relationship (Merchant -> Transactions) is defined
+  # in the Transaction type below as: Transaction.merchant: Merchant
+  # You can query transactions via GraphQL: merchant { transactions_on_merchant { ... } }
+}
+
+# Transaction table: parsed financial transactions
+type Transaction @table(name: "transactions") {
+  id: Int! @col(name: "id")
+  emailId: Int! @col(name: "email_id")
+  merchantId: Int @col(name: "merchant_id")
+
+  # Transaction details
+  txnType: TxnType! @col(name: "txn_type")
+  channel: ChannelType! @col(name: "channel")
+  amount: Float! @col(name: "amount", dataType: "decimal(12,2)")
+  currency: String @col(name: "currency", dataType: "varchar(3)") @default(value: "USD")
+
+  # Merchant/vendor info (denormalized)
+  merchantName: String @col(name: "merchant_name", dataType: "varchar(255)")
+  merchantRaw: String @col(name: "merchant_raw", dataType: "varchar(255)")
+
+  # Temporal info (America/Panama timezone)
+  txnDate: Date! @col(name: "txn_date")
+  txnTimestamp: Timestamp @col(name: "txn_timestamp")
+
+  # Card/account info (last 4 digits only)
+  cardLast4: String @col(name: "card_last4", dataType: "varchar(4)")
+  accountLast4: String @col(name: "account_last4", dataType: "varchar(4)")
+
+  # Provider-specific
+  provider: String! @col(name: "provider", dataType: "varchar(50)")
+  referenceNumber: String @col(name: "reference_number", dataType: "varchar(100)")
+
+  # Metadata
+  description: String @col(name: "description", dataType: "text")
+  notes: String @col(name: "notes", dataType: "text")
+
+  # Idempotency
+  idempotencyKey: String! @col(name: "idempotency_key", dataType: "varchar(64)")
+
+  createdAt: Timestamp! @col(name: "created_at") @default(expr: "request.time")
+  updatedAt: Timestamp! @col(name: "updated_at") @default(expr: "request.time")
+
+  # Many-to-one relationships
+  email: Email! @ref(fields: "emailId", references: "id")
+  merchant: Merchant @ref(fields: "merchantId", references: "id")
+}
+
+# Gmail Sync State: tracks the last processed historyId for incremental sync
+type GmailSyncState @table(name: "gmail_sync_state") {
+  id: Int! @col(name: "id")
+  lastHistoryId: Int! @col(name: "last_history_id", dataType: "bigint")
+  lastSyncedAt: Timestamp! @col(name: "last_synced_at")
+  watchExpiration: Timestamp @col(name: "watch_expiration")
+  createdAt: Timestamp! @col(name: "created_at") @default(expr: "request.time")
+  updatedAt: Timestamp! @col(name: "updated_at") @default(expr: "request.time")
+}
