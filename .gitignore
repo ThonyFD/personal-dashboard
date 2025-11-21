@@ -119,6 +119,24 @@ dist
 # Firebase cache directory
 .firebase/
 
+# SECURITY: Secrets and credentials - NEVER COMMIT
+*.key
+*.pem
+credentials.json
+service-account.json
+client_secret*.json
+oauth2.keys.json
+token.json
+**/credentials.json
+**/token.json
+
+# Terraform
+**/.terraform/
+*.tfstate
+*.tfstate.backup
+*.tfvars
+.terraform.lock.hcl
+
 # TernJS port file
 .tern-port
 
@@ -137,3 +155,16 @@ dist
 # Vite logs files
 vite.config.js.timestamp-*
 vite.config.ts.timestamp-*
+oauth-credential.json
+
+# Temporary documentation (keep out of git)
+*.txt
+!package.txt
+*.html
+populate-categories-simple.js
+populate-categories-sql.py
+check-merchants.ts
+delete-banistmo.js
+
+# macOS
+.DS_Store
