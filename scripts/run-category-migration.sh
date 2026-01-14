@@ -6,7 +6,7 @@ set -e  # Exit on error
 
 PROJECT="mail-reader-433802"
 INSTANCE="personal-dashboard-fdc"
-DATABASE="fdcdb"
+DATABASE="fdcdb_dc"
 
 echo "🚀 Starting Category Integrity Migration..."
 echo ""

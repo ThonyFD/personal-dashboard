@@ -1,6 +1,6 @@
 // Banisi (loan payments and banking notifications) parser
-import { BaseParser, ParserConfig } from './base';
-import { ParsedTransaction, GmailMessage } from '../types';
+import { BaseParser, ParserConfig } from './base.js';
+import { ParsedTransaction, GmailMessage } from '../types.js';
 
 const BANISI_CONFIG: ParserConfig = {
   name: 'banisi',

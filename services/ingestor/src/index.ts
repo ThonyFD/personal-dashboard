@@ -1,11 +1,11 @@
 // Express server for Cloud Run
 import express from 'express';
 import cors from 'cors';
-import { IngestionHandler } from './handler';
-import { Logger } from './utils/logger';
-import { OAuthTokenManager } from './utils/oauth-manager';
-import { GmailNotification, PubSubMessage } from './types';
-import monitoringRouter from './monitoring';
+import { IngestionHandler } from './handler.js';
+import { Logger } from './utils/logger.js';
+import { OAuthTokenManager } from './utils/oauth-manager.js';
+import { GmailNotification, PubSubMessage } from './types.js';
+import monitoringRouter from './monitoring.js';
 
 const app = express();
 app.use(express.json());

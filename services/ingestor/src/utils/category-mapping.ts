@@ -3,7 +3,7 @@
  * Maps the Category type strings to the categories table primary keys
  */
 
-import { Category } from './categories';
+import { Category, autoCategorizeMerchant } from './categories.js';
 
 /**
  * Map of category names to their database IDs
@@ -38,7 +38,6 @@ export function getCategoryId(category: Category): number {
  * Get the category ID for a merchant name (auto-categorize + convert to ID)
  */
 export function autoCategorizeMerchantId(merchantName: string): number {
-  const { autoCategorizeMerchant } = require('./categories');
   const category = autoCategorizeMerchant(merchantName);
   return getCategoryId(category);
 }

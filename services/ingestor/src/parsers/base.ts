@@ -1,5 +1,5 @@
 // Base parser interface for financial transaction extraction
-import { ParsedTransaction, GmailMessage } from '../types';
+import { ParsedTransaction, GmailMessage } from '../types.js';
 
 export interface ParserConfig {
   name: string;

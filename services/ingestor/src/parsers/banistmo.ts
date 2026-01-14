@@ -1,6 +1,6 @@
 // Banistmo transaction parser
-import { BaseParser, ParserConfig } from './base';
-import { ParsedTransaction, GmailMessage } from '../types';
+import { BaseParser, ParserConfig } from './base.js';
+import { ParsedTransaction, GmailMessage } from '../types.js';
 
 const BANISTMO_CONFIG: ParserConfig = {
   name: 'banistmo',
@@ -50,7 +50,7 @@ export class BanistmoParser extends BaseParser {
   }
 
   private cleanHTML(text: string): string {
-    let cleaned = text
+    const cleaned = text
       // Decode HTML entities
       .replace(/&nbsp;/g, ' ')
       .replace(/&lt;/g, '<')

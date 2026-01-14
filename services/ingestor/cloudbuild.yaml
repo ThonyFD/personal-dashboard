@@ -3,7 +3,7 @@ steps:
     args:
       - 'build'
       - '-f'
-      - 'Dockerfile.backfill'
+      - 'services/ingestor/Dockerfile.backfill'
       - '-t'
       - 'gcr.io/mail-reader-433802/backfill-week:latest'
       - '.'

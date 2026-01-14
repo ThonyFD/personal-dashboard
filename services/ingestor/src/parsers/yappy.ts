@@ -1,6 +1,6 @@
 // Yappy (Banco General mobile payment) transaction parser
-import { BaseParser, ParserConfig } from './base';
-import { ParsedTransaction, GmailMessage } from '../types';
+import { BaseParser, ParserConfig } from './base.js';
+import { ParsedTransaction, GmailMessage } from '../types.js';
 
 const YAPPY_CONFIG: ParserConfig = {
   name: 'yappy',
@@ -75,6 +75,13 @@ export class YappyParser extends BaseParser {
   }
 
   private extractMerchantFromBody(text: string, isSend: boolean): string | null {
+    // First, try to extract from HTML if present
+    const htmlMerchant = this.extractMerchantFromHTML(text, isSend);
+    if (htmlMerchant) {
+      return htmlMerchant;
+    }
+
+    // Fallback to plain text patterns
     // For send transactions, look for recipient name and phone
     // Format: "A: Binyu Xie (61944111)" or "Enviaste a: Binyu Xie"
     const patterns = isSend
@@ -111,7 +118,7 @@ export class YappyParser extends BaseParser {
         }
         // For other patterns, check if there's a phone number after the match
         if (match[1]) {
-          let merchant = match[1].trim();
+          const merchant = match[1].trim();
 
           // Check if there's a phone number on the next part
           const phoneMatch = text.match(new RegExp(
@@ -137,6 +144,68 @@ export class YappyParser extends BaseParser {
     }
 
     return null;
+  }
+
+  private extractMerchantFromHTML(html: string, isSend: boolean): string | null {
+    // Check if this is HTML content
+    if (!html.includes('<') || !html.includes('>')) {
+      return null;
+    }
+
+    try {
+      // Extract name from HTML
+      // Pattern for sent: <strong>Name</strong><strong> LastName</strong>
+      // Pattern for received: "Enviado por" followed by name
+      let nameMatch: RegExpMatchArray | null = null;
+      let phoneMatch: RegExpMatchArray | null = null;
+
+      if (isSend) {
+        // For sent transactions, look for the recipient name pattern
+        // The name appears after "Enviaste un Yappy" or similar
+        // Usually in format: <strong>Name</strong><strong> LastName</strong>
+        nameMatch = html.match(/<strong>([^<]+)<\/strong>\s*<strong>\s*([^<]+)<\/strong>/i);
+      } else {
+        // For received transactions, look for "Enviado por" section
+        // Pattern: "Enviado por" followed by <strong>Name</strong><strong> LastName</strong>
+        const sendBySection = html.match(/Enviado\s+por[\s\S]*?<strong>([^<]+)<\/strong>\s*<strong>\s*([^<]+)<\/strong>/i);
+        if (sendBySection) {
+          nameMatch = sendBySection;
+        }
+      }
+
+      // Extract phone number (always in format <strong>12345678</strong> after phone icon)
+      phoneMatch = html.match(/ico-cellphone\.png[\s\S]*?<strong[^>]*>(\d{8})<\/strong>/i);
+
+      if (nameMatch && phoneMatch) {
+        // Combine first name and last name, clean up any extra spaces
+        const firstName = nameMatch[1].trim();
+        const lastName = nameMatch[2].trim();
+        const phone = phoneMatch[1];
+        const fullName = `${firstName} ${lastName}`;
+
+        return `${fullName} (${phone})`;
+      }
+
+      // Try alternative pattern: name might be in a single <strong> tag
+      if (phoneMatch) {
+        const phone = phoneMatch[1];
+
+        // Look for name before the phone section
+        const singleNameMatch = html.match(/(?:Enviado\s+por|Te\s+enviaron)[\s\S]*?<strong>([^<]+)<\/strong>/i);
+        if (singleNameMatch) {
+          const name = singleNameMatch[1].trim();
+          // Make sure it's not the phone number
+          if (!/^\d+$/.test(name)) {
+            return `${name} (${phone})`;
+          }
+        }
+      }
+
+      return null;
+    } catch (error) {
+      // If HTML parsing fails, return null to try plain text patterns
+      return null;
+    }
   }
 
   private extractReference(text: string): string | null {

@@ -1,6 +1,6 @@
 // Clave (Panama's digital payment system) transaction parser
-import { BaseParser, ParserConfig } from './base';
-import { ParsedTransaction, GmailMessage } from '../types';
+import { BaseParser, ParserConfig } from './base.js';
+import { ParsedTransaction, GmailMessage } from '../types.js';
 
 const CLAVE_CONFIG: ParserConfig = {
   name: 'clave',

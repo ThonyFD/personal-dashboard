@@ -1,30 +1,11 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import {
-  getAuth,
   signInWithPopup,
   signOut as firebaseSignOut,
-  GoogleAuthProvider,
-  onAuthStateChanged,
+  onIdTokenChanged,
   User
 } from 'firebase/auth';
-import { initializeApp, getApps } from 'firebase/app';
-
-// Firebase configuration
-const firebaseConfig = {
-  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
-  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
-  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID || 'mail-reader-433802',
-  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
-  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
-  appId: import.meta.env.VITE_FIREBASE_APP_ID,
-};
-
-// Initialize Firebase App if not already initialized
-if (!getApps().length) {
-  initializeApp(firebaseConfig);
-}
-
-const auth = getAuth();
+import { auth, googleProvider } from '../lib/firebase';
 
 interface AuthContextType {
   user: User | null;
@@ -48,7 +29,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
+    // use onIdTokenChanged to handle token refreshes automatically
+    const unsubscribe = onIdTokenChanged(auth, async (user) => {
+      if (user) {
+        // Force token refresh if needed, though onIdTokenChanged handles most cases
+        // You can also get the token here: const token = await user.getIdToken();
+        console.log('Auth state changed: User signed in/token refreshed');
+      } else {
+        console.log('Auth state changed: User signed out');
+      }
       setUser(user);
       setLoading(false);
     });
@@ -57,9 +46,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, []);
 
   const signInWithGoogle = async () => {
-    const provider = new GoogleAuthProvider();
     try {
-      await signInWithPopup(auth, provider);
+      await signInWithPopup(auth, googleProvider);
     } catch (error) {
       console.error('Error signing in with Google:', error);
       throw error;

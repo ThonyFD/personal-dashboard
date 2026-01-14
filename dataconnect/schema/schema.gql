@@ -108,6 +108,11 @@ type Transaction @table(name: "transactions") {
   # Idempotency
   idempotencyKey: String! @col(name: "idempotency_key", dataType: "varchar(64)")
 
+  # Monthly Control fields
+  isPaid: Boolean @col(name: "is_paid") @default(value: true)
+  displayDay: Int @col(name: "display_day")
+  manualOverride: Boolean @col(name: "manual_override") @default(value: false)
+
   createdAt: Timestamp! @col(name: "created_at") @default(expr: "request.time")
   updatedAt: Timestamp! @col(name: "updated_at") @default(expr: "request.time")
 
@@ -122,6 +127,64 @@ type GmailSyncState @table(name: "gmail_sync_state") {
   lastHistoryId: Int! @col(name: "last_history_id", dataType: "bigint")
   lastSyncedAt: Timestamp! @col(name: "last_synced_at")
   watchExpiration: Timestamp @col(name: "watch_expiration")
+  createdAt: Timestamp! @col(name: "created_at") @default(expr: "request.time")
+  updatedAt: Timestamp! @col(name: "updated_at") @default(expr: "request.time")
+}
+
+# Monthly Incomes: income sources for each month (salary, bonuses, etc.)
+type MonthlyIncome @table(name: "monthly_incomes") {
+  id: Int! @col(name: "id")
+  year: Int! @col(name: "year")
+  month: Int! @col(name: "month")
+  source: String! @col(name: "source", dataType: "varchar(255)")
+  amount: Float! @col(name: "amount", dataType: "decimal(12,2)")
+  notes: String @col(name: "notes", dataType: "text")
+  createdAt: Timestamp! @col(name: "created_at") @default(expr: "request.time")
+  updatedAt: Timestamp! @col(name: "updated_at") @default(expr: "request.time")
+}
+
+# Manual Transactions: manually entered transactions not detected from emails
+type ManualTransaction @table(name: "manual_transactions") {
+  id: Int! @col(name: "id")
+  year: Int! @col(name: "year")
+  month: Int! @col(name: "month")
+  day: Int @col(name: "day")
+  description: String! @col(name: "description", dataType: "varchar(255)")
+  amount: Float! @col(name: "amount", dataType: "decimal(12,2)")
+  transactionType: String @col(name: "transaction_type", dataType: "varchar(50)")
+  paymentMethod: String @col(name: "payment_method", dataType: "varchar(100)")
+  isPaid: Boolean @col(name: "is_paid") @default(value: true)
+  notes: String @col(name: "notes", dataType: "text")
+  merchantId: Int @col(name: "merchant_id")
+  categoryId: Int @col(name: "category_id")
+  createdAt: Timestamp! @col(name: "created_at") @default(expr: "request.time")
+  updatedAt: Timestamp! @col(name: "updated_at") @default(expr: "request.time")
+
+  # Many-to-one relationship with Merchant
+  merchant: Merchant @ref(fields: "merchantId", references: "id")
+  # Many-to-one relationship with Category
+  category: Category @ref(fields: "categoryId", references: "id")
+}
+
+# Push Subscriptions: browser push notification subscriptions for reminders
+type PushSubscription @table(name: "push_subscriptions") {
+  id: Int! @col(name: "id")
+  userEmail: String! @col(name: "user_email", dataType: "varchar(255)")
+  endpoint: String! @col(name: "endpoint", dataType: "text")
+  keys: Any! @col(name: "keys", dataType: "jsonb")
+  userAgent: String @col(name: "user_agent", dataType: "text")
+  isActive: Boolean @col(name: "is_active") @default(value: true)
+  createdAt: Timestamp! @col(name: "created_at") @default(expr: "request.time")
+  updatedAt: Timestamp! @col(name: "updated_at") @default(expr: "request.time")
+}
+
+# Notification Preferences: user preferences for daily payment reminders
+type NotificationPreference @table(name: "notification_preferences") {
+  id: Int! @col(name: "id")
+  userEmail: String! @col(name: "user_email", dataType: "varchar(255)")
+  enableDailyReminders: Boolean @col(name: "enable_daily_reminders") @default(value: true)
+  reminderTime: String @col(name: "reminder_time", dataType: "time") @default(value: "12:00:00")
+  timezone: String @col(name: "timezone", dataType: "varchar(50)") @default(value: "America/Panama")
   createdAt: Timestamp! @col(name: "created_at") @default(expr: "request.time")
   updatedAt: Timestamp! @col(name: "updated_at") @default(expr: "request.time")
 }

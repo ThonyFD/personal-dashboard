@@ -3,6 +3,7 @@ import express from 'express';
 import { google } from 'googleapis';
 import { OAuth2Client } from 'google-auth-library';
 import { SecretManagerServiceClient } from '@google-cloud/secret-manager';
+import { persistTokens } from 'oauth-token-store';
 
 const app = express();
 app.use(express.json());
@@ -84,6 +85,38 @@ async function renewGmailWatch(): Promise<{ historyId: string; expiration: strin
 
     oauth2Client.setCredentials({
       refresh_token: credentials.refreshToken,
+    });
+
+    // Persist baseline token files
+    await persistTokens(
+      {
+        refresh_token: credentials.refreshToken,
+      },
+      { projectId: process.env.GOOGLE_CLOUD_PROJECT }
+    );
+
+    oauth2Client.on('tokens', (tokens) => {
+      if (!tokens.access_token && !tokens.refresh_token) {
+        return;
+      }
+
+      persistTokens(
+        {
+          access_token: tokens.access_token ?? undefined,
+          refresh_token: tokens.refresh_token || credentials.refreshToken,
+          expiry_date: tokens.expiry_date ?? undefined,
+          scope: tokens.scope,
+        },
+        {
+          projectId: process.env.GOOGLE_CLOUD_PROJECT,
+          updateSecretManager: Boolean(tokens.refresh_token),
+        }
+      ).catch((error) => {
+        logger.error('Failed to persist refreshed tokens', {
+          event: 'token_persist_failed',
+          error: error instanceof Error ? error.message : String(error),
+        });
+      });
     });
 
     const gmail = google.gmail({ version: 'v1', auth: oauth2Client });

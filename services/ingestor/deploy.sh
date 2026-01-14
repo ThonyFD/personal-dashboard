@@ -2,8 +2,23 @@
 # Deploy ingestor service to Cloud Run
 set -e
 
-PROJECT_ID="${GOOGLE_CLOUD_PROJECT}"
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+REPO_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
+
+# Resolve project/region, allowing defaults from gcloud config
+PROJECT_ID="${GOOGLE_CLOUD_PROJECT:-}"
+if [ -z "$PROJECT_ID" ] || [ "$PROJECT_ID" = "(unset)" ]; then
+  PROJECT_ID="$(gcloud config get-value project 2>/dev/null || true)"
+fi
+if [ -z "$PROJECT_ID" ] || [ "$PROJECT_ID" = "(unset)" ]; then
+  echo "ERROR: GOOGLE_CLOUD_PROJECT is not set and no gcloud default project found."
+  echo "Set it with: export GOOGLE_CLOUD_PROJECT=your-project-id"
+  exit 1
+fi
+export GOOGLE_CLOUD_PROJECT="$PROJECT_ID"
+
 REGION="${GOOGLE_CLOUD_REGION:-us-central1}"
+export GOOGLE_CLOUD_REGION="$REGION"
 SERVICE_NAME="finance-agent-ingestor"
 IMAGE_NAME="gcr.io/${PROJECT_ID}/${SERVICE_NAME}"
 
@@ -13,7 +28,10 @@ echo "Region: $REGION"
 
 # Build and push Docker image
 echo "Building Docker image..."
-gcloud builds submit --tag $IMAGE_NAME --project=$PROJECT_ID
+gcloud builds submit "$REPO_ROOT" \
+  --config "$SCRIPT_DIR/cloudbuild.deploy.yaml" \
+  --substitutions "_IMAGE=$IMAGE_NAME" \
+  --project=$PROJECT_ID
 
 # Deploy to Cloud Run
 echo "Deploying to Cloud Run..."

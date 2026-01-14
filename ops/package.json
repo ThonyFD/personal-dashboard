@@ -12,6 +12,7 @@
     "firebase": "^12.5.0",
     "google-auth-library": "^9.0.0",
     "googleapis": "^128.0.0",
+    "oauth-token-store": "file:../packages/oauth-token-store",
     "open": "^8.4.2",
     "tsx": "^4.7.0"
   }

@@ -22,6 +22,7 @@ import { OAuth2Client } from 'google-auth-library';
 import { SecretManagerServiceClient } from '@google-cloud/secret-manager';
 import * as fs from 'fs';
 import * as path from 'path';
+import { persistTokens } from 'oauth-token-store';
 
 // Import from ingestor service
 import { DatabaseClient } from '../services/ingestor/src/database/client';
@@ -140,12 +141,52 @@ class HistoricalBackfill {
         refresh_token: refreshToken,
       });
 
+      // Persist baseline token files for recovery
+      await persistTokens(
+        {
+          refresh_token: refreshToken,
+        },
+        { projectId: this.projectId }
+      );
+
+      this.oauth2Client.on('tokens', (tokens) => {
+        if (!tokens.access_token && !tokens.refresh_token) {
+          return;
+        }
+
+        persistTokens(
+          {
+            access_token: tokens.access_token,
+            refresh_token: tokens.refresh_token || refreshToken,
+            expiry_date: tokens.expiry_date,
+          },
+          {
+            projectId: this.projectId,
+            updateSecretManager: Boolean(tokens.refresh_token),
+          }
+        ).catch((error) => {
+          console.error('❌ Failed to persist refreshed tokens:', error);
+        });
+      });
+
       console.log('   ✓ OAuth2 client configured');
 
       // Refresh to get an access token
       console.log('   ✓ Refreshing access token...');
       const { credentials } = await this.oauth2Client.refreshAccessToken();
       this.oauth2Client.setCredentials(credentials);
+
+      await persistTokens(
+        {
+          access_token: credentials.access_token,
+          refresh_token: credentials.refresh_token || refreshToken,
+          expiry_date: credentials.expiry_date,
+        },
+        {
+          projectId: this.projectId,
+          updateSecretManager: Boolean(credentials.refresh_token),
+        }
+      );
 
       console.log('   ✓ Access token refreshed');
 

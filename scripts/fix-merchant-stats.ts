@@ -7,7 +7,7 @@
 import { Client } from 'pg';
 
 const CONNECTION_STRING = process.env.DATABASE_URL ||
-  'postgresql://postgres@/fdcdb?host=/cloudsql/mail-reader-433802:us-central1:personal-dashboard-fdc';
+  'postgresql://postgres@/fdcdb_dc?host=/cloudsql/mail-reader-433802:us-central1:personal-dashboard-fdc';
 
 async function fixMerchantStats() {
   const client = new Client({

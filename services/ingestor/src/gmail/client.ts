@@ -1,9 +1,9 @@
 // Gmail API client with OAuth
 import { google } from 'googleapis';
 import { OAuth2Client } from 'google-auth-library';
-import { OAuthTokenManager } from '../utils/oauth-manager';
-import { Logger } from '../utils/logger';
-import { GmailMessage } from '../types';
+import { OAuthTokenManager } from '../utils/oauth-manager.js';
+import { Logger } from '../utils/logger.js';
+import { GmailMessage } from '../types.js';
 
 export class GmailClient {
   private oauth2Client: OAuth2Client | null = null;

@@ -1,7 +1,9 @@
 // Firebase Data Connect client
 import { initializeApp, getApps } from 'firebase/app';
 import { getDataConnect } from 'firebase/data-connect';
+import { createRequire } from 'module';
 // Import from generated SDK (CommonJS)
+const require = createRequire(import.meta.url);
 const generated = require('../generated/index.cjs.js');
 const {
   connectorConfig,
@@ -21,9 +23,9 @@ const {
   ChannelType,
   TxnType,
 } = generated;
-import { Logger } from '../utils/logger';
-import { EmailData, TransactionData, MerchantData } from '../types';
-import { simpleNormalizeMerchantName } from '../utils/hash';
+import { Logger } from '../utils/logger.js';
+import { EmailData, TransactionData, MerchantData } from '../types.js';
+
 
 export class DatabaseClient {
   private dataConnect: ReturnType<typeof getDataConnect>;

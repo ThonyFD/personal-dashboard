@@ -1,7 +1,7 @@
 // Monitoring endpoints for system health
 import { Router, Response } from 'express';
-import { DatabaseClient } from './database/client';
-import { Logger } from './utils/logger';
+import { DatabaseClient } from './database/client.js';
+import { Logger } from './utils/logger.js';
 
 const router = Router();
 

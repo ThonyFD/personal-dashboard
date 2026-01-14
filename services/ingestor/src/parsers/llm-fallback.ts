@@ -1,6 +1,6 @@
 // LLM fallback parser using Anthropic Claude
-import { ParsedTransaction, GmailMessage } from '../types';
-import { Logger } from '../utils/logger';
+import { ParsedTransaction, GmailMessage } from '../types.js';
+import { Logger } from '../utils/logger.js';
 import { z } from 'zod';
 
 // Schema for LLM response validation

@@ -1,30 +1,10 @@
 // Firebase Data Connect client for dashboard
-import { initializeApp, getApps } from 'firebase/app';
-import { getDataConnect } from 'firebase/data-connect';
+import { dataConnect } from '../lib/firebase';
 import {
-  connectorConfig,
   listTransactions,
   listMerchants,
   updateMerchantCategoryId,
 } from '../generated/esm/index.esm.js';
-
-// Firebase configuration
-const firebaseConfig = {
-  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
-  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
-  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID || 'mail-reader-433802',
-  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
-  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
-  appId: import.meta.env.VITE_FIREBASE_APP_ID,
-};
-
-// Initialize Firebase App
-if (!getApps().length) {
-  initializeApp(firebaseConfig);
-}
-
-// Initialize Data Connect
-const dataConnect = getDataConnect(connectorConfig);
 
 // Types for dashboard
 export interface Transaction {
@@ -331,6 +311,278 @@ export async function updateMerchantCategoryById(merchantId: number, categoryId:
   }
 }
 
+// ============================================
+// MONTHLY CONTROL FUNCTIONS
+// ============================================
+
+export interface MonthlyIncome {
+  id: number;
+  year: number;
+  month: number;
+  source: string;
+  amount: number;
+  notes?: string;
+}
+
+export interface ManualTransaction {
+  id: number;
+  year: number;
+  month: number;
+  day?: number;
+  description: string;
+  amount: number;
+  transactionType?: string; // 'Inversión', 'Deuda', 'Ahorro', null
+  paymentMethod?: string; // 'BG', 'TDC(BANISTMO)', etc
+  isPaid: boolean;
+  notes?: string;
+  merchantId?: number;
+  categoryId?: number;
+}
+
+/**
+ * Fetch monthly incomes for a specific month
+ */
+export async function fetchMonthlyIncomes(year: number, month: number): Promise<MonthlyIncome[]> {
+  try {
+    const { getMonthlyIncomes } = await import('../generated/esm/index.esm.js');
+    const result = await getMonthlyIncomes(dataConnect, { year, month });
+
+    return (result.data.monthlyIncomes || []).map((income: any) => ({
+      id: income.id,
+      year: income.year,
+      month: income.month,
+      source: income.source,
+      amount: income.amount,
+      notes: income.notes,
+    }));
+  } catch (error) {
+    console.error('Error fetching monthly incomes:', error);
+    throw error;
+  }
+}
+
+/**
+ * Get the next available ID for monthly incomes
+ * Queries the database for the max ID and returns max + 1
+ */
+async function getNextMonthlyIncomeId(): Promise<number> {
+  try {
+    const { getMaxMonthlyIncomeId } = await import('../generated/esm/index.esm.js');
+    const result = await getMaxMonthlyIncomeId(dataConnect, {});
+
+    const maxId = result.data.monthlyIncomes?.[0]?.id;
+    // If no records exist, start from 1, otherwise increment max
+    return maxId ? maxId + 1 : 1;
+  } catch (error) {
+    console.error('Error fetching max monthly income ID:', error);
+    // Fallback to a safe starting ID if query fails
+    return Date.now() % 1000000; // Use timestamp-based ID as fallback
+  }
+}
+
+/**
+ * Get the next available ID for manual transactions
+ * Queries the database for the max ID and returns max + 1
+ */
+async function getNextManualTransactionId(): Promise<number> {
+  try {
+    const { getMaxManualTransactionId } = await import('../generated/esm/index.esm.js');
+    const result = await getMaxManualTransactionId(dataConnect, {});
+
+    const maxId = result.data.manualTransactions?.[0]?.id;
+    // If no records exist, start from 1, otherwise increment max
+    return maxId ? maxId + 1 : 1;
+  } catch (error) {
+    console.error('Error fetching max manual transaction ID:', error);
+    // Fallback to a safe starting ID if query fails
+    return Date.now() % 1000000; // Use timestamp-based ID as fallback
+  }
+}
+
+/**
+ * Create monthly income
+ */
+export async function createMonthlyIncome(income: Omit<MonthlyIncome, 'id'>): Promise<number> {
+  try {
+    const { createMonthlyIncome: createMutation } = await import('../generated/esm/index.esm.js');
+
+    // Get the next available ID from the database
+    const id = await getNextMonthlyIncomeId();
+
+    await createMutation(dataConnect, {
+      id,
+      year: income.year,
+      month: income.month,
+      source: income.source,
+      amount: income.amount,
+      notes: income.notes || null,
+    });
+
+    return id;
+  } catch (error) {
+    console.error('Error creating monthly income:', error);
+    throw error;
+  }
+}
+
+/**
+ * Update monthly income
+ */
+export async function updateMonthlyIncome(id: number, updates: Partial<MonthlyIncome>): Promise<void> {
+  try {
+    const { updateMonthlyIncome: updateMutation } = await import('../generated/esm/index.esm.js');
+
+    await updateMutation(dataConnect, {
+      id,
+      source: updates.source || null,
+      amount: updates.amount || null,
+      notes: updates.notes || null,
+    });
+  } catch (error) {
+    console.error('Error updating monthly income:', error);
+    throw error;
+  }
+}
+
+/**
+ * Delete monthly income
+ */
+export async function deleteMonthlyIncome(id: number): Promise<void> {
+  try {
+    const { deleteMonthlyIncome: deleteMutation } = await import('../generated/esm/index.esm.js');
+
+    await deleteMutation(dataConnect, { id });
+  } catch (error) {
+    console.error('Error deleting monthly income:', error);
+    throw error;
+  }
+}
+
+/**
+ * Fetch manual transactions for a specific month
+ */
+export async function fetchManualTransactions(
+  year: number,
+  month: number,
+  isPaid?: boolean
+): Promise<ManualTransaction[]> {
+  try {
+    const { getManualTransactions } = await import('../generated/esm/index.esm.js');
+
+    // Build variables - only include isPaid if it's explicitly set (not undefined)
+    // Passing null causes the filter to not match any records
+    const variables: any = { year, month };
+    if (isPaid !== undefined) {
+      variables.isPaid = isPaid;
+    }
+
+    const result = await getManualTransactions(dataConnect, variables);
+
+    return (result.data.manualTransactions || []).map((txn: any) => ({
+      id: txn.id,
+      year: txn.year,
+      month: txn.month,
+      day: txn.day,
+      description: txn.description,
+      amount: txn.amount,
+      transactionType: txn.transactionType,
+      paymentMethod: txn.paymentMethod,
+      isPaid: txn.isPaid,
+      notes: txn.notes,
+      merchantId: txn.merchantId,
+      categoryId: txn.categoryId,
+    }));
+  } catch (error) {
+    console.error('Error fetching manual transactions:', error);
+    throw error;
+  }
+}
+
+/**
+ * Create manual transaction
+ */
+export async function createManualTransaction(transaction: Omit<ManualTransaction, 'id'>): Promise<number> {
+  try {
+    const { createManualTransaction: createMutation } = await import('../generated/esm/index.esm.js');
+
+    // Get the next available ID from the database
+    const id = await getNextManualTransactionId();
+
+    await createMutation(dataConnect, {
+      id,
+      year: transaction.year,
+      month: transaction.month,
+      day: transaction.day || null,
+      description: transaction.description,
+      amount: transaction.amount,
+      transactionType: transaction.transactionType || null,
+      paymentMethod: transaction.paymentMethod || null,
+      isPaid: transaction.isPaid,
+      notes: transaction.notes || null,
+      merchantId: transaction.merchantId || null,
+      categoryId: transaction.categoryId || null,
+    });
+
+    return id;
+  } catch (error) {
+    console.error('Error creating manual transaction:', error);
+    throw error;
+  }
+}
+
+/**
+ * Update manual transaction
+ */
+export async function updateManualTransaction(id: number, updates: Partial<ManualTransaction>): Promise<void> {
+  try {
+    const { updateManualTransaction: updateMutation } = await import('../generated/esm/index.esm.js');
+
+    await updateMutation(dataConnect, {
+      id,
+      day: updates.day !== undefined ? updates.day : null,
+      description: updates.description || null,
+      amount: updates.amount || null,
+      transactionType: updates.transactionType !== undefined ? updates.transactionType : null,
+      paymentMethod: updates.paymentMethod !== undefined ? updates.paymentMethod : null,
+      isPaid: updates.isPaid !== undefined ? updates.isPaid : null,
+      notes: updates.notes !== undefined ? updates.notes : null,
+      merchantId: updates.merchantId !== undefined ? updates.merchantId : null,
+      categoryId: updates.categoryId !== undefined ? updates.categoryId : null,
+    });
+  } catch (error) {
+    console.error('Error updating manual transaction:', error);
+    throw error;
+  }
+}
+
+/**
+ * Delete manual transaction
+ */
+export async function deleteManualTransaction(id: number): Promise<void> {
+  try {
+    const { deleteManualTransaction: deleteMutation } = await import('../generated/esm/index.esm.js');
+
+    await deleteMutation(dataConnect, { id });
+  } catch (error) {
+    console.error('Error deleting manual transaction:', error);
+    throw error;
+  }
+}
+
+/**
+ * Toggle paid status of a manual transaction
+ */
+export async function toggleManualTransactionPaidStatus(id: number, isPaid: boolean): Promise<void> {
+  try {
+    const { updateManualTransactionPaidStatus } = await import('../generated/esm/index.esm.js');
+
+    await updateManualTransactionPaidStatus(dataConnect, { id, isPaid });
+  } catch (error) {
+    console.error('Error toggling manual transaction paid status:', error);
+    throw error;
+  }
+}
+
 /**
  * Export transactions as CSV
  */
@@ -372,5 +624,90 @@ export async function exportTransactionsCSV(startDate?: string, endDate?: string
   } catch (error) {
     console.error('Error exporting transactions:', error);
     throw error;
+  }
+}
+
+// ============================================
+// PUSH NOTIFICATION FUNCTIONS
+// ============================================
+
+/**
+ * Create push subscription
+ */
+export async function createPushSubscription(data: {
+  id: number;
+  userEmail: string;
+  endpoint: string;
+  keys: string;
+  userAgent?: string;
+  isActive: boolean;
+}): Promise<void> {
+  try {
+    const { createPushSubscription: createMutation } = await import('../generated/esm/index.esm.js');
+
+    await createMutation(dataConnect, {
+      id: data.id,
+      userEmail: data.userEmail,
+      endpoint: data.endpoint,
+      keys: data.keys,
+      userAgent: data.userAgent || null,
+      isActive: data.isActive,
+    });
+  } catch (error) {
+    console.error('Error creating push subscription:', error);
+    throw error;
+  }
+}
+
+/**
+ * Deactivate push subscription
+ */
+export async function deactivatePushSubscription(data: {
+  id: number;
+  isActive: boolean;
+}): Promise<void> {
+  try {
+    const { deactivatePushSubscription: updateMutation } = await import('../generated/esm/index.esm.js');
+
+    await updateMutation(dataConnect, {
+      id: data.id,
+      isActive: data.isActive,
+    });
+  } catch (error) {
+    console.error('Error deactivating push subscription:', error);
+    throw error;
+  }
+}
+
+/**
+ * Get active push subscriptions for a user
+ */
+export async function getActivePushSubscriptions(data: {
+  userEmail: string;
+}): Promise<any> {
+  try {
+    const { getActivePushSubscriptions: query } = await import('../generated/esm/index.esm.js');
+
+    return await query(dataConnect, {
+      userEmail: data.userEmail,
+    });
+  } catch (error) {
+    console.error('Error getting active push subscriptions:', error);
+    throw error;
+  }
+}
+
+/**
+ * Get maximum push subscription ID
+ */
+export async function getMaxPushSubscriptionId(): Promise<any> {
+  try {
+    const { getMaxPushSubscriptionId: query } = await import('../generated/esm/index.esm.js');
+
+    return await query(dataConnect, {});
+  } catch (error) {
+    console.error('Error getting max push subscription ID:', error);
+    // Fallback to a safe starting ID if query fails
+    return { data: { pushSubscriptions: [{ id: Date.now() % 1000000 }] } };
   }
 }

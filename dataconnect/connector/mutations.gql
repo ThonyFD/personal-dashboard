@@ -232,3 +232,208 @@ mutation UpdateMerchantNormalizedName(
     data: { normalizedName: $normalizedName }
   )
 }
+
+# ============================================
+# MONTHLY CONTROL MUTATIONS
+# ============================================
+
+# Create monthly income
+mutation CreateMonthlyIncome(
+  $id: Int!
+  $year: Int!
+  $month: Int!
+  $source: String!
+  $amount: Float!
+  $notes: String
+) @auth(level: PUBLIC) {
+  monthlyIncome_insert(
+    data: {
+      id: $id
+      year: $year
+      month: $month
+      source: $source
+      amount: $amount
+      notes: $notes
+    }
+  )
+}
+
+# Update monthly income
+mutation UpdateMonthlyIncome(
+  $id: Int!
+  $source: String
+  $amount: Float
+  $notes: String
+) @auth(level: PUBLIC) {
+  monthlyIncome_update(
+    key: { id: $id }
+    data: {
+      source: $source
+      amount: $amount
+      notes: $notes
+    }
+  )
+}
+
+# Delete monthly income
+mutation DeleteMonthlyIncome($id: Int!) @auth(level: PUBLIC) {
+  monthlyIncome_delete(key: { id: $id })
+}
+
+# Create manual transaction
+mutation CreateManualTransaction(
+  $id: Int!
+  $year: Int!
+  $month: Int!
+  $day: Int
+  $description: String!
+  $amount: Float!
+  $transactionType: String
+  $paymentMethod: String
+  $isPaid: Boolean
+  $notes: String
+  $merchantId: Int
+  $categoryId: Int
+) @auth(level: PUBLIC) {
+  manualTransaction_insert(
+    data: {
+      id: $id
+      year: $year
+      month: $month
+      day: $day
+      description: $description
+      amount: $amount
+      transactionType: $transactionType
+      paymentMethod: $paymentMethod
+      isPaid: $isPaid
+      notes: $notes
+      merchantId: $merchantId
+      categoryId: $categoryId
+    }
+  )
+}
+
+# Update manual transaction
+mutation UpdateManualTransaction(
+  $id: Int!
+  $day: Int
+  $description: String
+  $amount: Float
+  $transactionType: String
+  $paymentMethod: String
+  $isPaid: Boolean
+  $notes: String
+  $merchantId: Int
+  $categoryId: Int
+) @auth(level: PUBLIC) {
+  manualTransaction_update(
+    key: { id: $id }
+    data: {
+      day: $day
+      description: $description
+      amount: $amount
+      transactionType: $transactionType
+      paymentMethod: $paymentMethod
+      isPaid: $isPaid
+      notes: $notes
+      merchantId: $merchantId
+      categoryId: $categoryId
+    }
+  )
+}
+
+# Delete manual transaction
+mutation DeleteManualTransaction($id: Int!) @auth(level: PUBLIC) {
+  manualTransaction_delete(key: { id: $id })
+}
+
+# Mark transaction as paid/unpaid
+mutation UpdateTransactionPaidStatus(
+  $id: Int!
+  $isPaid: Boolean!
+) @auth(level: PUBLIC) {
+  transaction_update(
+    key: { id: $id }
+    data: { isPaid: $isPaid }
+  )
+}
+
+# Mark manual transaction as paid/unpaid
+mutation UpdateManualTransactionPaidStatus(
+  $id: Int!
+  $isPaid: Boolean!
+) @auth(level: PUBLIC) {
+  manualTransaction_update(
+    key: { id: $id }
+    data: { isPaid: $isPaid }
+  )
+}
+
+# Create push subscription
+mutation CreatePushSubscription(
+  $id: Int!
+  $userEmail: String!
+  $endpoint: String!
+  $keys: Any!
+  $userAgent: String
+) @auth(level: PUBLIC) {
+  pushSubscription_insert(
+    data: {
+      id: $id
+      userEmail: $userEmail
+      endpoint: $endpoint
+      keys: $keys
+      userAgent: $userAgent
+      isActive: true
+    }
+  )
+}
+
+# Deactivate push subscription
+mutation DeactivatePushSubscription($id: Int!) @auth(level: PUBLIC) {
+  pushSubscription_update(
+    key: { id: $id }
+    data: { isActive: false }
+  )
+}
+
+# Delete push subscription
+mutation DeletePushSubscription($id: Int!) @auth(level: PUBLIC) {
+  pushSubscription_delete(key: { id: $id })
+}
+
+# Create notification preferences
+mutation CreateNotificationPreferences(
+  $id: Int!
+  $userEmail: String!
+  $enableDailyReminders: Boolean
+  $reminderTime: String
+  $timezone: String
+) @auth(level: PUBLIC) {
+  notificationPreference_insert(
+    data: {
+      id: $id
+      userEmail: $userEmail
+      enableDailyReminders: $enableDailyReminders
+      reminderTime: $reminderTime
+      timezone: $timezone
+    }
+  )
+}
+
+# Update notification preferences
+mutation UpdateNotificationPreferences(
+  $id: Int!
+  $enableDailyReminders: Boolean
+  $reminderTime: String
+  $timezone: String
+) @auth(level: PUBLIC) {
+  notificationPreference_update(
+    key: { id: $id }
+    data: {
+      enableDailyReminders: $enableDailyReminders
+      reminderTime: $reminderTime
+      timezone: $timezone
+    }
+  )
+}

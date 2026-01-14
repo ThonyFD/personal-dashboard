@@ -1,11 +1,11 @@
 // Main ingestion handler for Gmail push notifications
-import { GmailClient } from './gmail/client';
-import { DatabaseClient } from './database/client';
-import { ParserRegistry } from './parsers';
-import { Logger } from './utils/logger';
-import { generateEmailBodyHash, generateIdempotencyKey, normalizeMerchantName, simpleNormalizeMerchantName } from './utils/hash';
-import { autoCategorizeMerchantId } from './utils/category-mapping';
-import { GmailNotification, EmailData, TransactionData } from './types';
+import { GmailClient } from './gmail/client.js';
+import { DatabaseClient } from './database/client.js';
+import { ParserRegistry } from './parsers/index.js';
+import { Logger } from './utils/logger.js';
+import { generateEmailBodyHash, generateIdempotencyKey, simpleNormalizeMerchantName } from './utils/hash.js';
+import { autoCategorizeMerchantId } from './utils/category-mapping.js';
+import { GmailNotification, EmailData, TransactionData } from './types.js';
 
 export class IngestionHandler {
   private gmailClient: GmailClient;

@@ -2,6 +2,7 @@
 import { google, Auth } from 'googleapis';
 import { OAuth2Client } from 'google-auth-library';
 import { SecretManagerServiceClient } from '@google-cloud/secret-manager';
+import { persistTokens } from 'oauth-token-store';
 import { Logger } from './logger';
 
 interface OAuthCredentials {
@@ -40,6 +41,37 @@ export class GmailPoller {
 
       this.oauth2Client.setCredentials({
         refresh_token: credentials.refreshToken,
+      });
+
+      await persistTokens(
+        {
+          refresh_token: credentials.refreshToken,
+        },
+        { projectId: this.projectId }
+      );
+
+      // Persist any token updates locally and to Secret Manager if Google rotates it
+      this.oauth2Client.on('tokens', (tokens) => {
+        if (!tokens.access_token && !tokens.refresh_token) {
+          return;
+        }
+
+        persistTokens(
+          {
+            access_token: tokens.access_token ?? undefined,
+            refresh_token: tokens.refresh_token || credentials.refreshToken,
+            expiry_date: tokens.expiry_date ?? undefined,
+          },
+          {
+            projectId: this.projectId,
+            updateSecretManager: Boolean(tokens.refresh_token),
+          }
+        ).catch((error) => {
+          Logger.error('Failed to persist refreshed tokens', {
+            event: 'token_persist_failed',
+            error: error instanceof Error ? error.message : String(error),
+          });
+        });
       });
 
       this.gmail = google.gmail({ version: 'v1', auth: this.oauth2Client as any });
