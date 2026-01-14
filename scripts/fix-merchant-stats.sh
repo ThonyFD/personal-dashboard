@@ -5,7 +5,7 @@ set -e
 
 PROJECT_ID="mail-reader-433802"
 INSTANCE_NAME="personal-dashboard-fdc"
-DB_NAME="fdcdb"
+DB_NAME="fdcdb_dc"
 DB_USER="postgres"
 
 echo "==================================="

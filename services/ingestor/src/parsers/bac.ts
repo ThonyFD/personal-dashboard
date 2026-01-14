@@ -1,6 +1,6 @@
 // BAC (Banco de América Central) transaction parser
-import { BaseParser, ParserConfig } from './base';
-import { ParsedTransaction, GmailMessage } from '../types';
+import { BaseParser, ParserConfig } from './base.js';
+import { ParsedTransaction, GmailMessage } from '../types.js';
 
 const BAC_CONFIG: ParserConfig = {
   name: 'bac',

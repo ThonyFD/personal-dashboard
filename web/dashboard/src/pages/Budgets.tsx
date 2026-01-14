@@ -512,6 +512,7 @@ export default function Budgets() {
                 >
                   <option value="">Select Category</option>
                   {Array.from(new Set(merchants?.map(m => m.categoryRef).filter(Boolean)))
+                    .sort((a, b) => a.name.localeCompare(b.name))
                     .map(category => (
                       <option key={category.id} value={category.id}>
                         {category.name}

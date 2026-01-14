@@ -1,5 +1,5 @@
 // Structured logging utility for Cloud Run
-import { LogContext } from '../types';
+import { LogContext } from '../types.js';
 
 export class Logger {
   private static formatLog(level: string, message: string, context?: LogContext): string {

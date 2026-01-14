@@ -213,7 +213,7 @@ export default function Merchants() {
             }}
           >
             <option value="">All Categories</option>
-            {categories.map((cat) => (
+            {[...categories].sort((a, b) => a.name.localeCompare(b.name)).map((cat) => (
               <option key={cat.id} value={cat.id.toString()}>
                 {cat.icon} {cat.name}
               </option>
@@ -268,7 +268,7 @@ export default function Merchants() {
                             fontSize: '0.9rem',
                           }}
                         >
-                          {categories.map((cat) => (
+                          {[...categories].sort((a, b) => a.name.localeCompare(b.name)).map((cat) => (
                             <option key={cat.id} value={cat.id}>
                               {cat.icon} {cat.name}
                             </option>

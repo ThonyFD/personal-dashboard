@@ -3,6 +3,9 @@ connectorId: "default"
 # Generate TypeScript SDK for both backend (ingestor) and frontend (dashboard)
 generate:
   javascriptSdk:
-    outputDir: "../../services/ingestor/src/generated"
-    package: "@dataconnect/default"
-    packageJsonDir: "../../services/ingestor"
+    - outputDir: "../../services/ingestor/src/generated"
+      package: "@dataconnect/default"
+      packageJsonDir: "../../services/ingestor"
+    - outputDir: "../../web/dashboard/src/generated"
+      package: "@dataconnect/default"
+      packageJsonDir: "../../web/dashboard"

@@ -2,7 +2,8 @@
 // Manages automatic refresh of OAuth access tokens
 
 import { SecretManagerServiceClient } from '@google-cloud/secret-manager';
-import { Logger } from './logger';
+import { Logger } from './logger.js';
+import { persistTokens } from 'oauth-token-store';
 
 interface OAuthCredentials {
   clientId: string;
@@ -85,6 +86,20 @@ export class OAuthTokenManager {
         accessToken: tokenResponse.access_token,
         expiresAt: Date.now() + tokenResponse.expires_in * 1000,
       };
+
+      // Persist tokens locally for recovery/reference
+      await persistTokens(
+        {
+          access_token: tokenResponse.access_token,
+          refresh_token: tokenResponse.refresh_token || credentials.refreshToken,
+          expires_in: tokenResponse.expires_in,
+          scope: tokenResponse.scope,
+          token_type: tokenResponse.token_type,
+        },
+        {
+          projectId: this.projectId,
+        }
+      );
 
       // If Google returned a new refresh token, update it in Secret Manager
       if (tokenResponse.refresh_token && tokenResponse.refresh_token !== credentials.refreshToken) {
@@ -197,6 +212,16 @@ export class OAuthTokenManager {
           data: Buffer.from(newRefreshToken, 'utf8'),
         },
       });
+
+      // Update local token files to keep in sync
+      await persistTokens(
+        {
+          refresh_token: newRefreshToken,
+        },
+        {
+          projectId: this.projectId,
+        }
+      );
 
       Logger.info('Refresh token updated successfully', {
         event: 'refresh_token_updated',

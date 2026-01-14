@@ -5,11 +5,11 @@
  * Reprocesa emails de la última semana desde Gmail
  */
 
-import { GmailClient } from './gmail/client';
-import { IngestionHandler } from './handler';
+import { GmailClient } from './gmail/client.js';
+import { IngestionHandler } from './handler.js';
 
 async function main() {
-  console.log('🔄 Starting Cloud Run backfill job for the past week...\n');
+  console.log('🔄 Starting Cloud Run backfill job since Dec 14, 2025...\n');
 
   const handler = new IngestionHandler();
   const gmailClient = new GmailClient();
@@ -20,12 +20,11 @@ async function main() {
 
   console.log('✓ Clients initialized\n');
 
-  // Calculate timestamp for one week ago
-  const oneWeekAgo = new Date();
-  oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
-  const afterTimestamp = Math.floor(oneWeekAgo.getTime() / 1000);
+  // Use Gmail date query format for Dec 14, 2025
+  const startDate = '2025/12/14';
+  const query = `label:financial after:${startDate}`;
 
-  console.log(`Fetching emails after: ${oneWeekAgo.toISOString()}\n`);
+  console.log(`Fetching emails since: ${startDate}\n`);
 
   const gmail = (gmailClient as any).gmail;
 
@@ -33,15 +32,15 @@ async function main() {
     // Refresh token before making API call
     await (gmailClient as any).refreshToken();
 
-    // Fetch messages from the past week
+    // Fetch messages since Dec 14, 2025
     const response = await gmail.users.messages.list({
       userId: 'me',
-      q: `after:${afterTimestamp}`,
+      q: query,
       maxResults: 500,
     });
 
     const messages = response.data.messages || [];
-    console.log(`Found ${messages.length} messages from the past week\n`);
+    console.log(`Found ${messages.length} messages since Dec 14, 2025\n`);
 
     if (messages.length === 0) {
       console.log('No messages to process. Exiting.');

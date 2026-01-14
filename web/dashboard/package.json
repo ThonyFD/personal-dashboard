@@ -10,6 +10,7 @@
     "lint": "eslint src --ext ts,tsx"
   },
   "dependencies": {
+    "@dataconnect/default": "file:src/generated",
     "@tanstack/react-query": "^5.14.0",
     "@types/html2canvas": "^0.5.35",
     "date-fns": "^3.0.0",

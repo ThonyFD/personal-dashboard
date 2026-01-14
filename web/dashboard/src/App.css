@@ -6,20 +6,36 @@
 
 /* Mobile-first navigation */
 .nav {
-  background-color: #2c3e50;
+  background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
   color: white;
   padding: 0.75rem 1rem;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.15);
   position: relative;
+}
+
+.nav-brand {
+  cursor: pointer;
+  transition: transform 0.2s ease;
+}
+
+.nav-brand:hover {
+  transform: translateY(-1px);
+}
+
+.nav-brand:active {
+  transform: translateY(0);
 }
 
 .nav h1 {
   margin: 0;
   font-size: 1.2rem;
   flex-shrink: 0;
+  color: white;
+  font-weight: 700;
+  letter-spacing: -0.5px;
 }
 
 /* Hamburger button */
@@ -32,6 +48,16 @@
   align-items: center;
   justify-content: center;
   z-index: 1001;
+  border-radius: 4px;
+  transition: background-color 0.2s ease;
+}
+
+.hamburger-btn:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+.hamburger-btn:active {
+  background-color: rgba(255, 255, 255, 0.15);
 }
 
 .hamburger-icon {
@@ -220,10 +246,12 @@
 @media (min-width: 768px) {
   .nav {
     padding: 1rem 1.5rem;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.2);
   }
 
   .nav h1 {
     font-size: 1.5rem;
+    letter-spacing: -0.75px;
   }
 
   .main {
@@ -234,7 +262,11 @@
 /* Desktop and up */
 @media (min-width: 1024px) {
   .nav {
-    padding: 1rem 2rem;
+    padding: 1.25rem 2rem;
+  }
+
+  .nav h1 {
+    font-size: 1.65rem;
   }
 
   .main {

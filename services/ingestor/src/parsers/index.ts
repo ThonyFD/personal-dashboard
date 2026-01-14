@@ -1,13 +1,13 @@
 // Parser registry and detector
-import { BaseParser } from './base';
-import { BACParser } from './bac';
-import { BanistmoParser } from './banistmo';
-import { BanisiParser } from './banisi';
-import { ClaveParser } from './clave';
-import { YappyParser } from './yappy';
-import { LLMFallbackParser } from './llm-fallback';
-import { GmailMessage, ParsedTransaction } from '../types';
-import { Logger } from '../utils/logger';
+import { BaseParser } from './base.js';
+import { BACParser } from './bac.js';
+import { BanistmoParser } from './banistmo.js';
+import { BanisiParser } from './banisi.js';
+import { ClaveParser } from './clave.js';
+import { YappyParser } from './yappy.js';
+import { LLMFallbackParser } from './llm-fallback.js';
+import { GmailMessage, ParsedTransaction } from '../types.js';
+import { Logger } from '../utils/logger.js';
 
 export class ParserRegistry {
   private parsers: BaseParser[];

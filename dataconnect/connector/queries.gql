@@ -547,3 +547,224 @@ query GetLatestTransaction @auth(level: PUBLIC) {
     txnDate
   }
 }
+
+# ============================================
+# MONTHLY CONTROL QUERIES
+# ============================================
+
+# Get maximum monthly income ID
+query GetMaxMonthlyIncomeId @auth(level: PUBLIC) {
+  monthlyIncomes(
+    orderBy: [{ id: DESC }]
+    limit: 1
+  ) {
+    id
+  }
+}
+
+# Get maximum manual transaction ID
+query GetMaxManualTransactionId @auth(level: PUBLIC) {
+  manualTransactions(
+    orderBy: [{ id: DESC }]
+    limit: 1
+  ) {
+    id
+  }
+}
+
+# Get monthly incomes for a specific month
+query GetMonthlyIncomes($year: Int!, $month: Int!) @auth(level: PUBLIC) {
+  monthlyIncomes(
+    where: {
+      _and: [
+        { year: { eq: $year } }
+        { month: { eq: $month } }
+      ]
+    }
+    orderBy: [{ source: ASC }]
+  ) {
+    id
+    year
+    month
+    source
+    amount
+    notes
+    createdAt
+    updatedAt
+  }
+}
+
+# Get manual transactions for a specific month
+query GetManualTransactions(
+  $year: Int!
+  $month: Int!
+  $isPaid: Boolean
+) @auth(level: PUBLIC) {
+  manualTransactions(
+    where: {
+      _and: [
+        { year: { eq: $year } }
+        { month: { eq: $month } }
+      ]
+    }
+    orderBy: [{ day: ASC }, { createdAt: ASC }]
+  ) {
+    id
+    year
+    month
+    day
+    description
+    amount
+    transactionType
+    paymentMethod
+    isPaid
+    notes
+    merchantId
+    categoryId
+    category {
+      id
+      name
+      icon
+      color
+    }
+    merchant {
+      id
+      name
+      categoryId
+      categoryRef {
+        id
+        name
+        icon
+        color
+      }
+    }
+    createdAt
+    updatedAt
+  }
+}
+
+# Get all transactions (auto + manual) for a specific month
+# Note: This returns auto transactions only. Manual transactions are fetched separately
+query GetMonthlyTransactions(
+  $startDate: Date!
+  $endDate: Date!
+) @auth(level: PUBLIC) {
+  transactions(
+    where: {
+      _and: [
+        { txnDate: { ge: $startDate } }
+        { txnDate: { le: $endDate } }
+      ]
+    }
+    orderBy: [{ txnDate: ASC }, { createdAt: ASC }]
+  ) {
+    id
+    amount
+    currency
+    txnType
+    channel
+    txnDate
+    displayDay
+    merchantName
+    provider
+    description
+    isPaid
+    manualOverride
+    merchant {
+      id
+      name
+      categoryId
+      categoryRef {
+        id
+        name
+        icon
+        color
+      }
+    }
+    createdAt
+  }
+}
+
+# Get pending payments for a specific day (for reminders)
+query GetPendingPaymentsForDay(
+  $year: Int!
+  $month: Int!
+  $day: Int!
+) @auth(level: PUBLIC) {
+  manualTransactions(
+    where: {
+      _and: [
+        { year: { eq: $year } }
+        { month: { eq: $month } }
+        { day: { eq: $day } }
+        { isPaid: { eq: false } }
+      ]
+    }
+    orderBy: [{ amount: DESC }]
+  ) {
+    id
+    description
+    amount
+    paymentMethod
+    transactionType
+    notes
+  }
+}
+
+# Get user notification preferences
+query GetNotificationPreferences($userEmail: String!) @auth(level: PUBLIC) {
+  notificationPreferences(
+    where: { userEmail: { eq: $userEmail } }
+    limit: 1
+  ) {
+    id
+    userEmail
+    enableDailyReminders
+    reminderTime
+    timezone
+    createdAt
+    updatedAt
+  }
+}
+
+# Get active push subscriptions for a user
+query GetActivePushSubscriptions($userEmail: String!) @auth(level: PUBLIC) {
+  pushSubscriptions(
+    where: {
+      _and: [
+        { userEmail: { eq: $userEmail } }
+        { isActive: { eq: true } }
+      ]
+    }
+  ) {
+    id
+    endpoint
+    keys
+    isActive
+    createdAt
+  }
+}
+
+# Get all active push subscriptions (for notifier service)
+query GetAllActivePushSubscriptions @auth(level: PUBLIC) {
+  pushSubscriptions(
+    where: { isActive: { eq: true } }
+  ) {
+    id
+    userEmail
+    endpoint
+    keys
+    isActive
+    createdAt
+  }
+}
+
+# Get maximum push subscription ID
+query GetMaxPushSubscriptionId @auth(level: PUBLIC) {
+  pushSubscriptions(
+    orderBy: [{ id: DESC }]
+    limit: 1
+  ) {
+    id
+  }
+}

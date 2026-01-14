@@ -7,7 +7,7 @@ set -e
 
 PROJECT_ID="mail-reader-433802"
 INSTANCE_ID="personal-dashboard-fdc"
-DATABASE="fdcdb"
+DATABASE="fdcdb_dc"
 
 echo "Populating merchants table..."
 echo "Project: $PROJECT_ID"

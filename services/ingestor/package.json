@@ -2,14 +2,16 @@
   "name": "finance-agent-ingestor",
   "version": "1.0.0",
   "description": "Gmail email ingestion service for AI Finance Agent",
+  "type": "module",
   "main": "dist/index.js",
   "scripts": {
-    "build": "tsc",
+    "build": "tsc && cp -r src/generated dist/",
     "start": "node dist/index.js",
     "dev": "tsx watch src/index.ts",
     "test": "jest",
     "lint": "eslint src --ext .ts",
-    "deploy": "./deploy.sh"
+    "deploy": "./deploy.sh",
+    "renew-token": "tsx scripts/renew-token.ts"
   },
   "keywords": [
     "finance",
@@ -23,12 +25,15 @@
     "@dataconnect/default": "file:src/generated",
     "@google-cloud/pubsub": "^4.0.0",
     "@google-cloud/secret-manager": "^5.0.0",
+    "@types/pg": "^8.15.6",
     "cors": "^2.8.5",
     "dotenv": "^16.3.1",
     "express": "^4.18.2",
     "firebase": "^12.4.0",
     "firebase-admin": "^12.0.0",
     "googleapis": "^128.0.0",
+    "oauth-token-store": "file:../../packages/oauth-token-store",
+    "pg": "^8.16.3",
     "zod": "^3.22.4"
   },
   "devDependencies": {
@@ -40,6 +45,7 @@
     "@typescript-eslint/parser": "^6.15.0",
     "eslint": "^8.55.0",
     "jest": "^29.7.0",
+    "open": "^11.0.0",
     "tsx": "^4.7.0",
     "typescript": "^5.3.3"
   },

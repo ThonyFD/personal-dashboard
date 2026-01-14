@@ -122,7 +122,7 @@ Si necesitas ejecutar SQL manualmente (triggers, functions):
 2. Ejecuta los scripts desde `packages/sql/schema.sql`
 
 ```bash
-gcloud sql connect personal-dashboard-fdc --user=postgres --database=fdcdb
+gcloud sql connect personal-dashboard-fdc --user=postgres --database=fdcdb_dc
 ```
 
 ## Troubleshooting

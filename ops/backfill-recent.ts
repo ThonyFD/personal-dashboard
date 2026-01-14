@@ -12,6 +12,7 @@
 import { google } from 'googleapis';
 import { OAuth2Client } from 'google-auth-library';
 import { SecretManagerServiceClient } from '@google-cloud/secret-manager';
+import { persistTokens } from 'oauth-token-store';
 
 // Import from ingestor service
 import { DatabaseClient } from '../services/ingestor/src/database/client';
@@ -71,6 +72,33 @@ class RecentBackfill {
 
     this.oauth2Client = new google.auth.OAuth2(clientId, clientSecret);
     this.oauth2Client.setCredentials({ refresh_token: refreshToken });
+
+    await persistTokens(
+      {
+        refresh_token: refreshToken,
+      },
+      { projectId: this.projectId }
+    );
+
+    this.oauth2Client.on('tokens', (tokens) => {
+      if (!tokens.access_token && !tokens.refresh_token) {
+        return;
+      }
+
+      persistTokens(
+        {
+          access_token: tokens.access_token,
+          refresh_token: tokens.refresh_token || refreshToken,
+          expiry_date: tokens.expiry_date,
+        },
+        {
+          projectId: this.projectId,
+          updateSecretManager: Boolean(tokens.refresh_token),
+        }
+      ).catch((error) => {
+        console.error('❌ Failed to persist refreshed tokens:', error);
+      });
+    });
 
     this.gmail = google.gmail({ version: 'v1', auth: this.oauth2Client });
     console.log('✓ Gmail client initialized\n');

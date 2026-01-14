@@ -10,12 +10,16 @@ import Merchants from './pages/Merchants'
 import Categories from './pages/Categories'
 import Charts from './pages/Charts'
 import CashFlow from './pages/CashFlow'
+import MonthlyControl from './pages/MonthlyControl'
 import Reports from './pages/Reports'
 import Budgets from './pages/Budgets'
 import Goals from './pages/Goals'
 import Recurring from './pages/Recurring'
 import Exports from './pages/Exports'
 import SystemHealth from './pages/SystemHealth'
+import TermsOfService from './pages/TermsOfService'
+import PrivacyPolicy from './pages/PrivacyPolicy'
+import Debug from './pages/Debug'
 import './App.css'
 
 const queryClient = new QueryClient()
@@ -40,7 +44,9 @@ function Navigation() {
 
   return (
     <nav className="nav">
-      <Link to="/"><h1>AI Finance Agent</h1></Link>
+      <div className="nav-brand" onClick={() => navigate('/')}>
+        <h1>AI Finance Agent</h1>
+      </div>
 
       {/* Hamburger button */}
       <button
@@ -88,6 +94,10 @@ function Navigation() {
             <span className="menu-icon">💰</span>
             Cash Flow
           </Link>
+          <Link to="/monthly-control" onClick={closeMenu}>
+            <span className="menu-icon">📊</span>
+            Control Mensual
+          </Link>
           <Link to="/recurring" onClick={closeMenu}>
             <span className="menu-icon">🔄</span>
             Recurring
@@ -128,6 +138,10 @@ function Navigation() {
             <span className="menu-icon">🔧</span>
             System Health
           </Link>
+          <Link to="/debug" onClick={closeMenu}>
+            <span className="menu-icon">🐛</span>
+            Debug
+          </Link>
         </div>
 
         {/* Sign out button */}
@@ -155,6 +169,8 @@ function AppContent() {
       <main className="main">
         <Routes>
           <Route path="/login" element={<Login />} />
+          <Route path="/terms" element={<TermsOfService />} />
+          <Route path="/privacy" element={<PrivacyPolicy />} />
           <Route path="/" element={
             <ProtectedRoute>
               <Overview />
@@ -163,6 +179,11 @@ function AppContent() {
           <Route path="/cashflow" element={
             <ProtectedRoute>
               <CashFlow />
+            </ProtectedRoute>
+          } />
+          <Route path="/monthly-control" element={
+            <ProtectedRoute>
+              <MonthlyControl />
             </ProtectedRoute>
           } />
           <Route path="/recurring" element={
@@ -213,6 +234,11 @@ function AppContent() {
           <Route path="/system-health" element={
             <ProtectedRoute>
               <SystemHealth />
+            </ProtectedRoute>
+          } />
+          <Route path="/debug" element={
+            <ProtectedRoute>
+              <Debug />
             </ProtectedRoute>
           } />
         </Routes>

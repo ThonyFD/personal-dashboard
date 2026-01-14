@@ -64,6 +64,25 @@ export interface CreateEmailVariables {
   parsed?: boolean | null;
 }
 
+export interface CreateManualTransactionData {
+  manualTransaction_insert: ManualTransaction_Key;
+}
+
+export interface CreateManualTransactionVariables {
+  id: number;
+  year: number;
+  month: number;
+  day?: number | null;
+  description: string;
+  amount: number;
+  transactionType?: string | null;
+  paymentMethod?: string | null;
+  isPaid?: boolean | null;
+  notes?: string | null;
+  merchantId?: number | null;
+  categoryId?: number | null;
+}
+
 export interface CreateMerchantData {
   merchant_insert: Merchant_Key;
 }
@@ -73,6 +92,43 @@ export interface CreateMerchantVariables {
   name: string;
   normalizedName: string;
   categoryId?: number | null;
+}
+
+export interface CreateMonthlyIncomeData {
+  monthlyIncome_insert: MonthlyIncome_Key;
+}
+
+export interface CreateMonthlyIncomeVariables {
+  id: number;
+  year: number;
+  month: number;
+  source: string;
+  amount: number;
+  notes?: string | null;
+}
+
+export interface CreateNotificationPreferencesData {
+  notificationPreference_insert: NotificationPreference_Key;
+}
+
+export interface CreateNotificationPreferencesVariables {
+  id: number;
+  userEmail: string;
+  enableDailyReminders?: boolean | null;
+  reminderTime?: string | null;
+  timezone?: string | null;
+}
+
+export interface CreatePushSubscriptionData {
+  pushSubscription_insert: PushSubscription_Key;
+}
+
+export interface CreatePushSubscriptionVariables {
+  id: number;
+  userEmail: string;
+  endpoint: string;
+  keys: unknown;
+  userAgent?: string | null;
 }
 
 export interface CreateTransactionData {
@@ -100,6 +156,14 @@ export interface CreateTransactionVariables {
   idempotencyKey: string;
 }
 
+export interface DeactivatePushSubscriptionData {
+  pushSubscription_update?: PushSubscription_Key | null;
+}
+
+export interface DeactivatePushSubscriptionVariables {
+  id: number;
+}
+
 export interface DeleteCategoryData {
   category_delete?: Category_Key | null;
 }
@@ -116,11 +180,35 @@ export interface DeleteEmailVariables {
   id: number;
 }
 
+export interface DeleteManualTransactionData {
+  manualTransaction_delete?: ManualTransaction_Key | null;
+}
+
+export interface DeleteManualTransactionVariables {
+  id: number;
+}
+
 export interface DeleteMerchantData {
   merchant_delete?: Merchant_Key | null;
 }
 
 export interface DeleteMerchantVariables {
+  id: number;
+}
+
+export interface DeleteMonthlyIncomeData {
+  monthlyIncome_delete?: MonthlyIncome_Key | null;
+}
+
+export interface DeleteMonthlyIncomeVariables {
+  id: number;
+}
+
+export interface DeletePushSubscriptionData {
+  pushSubscription_delete?: PushSubscription_Key | null;
+}
+
+export interface DeletePushSubscriptionVariables {
   id: number;
 }
 
@@ -135,6 +223,31 @@ export interface DeleteTransactionVariables {
 export interface Email_Key {
   id: number;
   __typename?: 'Email_Key';
+}
+
+export interface GetActivePushSubscriptionsData {
+  pushSubscriptions: ({
+    id: number;
+    endpoint: string;
+    keys: unknown;
+    isActive?: boolean | null;
+    createdAt: TimestampString;
+  } & PushSubscription_Key)[];
+}
+
+export interface GetActivePushSubscriptionsVariables {
+  userEmail: string;
+}
+
+export interface GetAllActivePushSubscriptionsData {
+  pushSubscriptions: ({
+    id: number;
+    userEmail: string;
+    endpoint: string;
+    keys: unknown;
+    isActive?: boolean | null;
+    createdAt: TimestampString;
+  } & PushSubscription_Key)[];
 }
 
 export interface GetAllEmailsData {
@@ -253,6 +366,66 @@ export interface GetLatestTransactionData {
   } & Transaction_Key)[];
 }
 
+export interface GetManualTransactionsData {
+  manualTransactions: ({
+    id: number;
+    year: number;
+    month: number;
+    day?: number | null;
+    description: string;
+    amount: number;
+    transactionType?: string | null;
+    paymentMethod?: string | null;
+    isPaid?: boolean | null;
+    notes?: string | null;
+    merchantId?: number | null;
+    categoryId?: number | null;
+    category?: {
+      id: number;
+      name: string;
+      icon: string;
+      color: string;
+    } & Category_Key;
+      merchant?: {
+        id: number;
+        name: string;
+        categoryId?: number | null;
+        categoryRef?: {
+          id: number;
+          name: string;
+          icon: string;
+          color: string;
+        } & Category_Key;
+      } & Merchant_Key;
+        createdAt: TimestampString;
+        updatedAt: TimestampString;
+  } & ManualTransaction_Key)[];
+}
+
+export interface GetManualTransactionsVariables {
+  year: number;
+  month: number;
+  isPaid?: boolean | null;
+}
+
+export interface GetMaxManualTransactionIdData {
+  manualTransactions: ({
+    id: number;
+  } & ManualTransaction_Key)[];
+}
+
+export interface GetMaxMonthlyIncomeIdData {
+  monthlyIncomes: ({
+    id: number;
+  } & MonthlyIncome_Key)[];
+}
+
+export interface GetMaxPushSubscriptionIdData {
+  pushSubscriptions: ({
+    id: number;
+  } & PushSubscription_Key)[];
+}
+
 export interface GetMerchantByNameData {
   merchants: ({
     id: number;
@@ -307,6 +480,91 @@ export interface GetMerchantsCountData {
 export interface GetMerchantsCountVariables {
   categoryId?: number | null;
   searchTerm?: string | null;
+}
+
+export interface GetMonthlyIncomesData {
+  monthlyIncomes: ({
+    id: number;
+    year: number;
+    month: number;
+    source: string;
+    amount: number;
+    notes?: string | null;
+    createdAt: TimestampString;
+    updatedAt: TimestampString;
+  } & MonthlyIncome_Key)[];
+}
+
+export interface GetMonthlyIncomesVariables {
+  year: number;
+  month: number;
+}
+
+export interface GetMonthlyTransactionsData {
+  transactions: ({
+    id: number;
+    amount: number;
+    currency?: string | null;
+    txnType: TxnType;
+    channel: ChannelType;
+    txnDate: DateString;
+    displayDay?: number | null;
+    merchantName?: string | null;
+    provider: string;
+    description?: string | null;
+    isPaid?: boolean | null;
+    manualOverride?: boolean | null;
+    merchant?: {
+      id: number;
+      name: string;
+      categoryId?: number | null;
+      categoryRef?: {
+        id: number;
+        name: string;
+        icon: string;
+        color: string;
+      } & Category_Key;
+    } & Merchant_Key;
+      createdAt: TimestampString;
+  } & Transaction_Key)[];
+}
+
+export interface GetMonthlyTransactionsVariables {
+  startDate: DateString;
+  endDate: DateString;
+}
+
+export interface GetNotificationPreferencesData {
+  notificationPreferences: ({
+    id: number;
+    userEmail: string;
+    enableDailyReminders?: boolean | null;
+    reminderTime?: string | null;
+    timezone?: string | null;
+    createdAt: TimestampString;
+    updatedAt: TimestampString;
+  } & NotificationPreference_Key)[];
+}
+
+export interface GetNotificationPreferencesVariables {
+  userEmail: string;
+}
+
+export interface GetPendingPaymentsForDayData {
+  manualTransactions: ({
+    id: number;
+    description: string;
+    amount: number;
+    paymentMethod?: string | null;
+    transactionType?: string | null;
+    notes?: string | null;
+  } & ManualTransaction_Key)[];
+}
+
+export interface GetPendingPaymentsForDayVariables {
+  year: number;
+  month: number;
+  day: number;
 }
 
 export interface GetRecentEmailsForMonitoringData {
@@ -584,9 +842,29 @@ export interface ListTransactionsVariables {
   txnType?: TxnType | null;
 }
 
+export interface ManualTransaction_Key {
+  id: number;
+  __typename?: 'ManualTransaction_Key';
+}
+
 export interface Merchant_Key {
   id: number;
   __typename?: 'Merchant_Key';
+}
+
+export interface MonthlyIncome_Key {
+  id: number;
+  __typename?: 'MonthlyIncome_Key';
+}
+
+export interface NotificationPreference_Key {
+  id: number;
+  __typename?: 'NotificationPreference_Key';
+}
+
+export interface PushSubscription_Key {
+  id: number;
+  __typename?: 'PushSubscription_Key';
 }
 
 export interface SearchTransactionsData {
@@ -652,6 +930,32 @@ export interface UpdateGmailSyncStateVariables {
   watchExpiration?: TimestampString | null;
 }
 
+export interface UpdateManualTransactionData {
+  manualTransaction_update?: ManualTransaction_Key | null;
+}
+
+export interface UpdateManualTransactionPaidStatusData {
+  manualTransaction_update?: ManualTransaction_Key | null;
+}
+
+export interface UpdateManualTransactionPaidStatusVariables {
+  id: number;
+  isPaid: boolean;
+}
+
+export interface UpdateManualTransactionVariables {
+  id: number;
+  day?: number | null;
+  description?: string | null;
+  amount?: number | null;
+  transactionType?: string | null;
+  paymentMethod?: string | null;
+  isPaid?: boolean | null;
+  notes?: string | null;
+  merchantId?: number | null;
+  categoryId?: number | null;
+}
+
 export interface UpdateMerchantCategoryIdData {
   merchant_update?: Merchant_Key | null;
 }
@@ -670,6 +974,28 @@ export interface UpdateMerchantNormalizedNameVariables {
   normalizedName: string;
 }
 
+export interface UpdateMonthlyIncomeData {
+  monthlyIncome_update?: MonthlyIncome_Key | null;
+}
+
+export interface UpdateMonthlyIncomeVariables {
+  id: number;
+  source?: string | null;
+  amount?: number | null;
+  notes?: string | null;
+}
+
+export interface UpdateNotificationPreferencesData {
+  notificationPreference_update?: NotificationPreference_Key | null;
+}
+
+export interface UpdateNotificationPreferencesVariables {
+  id: number;
+  enableDailyReminders?: boolean | null;
+  reminderTime?: string | null;
+  timezone?: string | null;
+}
+
 export interface UpdateTransactionMerchantData {
   transaction_update?: Transaction_Key | null;
 }
@@ -686,6 +1012,15 @@ export interface UpdateTransactionNotesData {
 export interface UpdateTransactionNotesVariables {
   id: number;
   notes: string;
+}
+
+export interface UpdateTransactionPaidStatusData {
+  transaction_update?: Transaction_Key | null;
+}
+
+export interface UpdateTransactionPaidStatusVariables {
+  id: number;
+  isPaid: boolean;
 }
 
 interface CreateEmailRef {
@@ -867,6 +1202,162 @@ export const updateMerchantNormalizedNameRef: UpdateMerchantNormalizedNameRef;
 
 export function updateMerchantNormalizedName(vars: UpdateMerchantNormalizedNameVariables): MutationPromise<UpdateMerchantNormalizedNameData, UpdateMerchantNormalizedNameVariables>;
 export function updateMerchantNormalizedName(dc: DataConnect, vars: UpdateMerchantNormalizedNameVariables): MutationPromise<UpdateMerchantNormalizedNameData, UpdateMerchantNormalizedNameVariables>;
+
+interface CreateMonthlyIncomeRef {
+  /* Allow users to create refs without passing in DataConnect */
+  (vars: CreateMonthlyIncomeVariables): MutationRef<CreateMonthlyIncomeData, CreateMonthlyIncomeVariables>;
+  /* Allow users to pass in custom DataConnect instances */
+  (dc: DataConnect, vars: CreateMonthlyIncomeVariables): MutationRef<CreateMonthlyIncomeData, CreateMonthlyIncomeVariables>;
+  operationName: string;
+}
+export const createMonthlyIncomeRef: CreateMonthlyIncomeRef;
+
+export function createMonthlyIncome(vars: CreateMonthlyIncomeVariables): MutationPromise<CreateMonthlyIncomeData, CreateMonthlyIncomeVariables>;
+export function createMonthlyIncome(dc: DataConnect, vars: CreateMonthlyIncomeVariables): MutationPromise<CreateMonthlyIncomeData, CreateMonthlyIncomeVariables>;
+
+interface UpdateMonthlyIncomeRef {
+  /* Allow users to create refs without passing in DataConnect */
+  (vars: UpdateMonthlyIncomeVariables): MutationRef<UpdateMonthlyIncomeData, UpdateMonthlyIncomeVariables>;
+  /* Allow users to pass in custom DataConnect instances */
+  (dc: DataConnect, vars: UpdateMonthlyIncomeVariables): MutationRef<UpdateMonthlyIncomeData, UpdateMonthlyIncomeVariables>;
+  operationName: string;
+}
+export const updateMonthlyIncomeRef: UpdateMonthlyIncomeRef;
+
+export function updateMonthlyIncome(vars: UpdateMonthlyIncomeVariables): MutationPromise<UpdateMonthlyIncomeData, UpdateMonthlyIncomeVariables>;
+export function updateMonthlyIncome(dc: DataConnect, vars: UpdateMonthlyIncomeVariables): MutationPromise<UpdateMonthlyIncomeData, UpdateMonthlyIncomeVariables>;
+
+interface DeleteMonthlyIncomeRef {
+  /* Allow users to create refs without passing in DataConnect */
+  (vars: DeleteMonthlyIncomeVariables): MutationRef<DeleteMonthlyIncomeData, DeleteMonthlyIncomeVariables>;
+  /* Allow users to pass in custom DataConnect instances */
+  (dc: DataConnect, vars: DeleteMonthlyIncomeVariables): MutationRef<DeleteMonthlyIncomeData, DeleteMonthlyIncomeVariables>;
+  operationName: string;
+}
+export const deleteMonthlyIncomeRef: DeleteMonthlyIncomeRef;
+
+export function deleteMonthlyIncome(vars: DeleteMonthlyIncomeVariables): MutationPromise<DeleteMonthlyIncomeData, DeleteMonthlyIncomeVariables>;
+export function deleteMonthlyIncome(dc: DataConnect, vars: DeleteMonthlyIncomeVariables): MutationPromise<DeleteMonthlyIncomeData, DeleteMonthlyIncomeVariables>;
+
+interface CreateManualTransactionRef {
+  /* Allow users to create refs without passing in DataConnect */
+  (vars: CreateManualTransactionVariables): MutationRef<CreateManualTransactionData, CreateManualTransactionVariables>;
+  /* Allow users to pass in custom DataConnect instances */
+  (dc: DataConnect, vars: CreateManualTransactionVariables): MutationRef<CreateManualTransactionData, CreateManualTransactionVariables>;
+  operationName: string;
+}
+export const createManualTransactionRef: CreateManualTransactionRef;
+
+export function createManualTransaction(vars: CreateManualTransactionVariables): MutationPromise<CreateManualTransactionData, CreateManualTransactionVariables>;
+export function createManualTransaction(dc: DataConnect, vars: CreateManualTransactionVariables): MutationPromise<CreateManualTransactionData, CreateManualTransactionVariables>;
+
+interface UpdateManualTransactionRef {
+  /* Allow users to create refs without passing in DataConnect */
+  (vars: UpdateManualTransactionVariables): MutationRef<UpdateManualTransactionData, UpdateManualTransactionVariables>;
+  /* Allow users to pass in custom DataConnect instances */
+  (dc: DataConnect, vars: UpdateManualTransactionVariables): MutationRef<UpdateManualTransactionData, UpdateManualTransactionVariables>;
+  operationName: string;
+}
+export const updateManualTransactionRef: UpdateManualTransactionRef;
+
+export function updateManualTransaction(vars: UpdateManualTransactionVariables): MutationPromise<UpdateManualTransactionData, UpdateManualTransactionVariables>;
+export function updateManualTransaction(dc: DataConnect, vars: UpdateManualTransactionVariables): MutationPromise<UpdateManualTransactionData, UpdateManualTransactionVariables>;
+
+interface DeleteManualTransactionRef {
+  /* Allow users to create refs without passing in DataConnect */
+  (vars: DeleteManualTransactionVariables): MutationRef<DeleteManualTransactionData, DeleteManualTransactionVariables>;
+  /* Allow users to pass in custom DataConnect instances */
+  (dc: DataConnect, vars: DeleteManualTransactionVariables): MutationRef<DeleteManualTransactionData, DeleteManualTransactionVariables>;
+  operationName: string;
+}
+export const deleteManualTransactionRef: DeleteManualTransactionRef;
+
+export function deleteManualTransaction(vars: DeleteManualTransactionVariables): MutationPromise<DeleteManualTransactionData, DeleteManualTransactionVariables>;
+export function deleteManualTransaction(dc: DataConnect, vars: DeleteManualTransactionVariables): MutationPromise<DeleteManualTransactionData, DeleteManualTransactionVariables>;
+
+interface UpdateTransactionPaidStatusRef {
+  /* Allow users to create refs without passing in DataConnect */
+  (vars: UpdateTransactionPaidStatusVariables): MutationRef<UpdateTransactionPaidStatusData, UpdateTransactionPaidStatusVariables>;
+  /* Allow users to pass in custom DataConnect instances */
+  (dc: DataConnect, vars: UpdateTransactionPaidStatusVariables): MutationRef<UpdateTransactionPaidStatusData, UpdateTransactionPaidStatusVariables>;
+  operationName: string;
+}
+export const updateTransactionPaidStatusRef: UpdateTransactionPaidStatusRef;
+
+export function updateTransactionPaidStatus(vars: UpdateTransactionPaidStatusVariables): MutationPromise<UpdateTransactionPaidStatusData, UpdateTransactionPaidStatusVariables>;
+export function updateTransactionPaidStatus(dc: DataConnect, vars: UpdateTransactionPaidStatusVariables): MutationPromise<UpdateTransactionPaidStatusData, UpdateTransactionPaidStatusVariables>;
+
+interface UpdateManualTransactionPaidStatusRef {
+  /* Allow users to create refs without passing in DataConnect */
+  (vars: UpdateManualTransactionPaidStatusVariables): MutationRef<UpdateManualTransactionPaidStatusData, UpdateManualTransactionPaidStatusVariables>;
+  /* Allow users to pass in custom DataConnect instances */
+  (dc: DataConnect, vars: UpdateManualTransactionPaidStatusVariables): MutationRef<UpdateManualTransactionPaidStatusData, UpdateManualTransactionPaidStatusVariables>;
+  operationName: string;
+}
+export const updateManualTransactionPaidStatusRef: UpdateManualTransactionPaidStatusRef;
+
+export function updateManualTransactionPaidStatus(vars: UpdateManualTransactionPaidStatusVariables): MutationPromise<UpdateManualTransactionPaidStatusData, UpdateManualTransactionPaidStatusVariables>;
+export function updateManualTransactionPaidStatus(dc: DataConnect, vars: UpdateManualTransactionPaidStatusVariables): MutationPromise<UpdateManualTransactionPaidStatusData, UpdateManualTransactionPaidStatusVariables>;
+
+interface CreatePushSubscriptionRef {
+  /* Allow users to create refs without passing in DataConnect */
+  (vars: CreatePushSubscriptionVariables): MutationRef<CreatePushSubscriptionData, CreatePushSubscriptionVariables>;
+  /* Allow users to pass in custom DataConnect instances */
+  (dc: DataConnect, vars: CreatePushSubscriptionVariables): MutationRef<CreatePushSubscriptionData, CreatePushSubscriptionVariables>;
+  operationName: string;
+}
+export const createPushSubscriptionRef: CreatePushSubscriptionRef;
+
+export function createPushSubscription(vars: CreatePushSubscriptionVariables): MutationPromise<CreatePushSubscriptionData, CreatePushSubscriptionVariables>;
+export function createPushSubscription(dc: DataConnect, vars: CreatePushSubscriptionVariables): MutationPromise<CreatePushSubscriptionData, CreatePushSubscriptionVariables>;
+
+interface DeactivatePushSubscriptionRef {
+  /* Allow users to create refs without passing in DataConnect */
+  (vars: DeactivatePushSubscriptionVariables): MutationRef<DeactivatePushSubscriptionData, DeactivatePushSubscriptionVariables>;
+  /* Allow users to pass in custom DataConnect instances */
+  (dc: DataConnect, vars: DeactivatePushSubscriptionVariables): MutationRef<DeactivatePushSubscriptionData, DeactivatePushSubscriptionVariables>;
+  operationName: string;
+}
+export const deactivatePushSubscriptionRef: DeactivatePushSubscriptionRef;
+
+export function deactivatePushSubscription(vars: DeactivatePushSubscriptionVariables): MutationPromise<DeactivatePushSubscriptionData, DeactivatePushSubscriptionVariables>;
+export function deactivatePushSubscription(dc: DataConnect, vars: DeactivatePushSubscriptionVariables): MutationPromise<DeactivatePushSubscriptionData, DeactivatePushSubscriptionVariables>;
+
+interface DeletePushSubscriptionRef {
+  /* Allow users to create refs without passing in DataConnect */
+  (vars: DeletePushSubscriptionVariables): MutationRef<DeletePushSubscriptionData, DeletePushSubscriptionVariables>;
+  /* Allow users to pass in custom DataConnect instances */
+  (dc: DataConnect, vars: DeletePushSubscriptionVariables): MutationRef<DeletePushSubscriptionData, DeletePushSubscriptionVariables>;
+  operationName: string;
+}
+export const deletePushSubscriptionRef: DeletePushSubscriptionRef;
+
+export function deletePushSubscription(vars: DeletePushSubscriptionVariables): MutationPromise<DeletePushSubscriptionData, DeletePushSubscriptionVariables>;
+export function deletePushSubscription(dc: DataConnect, vars: DeletePushSubscriptionVariables): MutationPromise<DeletePushSubscriptionData, DeletePushSubscriptionVariables>;
+
+interface CreateNotificationPreferencesRef {
+  /* Allow users to create refs without passing in DataConnect */
+  (vars: CreateNotificationPreferencesVariables): MutationRef<CreateNotificationPreferencesData, CreateNotificationPreferencesVariables>;
+  /* Allow users to pass in custom DataConnect instances */
+  (dc: DataConnect, vars: CreateNotificationPreferencesVariables): MutationRef<CreateNotificationPreferencesData, CreateNotificationPreferencesVariables>;
+  operationName: string;
+}
+export const createNotificationPreferencesRef: CreateNotificationPreferencesRef;
+
+export function createNotificationPreferences(vars: CreateNotificationPreferencesVariables): MutationPromise<CreateNotificationPreferencesData, CreateNotificationPreferencesVariables>;
+export function createNotificationPreferences(dc: DataConnect, vars: CreateNotificationPreferencesVariables): MutationPromise<CreateNotificationPreferencesData, CreateNotificationPreferencesVariables>;
+
+interface UpdateNotificationPreferencesRef {
+  /* Allow users to create refs without passing in DataConnect */
+  (vars: UpdateNotificationPreferencesVariables): MutationRef<UpdateNotificationPreferencesData, UpdateNotificationPreferencesVariables>;
+  /* Allow users to pass in custom DataConnect instances */
+  (dc: DataConnect, vars: UpdateNotificationPreferencesVariables): MutationRef<UpdateNotificationPreferencesData, UpdateNotificationPreferencesVariables>;
+  operationName: string;
+}
+export const updateNotificationPreferencesRef: UpdateNotificationPreferencesRef;
+
+export function updateNotificationPreferences(vars: UpdateNotificationPreferencesVariables): MutationPromise<UpdateNotificationPreferencesData, UpdateNotificationPreferencesVariables>;
+export function updateNotificationPreferences(dc: DataConnect, vars: UpdateNotificationPreferencesVariables): MutationPromise<UpdateNotificationPreferencesData, UpdateNotificationPreferencesVariables>;
 
 interface ListTransactionsRef {
   /* Allow users to create refs without passing in DataConnect */
@@ -1179,4 +1670,124 @@ export const getLatestTransactionRef: GetLatestTransactionRef;
 
 export function getLatestTransaction(): QueryPromise<GetLatestTransactionData, undefined>;
 export function getLatestTransaction(dc: DataConnect): QueryPromise<GetLatestTransactionData, undefined>;
+
+interface GetMaxMonthlyIncomeIdRef {
+  /* Allow users to create refs without passing in DataConnect */
+  (): QueryRef<GetMaxMonthlyIncomeIdData, undefined>;
+  /* Allow users to pass in custom DataConnect instances */
+  (dc: DataConnect): QueryRef<GetMaxMonthlyIncomeIdData, undefined>;
+  operationName: string;
+}
+export const getMaxMonthlyIncomeIdRef: GetMaxMonthlyIncomeIdRef;
+
+export function getMaxMonthlyIncomeId(): QueryPromise<GetMaxMonthlyIncomeIdData, undefined>;
+export function getMaxMonthlyIncomeId(dc: DataConnect): QueryPromise<GetMaxMonthlyIncomeIdData, undefined>;
+
+interface GetMaxManualTransactionIdRef {
+  /* Allow users to create refs without passing in DataConnect */
+  (): QueryRef<GetMaxManualTransactionIdData, undefined>;
+  /* Allow users to pass in custom DataConnect instances */
+  (dc: DataConnect): QueryRef<GetMaxManualTransactionIdData, undefined>;
+  operationName: string;
+}
+export const getMaxManualTransactionIdRef: GetMaxManualTransactionIdRef;
+
+export function getMaxManualTransactionId(): QueryPromise<GetMaxManualTransactionIdData, undefined>;
+export function getMaxManualTransactionId(dc: DataConnect): QueryPromise<GetMaxManualTransactionIdData, undefined>;
+
+interface GetMonthlyIncomesRef {
+  /* Allow users to create refs without passing in DataConnect */
+  (vars: GetMonthlyIncomesVariables): QueryRef<GetMonthlyIncomesData, GetMonthlyIncomesVariables>;
+  /* Allow users to pass in custom DataConnect instances */
+  (dc: DataConnect, vars: GetMonthlyIncomesVariables): QueryRef<GetMonthlyIncomesData, GetMonthlyIncomesVariables>;
+  operationName: string;
+}
+export const getMonthlyIncomesRef: GetMonthlyIncomesRef;
+
+export function getMonthlyIncomes(vars: GetMonthlyIncomesVariables): QueryPromise<GetMonthlyIncomesData, GetMonthlyIncomesVariables>;
+export function getMonthlyIncomes(dc: DataConnect, vars: GetMonthlyIncomesVariables): QueryPromise<GetMonthlyIncomesData, GetMonthlyIncomesVariables>;
+
+interface GetManualTransactionsRef {
+  /* Allow users to create refs without passing in DataConnect */
+  (vars: GetManualTransactionsVariables): QueryRef<GetManualTransactionsData, GetManualTransactionsVariables>;
+  /* Allow users to pass in custom DataConnect instances */
+  (dc: DataConnect, vars: GetManualTransactionsVariables): QueryRef<GetManualTransactionsData, GetManualTransactionsVariables>;
+  operationName: string;
+}
+export const getManualTransactionsRef: GetManualTransactionsRef;
+
+export function getManualTransactions(vars: GetManualTransactionsVariables): QueryPromise<GetManualTransactionsData, GetManualTransactionsVariables>;
+export function getManualTransactions(dc: DataConnect, vars: GetManualTransactionsVariables): QueryPromise<GetManualTransactionsData, GetManualTransactionsVariables>;
+
+interface GetMonthlyTransactionsRef {
+  /* Allow users to create refs without passing in DataConnect */
+  (vars: GetMonthlyTransactionsVariables): QueryRef<GetMonthlyTransactionsData, GetMonthlyTransactionsVariables>;
+  /* Allow users to pass in custom DataConnect instances */
+  (dc: DataConnect, vars: GetMonthlyTransactionsVariables): QueryRef<GetMonthlyTransactionsData, GetMonthlyTransactionsVariables>;
+  operationName: string;
+}
+export const getMonthlyTransactionsRef: GetMonthlyTransactionsRef;
+
+export function getMonthlyTransactions(vars: GetMonthlyTransactionsVariables): QueryPromise<GetMonthlyTransactionsData, GetMonthlyTransactionsVariables>;
+export function getMonthlyTransactions(dc: DataConnect, vars: GetMonthlyTransactionsVariables): QueryPromise<GetMonthlyTransactionsData, GetMonthlyTransactionsVariables>;
+
+interface GetPendingPaymentsForDayRef {
+  /* Allow users to create refs without passing in DataConnect */
+  (vars: GetPendingPaymentsForDayVariables): QueryRef<GetPendingPaymentsForDayData, GetPendingPaymentsForDayVariables>;
+  /* Allow users to pass in custom DataConnect instances */
+  (dc: DataConnect, vars: GetPendingPaymentsForDayVariables): QueryRef<GetPendingPaymentsForDayData, GetPendingPaymentsForDayVariables>;
+  operationName: string;
+}
+export const getPendingPaymentsForDayRef: GetPendingPaymentsForDayRef;
+
+export function getPendingPaymentsForDay(vars: GetPendingPaymentsForDayVariables): QueryPromise<GetPendingPaymentsForDayData, GetPendingPaymentsForDayVariables>;
+export function getPendingPaymentsForDay(dc: DataConnect, vars: GetPendingPaymentsForDayVariables): QueryPromise<GetPendingPaymentsForDayData, GetPendingPaymentsForDayVariables>;
+
+interface GetNotificationPreferencesRef {
+  /* Allow users to create refs without passing in DataConnect */
+  (vars: GetNotificationPreferencesVariables): QueryRef<GetNotificationPreferencesData, GetNotificationPreferencesVariables>;
+  /* Allow users to pass in custom DataConnect instances */
+  (dc: DataConnect, vars: GetNotificationPreferencesVariables): QueryRef<GetNotificationPreferencesData, GetNotificationPreferencesVariables>;
+  operationName: string;
+}
+export const getNotificationPreferencesRef: GetNotificationPreferencesRef;
+
+export function getNotificationPreferences(vars: GetNotificationPreferencesVariables): QueryPromise<GetNotificationPreferencesData, GetNotificationPreferencesVariables>;
+export function getNotificationPreferences(dc: DataConnect, vars: GetNotificationPreferencesVariables): QueryPromise<GetNotificationPreferencesData, GetNotificationPreferencesVariables>;
+
+interface GetActivePushSubscriptionsRef {
+  /* Allow users to create refs without passing in DataConnect */
+  (vars: GetActivePushSubscriptionsVariables): QueryRef<GetActivePushSubscriptionsData, GetActivePushSubscriptionsVariables>;
+  /* Allow users to pass in custom DataConnect instances */
+  (dc: DataConnect, vars: GetActivePushSubscriptionsVariables): QueryRef<GetActivePushSubscriptionsData, GetActivePushSubscriptionsVariables>;
+  operationName: string;
+}
+export const getActivePushSubscriptionsRef: GetActivePushSubscriptionsRef;
+
+export function getActivePushSubscriptions(vars: GetActivePushSubscriptionsVariables): QueryPromise<GetActivePushSubscriptionsData, GetActivePushSubscriptionsVariables>;
+export function getActivePushSubscriptions(dc: DataConnect, vars: GetActivePushSubscriptionsVariables): QueryPromise<GetActivePushSubscriptionsData, GetActivePushSubscriptionsVariables>;
+
+interface GetAllActivePushSubscriptionsRef {
+  /* Allow users to create refs without passing in DataConnect */
+  (): QueryRef<GetAllActivePushSubscriptionsData, undefined>;
+  /* Allow users to pass in custom DataConnect instances */
+  (dc: DataConnect): QueryRef<GetAllActivePushSubscriptionsData, undefined>;
+  operationName: string;
+}
+export const getAllActivePushSubscriptionsRef: GetAllActivePushSubscriptionsRef;
+
+export function getAllActivePushSubscriptions(): QueryPromise<GetAllActivePushSubscriptionsData, undefined>;
+export function getAllActivePushSubscriptions(dc: DataConnect): QueryPromise<GetAllActivePushSubscriptionsData, undefined>;
+
+interface GetMaxPushSubscriptionIdRef {
+  /* Allow users to create refs without passing in DataConnect */
+  (): QueryRef<GetMaxPushSubscriptionIdData, undefined>;
+  /* Allow users to pass in custom DataConnect instances */
+  (dc: DataConnect): QueryRef<GetMaxPushSubscriptionIdData, undefined>;
+  operationName: string;
+}
+export const getMaxPushSubscriptionIdRef: GetMaxPushSubscriptionIdRef;
+
+export function getMaxPushSubscriptionId(): QueryPromise<GetMaxPushSubscriptionIdData, undefined>;
+export function getMaxPushSubscriptionId(dc: DataConnect): QueryPromise<GetMaxPushSubscriptionIdData, undefined>;
 

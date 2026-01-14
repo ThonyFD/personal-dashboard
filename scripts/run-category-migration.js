@@ -10,7 +10,7 @@ const path = require('path');
 
 const PROJECT_ID = 'mail-reader-433802';
 const INSTANCE_CONNECTION_NAME = 'mail-reader-433802:us-central1:personal-dashboard-fdc';
-const DATABASE = 'fdcdb';
+const DATABASE = 'fdcdb_dc';
 const USER = 'postgres';
 
 async function runMigration() {

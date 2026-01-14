@@ -14,38 +14,38 @@ If a user is not using a supported framework, they can use the generated SDK dir
 Here's an example of how to use it with the first 5 operations:
 
 ```js
-import { listTransactions, getTransaction, listMerchants, getMerchantsCount, getMerchant, getMerchantByName, getSpendingSummary, getTopMerchants, getSpendingByCategory, listEmails } from '@dataconnect/default';
+import { createEmail, updateEmailParsed, createMerchant, createTransaction, updateTransactionMerchant, updateTransactionNotes, deleteTransaction, deleteEmail, updateGmailSyncState, deleteMerchant } from '@dataconnect/default';
 
 
-// Operation ListTransactions:  For variables, look at type ListTransactionsVars in ../index.d.ts
-const { data } = await ListTransactions(dataConnect, listTransactionsVars);
+// Operation CreateEmail:  For variables, look at type CreateEmailVars in ../index.d.ts
+const { data } = await CreateEmail(dataConnect, createEmailVars);
 
-// Operation GetTransaction:  For variables, look at type GetTransactionVars in ../index.d.ts
-const { data } = await GetTransaction(dataConnect, getTransactionVars);
+// Operation UpdateEmailParsed:  For variables, look at type UpdateEmailParsedVars in ../index.d.ts
+const { data } = await UpdateEmailParsed(dataConnect, updateEmailParsedVars);
 
-// Operation ListMerchants:  For variables, look at type ListMerchantsVars in ../index.d.ts
-const { data } = await ListMerchants(dataConnect, listMerchantsVars);
+// Operation CreateMerchant:  For variables, look at type CreateMerchantVars in ../index.d.ts
+const { data } = await CreateMerchant(dataConnect, createMerchantVars);
 
-// Operation GetMerchantsCount:  For variables, look at type GetMerchantsCountVars in ../index.d.ts
-const { data } = await GetMerchantsCount(dataConnect, getMerchantsCountVars);
+// Operation CreateTransaction:  For variables, look at type CreateTransactionVars in ../index.d.ts
+const { data } = await CreateTransaction(dataConnect, createTransactionVars);
 
-// Operation GetMerchant:  For variables, look at type GetMerchantVars in ../index.d.ts
-const { data } = await GetMerchant(dataConnect, getMerchantVars);
+// Operation UpdateTransactionMerchant:  For variables, look at type UpdateTransactionMerchantVars in ../index.d.ts
+const { data } = await UpdateTransactionMerchant(dataConnect, updateTransactionMerchantVars);
 
-// Operation GetMerchantByName:  For variables, look at type GetMerchantByNameVars in ../index.d.ts
-const { data } = await GetMerchantByName(dataConnect, getMerchantByNameVars);
+// Operation UpdateTransactionNotes:  For variables, look at type UpdateTransactionNotesVars in ../index.d.ts
+const { data } = await UpdateTransactionNotes(dataConnect, updateTransactionNotesVars);
 
-// Operation GetSpendingSummary:  For variables, look at type GetSpendingSummaryVars in ../index.d.ts
-const { data } = await GetSpendingSummary(dataConnect, getSpendingSummaryVars);
+// Operation DeleteTransaction:  For variables, look at type DeleteTransactionVars in ../index.d.ts
+const { data } = await DeleteTransaction(dataConnect, deleteTransactionVars);
 
-// Operation GetTopMerchants:  For variables, look at type GetTopMerchantsVars in ../index.d.ts
-const { data } = await GetTopMerchants(dataConnect, getTopMerchantsVars);
+// Operation DeleteEmail:  For variables, look at type DeleteEmailVars in ../index.d.ts
+const { data } = await DeleteEmail(dataConnect, deleteEmailVars);
 
-// Operation GetSpendingByCategory:  For variables, look at type GetSpendingByCategoryVars in ../index.d.ts
-const { data } = await GetSpendingByCategory(dataConnect, getSpendingByCategoryVars);
+// Operation UpdateGmailSyncState:  For variables, look at type UpdateGmailSyncStateVars in ../index.d.ts
+const { data } = await UpdateGmailSyncState(dataConnect, updateGmailSyncStateVars);
 
-// Operation ListEmails:  For variables, look at type ListEmailsVars in ../index.d.ts
-const { data } = await ListEmails(dataConnect, listEmailsVars);
+// Operation DeleteMerchant:  For variables, look at type DeleteMerchantVars in ../index.d.ts
+const { data } = await DeleteMerchant(dataConnect, deleteMerchantVars);
 
 
 ```

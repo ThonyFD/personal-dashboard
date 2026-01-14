@@ -189,6 +189,149 @@ export function updateMerchantNormalizedName(dcOrVars, vars) {
   return executeMutation(updateMerchantNormalizedNameRef(dcOrVars, vars));
 }
 
+export const createMonthlyIncomeRef = (dcOrVars, vars) => {
+  const { dc: dcInstance, vars: inputVars} = validateArgs(connectorConfig, dcOrVars, vars, true);
+  dcInstance._useGeneratedSdk();
+  return mutationRef(dcInstance, 'CreateMonthlyIncome', inputVars);
+}
+createMonthlyIncomeRef.operationName = 'CreateMonthlyIncome';
+
+export function createMonthlyIncome(dcOrVars, vars) {
+  return executeMutation(createMonthlyIncomeRef(dcOrVars, vars));
+}
+
+export const updateMonthlyIncomeRef = (dcOrVars, vars) => {
+  const { dc: dcInstance, vars: inputVars} = validateArgs(connectorConfig, dcOrVars, vars, true);
+  dcInstance._useGeneratedSdk();
+  return mutationRef(dcInstance, 'UpdateMonthlyIncome', inputVars);
+}
+updateMonthlyIncomeRef.operationName = 'UpdateMonthlyIncome';
+
+export function updateMonthlyIncome(dcOrVars, vars) {
+  return executeMutation(updateMonthlyIncomeRef(dcOrVars, vars));
+}
+
+export const deleteMonthlyIncomeRef = (dcOrVars, vars) => {
+  const { dc: dcInstance, vars: inputVars} = validateArgs(connectorConfig, dcOrVars, vars, true);
+  dcInstance._useGeneratedSdk();
+  return mutationRef(dcInstance, 'DeleteMonthlyIncome', inputVars);
+}
+deleteMonthlyIncomeRef.operationName = 'DeleteMonthlyIncome';
+
+export function deleteMonthlyIncome(dcOrVars, vars) {
+  return executeMutation(deleteMonthlyIncomeRef(dcOrVars, vars));
+}
+
+export const createManualTransactionRef = (dcOrVars, vars) => {
+  const { dc: dcInstance, vars: inputVars} = validateArgs(connectorConfig, dcOrVars, vars, true);
+  dcInstance._useGeneratedSdk();
+  return mutationRef(dcInstance, 'CreateManualTransaction', inputVars);
+}
+createManualTransactionRef.operationName = 'CreateManualTransaction';
+
+export function createManualTransaction(dcOrVars, vars) {
+  return executeMutation(createManualTransactionRef(dcOrVars, vars));
+}
+
+export const updateManualTransactionRef = (dcOrVars, vars) => {
+  const { dc: dcInstance, vars: inputVars} = validateArgs(connectorConfig, dcOrVars, vars, true);
+  dcInstance._useGeneratedSdk();
+  return mutationRef(dcInstance, 'UpdateManualTransaction', inputVars);
+}
+updateManualTransactionRef.operationName = 'UpdateManualTransaction';
+
+export function updateManualTransaction(dcOrVars, vars) {
+  return executeMutation(updateManualTransactionRef(dcOrVars, vars));
+}
+
+export const deleteManualTransactionRef = (dcOrVars, vars) => {
+  const { dc: dcInstance, vars: inputVars} = validateArgs(connectorConfig, dcOrVars, vars, true);
+  dcInstance._useGeneratedSdk();
+  return mutationRef(dcInstance, 'DeleteManualTransaction', inputVars);
+}
+deleteManualTransactionRef.operationName = 'DeleteManualTransaction';
+
+export function deleteManualTransaction(dcOrVars, vars) {
+  return executeMutation(deleteManualTransactionRef(dcOrVars, vars));
+}
+
+export const updateTransactionPaidStatusRef = (dcOrVars, vars) => {
+  const { dc: dcInstance, vars: inputVars} = validateArgs(connectorConfig, dcOrVars, vars, true);
+  dcInstance._useGeneratedSdk();
+  return mutationRef(dcInstance, 'UpdateTransactionPaidStatus', inputVars);
+}
+updateTransactionPaidStatusRef.operationName = 'UpdateTransactionPaidStatus';
+
+export function updateTransactionPaidStatus(dcOrVars, vars) {
+  return executeMutation(updateTransactionPaidStatusRef(dcOrVars, vars));
+}
+
+export const updateManualTransactionPaidStatusRef = (dcOrVars, vars) => {
+  const { dc: dcInstance, vars: inputVars} = validateArgs(connectorConfig, dcOrVars, vars, true);
+  dcInstance._useGeneratedSdk();
+  return mutationRef(dcInstance, 'UpdateManualTransactionPaidStatus', inputVars);
+}
+updateManualTransactionPaidStatusRef.operationName = 'UpdateManualTransactionPaidStatus';
+
+export function updateManualTransactionPaidStatus(dcOrVars, vars) {
+  return executeMutation(updateManualTransactionPaidStatusRef(dcOrVars, vars));
+}
+
+export const createPushSubscriptionRef = (dcOrVars, vars) => {
+  const { dc: dcInstance, vars: inputVars} = validateArgs(connectorConfig, dcOrVars, vars, true);
+  dcInstance._useGeneratedSdk();
+  return mutationRef(dcInstance, 'CreatePushSubscription', inputVars);
+}
+createPushSubscriptionRef.operationName = 'CreatePushSubscription';
+
+export function createPushSubscription(dcOrVars, vars) {
+  return executeMutation(createPushSubscriptionRef(dcOrVars, vars));
+}
+
+export const deactivatePushSubscriptionRef = (dcOrVars, vars) => {
+  const { dc: dcInstance, vars: inputVars} = validateArgs(connectorConfig, dcOrVars, vars, true);
+  dcInstance._useGeneratedSdk();
+  return mutationRef(dcInstance, 'DeactivatePushSubscription', inputVars);
+}
+deactivatePushSubscriptionRef.operationName = 'DeactivatePushSubscription';
+
+export function deactivatePushSubscription(dcOrVars, vars) {
+  return executeMutation(deactivatePushSubscriptionRef(dcOrVars, vars));
+}
+
+export const deletePushSubscriptionRef = (dcOrVars, vars) => {
+  const { dc: dcInstance, vars: inputVars} = validateArgs(connectorConfig, dcOrVars, vars, true);
+  dcInstance._useGeneratedSdk();
+  return mutationRef(dcInstance, 'DeletePushSubscription', inputVars);
+}
+deletePushSubscriptionRef.operationName = 'DeletePushSubscription';
+
+export function deletePushSubscription(dcOrVars, vars) {
+  return executeMutation(deletePushSubscriptionRef(dcOrVars, vars));
+}
+
+export const createNotificationPreferencesRef = (dcOrVars, vars) => {
+  const { dc: dcInstance, vars: inputVars} = validateArgs(connectorConfig, dcOrVars, vars, true);
+  dcInstance._useGeneratedSdk();
+  return mutationRef(dcInstance, 'CreateNotificationPreferences', inputVars);
+}
+createNotificationPreferencesRef.operationName = 'CreateNotificationPreferences';
+
+export function createNotificationPreferences(dcOrVars, vars) {
+  return executeMutation(createNotificationPreferencesRef(dcOrVars, vars));
+}
+
+export const updateNotificationPreferencesRef = (dcOrVars, vars) => {
+  const { dc: dcInstance, vars: inputVars} = validateArgs(connectorConfig, dcOrVars, vars, true);
+  dcInstance._useGeneratedSdk();
+  return mutationRef(dcInstance, 'UpdateNotificationPreferences', inputVars);
+}
+updateNotificationPreferencesRef.operationName = 'UpdateNotificationPreferences';
+
+export function updateNotificationPreferences(dcOrVars, vars) {
+  return executeMutation(updateNotificationPreferencesRef(dcOrVars, vars));
+}
+
 export const listTransactionsRef = (dcOrVars, vars) => {
   const { dc: dcInstance, vars: inputVars} = validateArgs(connectorConfig, dcOrVars, vars);
   dcInstance._useGeneratedSdk();
@@ -473,5 +616,115 @@ getLatestTransactionRef.operationName = 'GetLatestTransaction';
 
 export function getLatestTransaction(dc) {
   return executeQuery(getLatestTransactionRef(dc));
+}
+
+export const getMaxMonthlyIncomeIdRef = (dc) => {
+  const { dc: dcInstance} = validateArgs(connectorConfig, dc, undefined);
+  dcInstance._useGeneratedSdk();
+  return queryRef(dcInstance, 'GetMaxMonthlyIncomeId');
+}
+getMaxMonthlyIncomeIdRef.operationName = 'GetMaxMonthlyIncomeId';
+
+export function getMaxMonthlyIncomeId(dc) {
+  return executeQuery(getMaxMonthlyIncomeIdRef(dc));
+}
+
+export const getMaxManualTransactionIdRef = (dc) => {
+  const { dc: dcInstance} = validateArgs(connectorConfig, dc, undefined);
+  dcInstance._useGeneratedSdk();
+  return queryRef(dcInstance, 'GetMaxManualTransactionId');
+}
+getMaxManualTransactionIdRef.operationName = 'GetMaxManualTransactionId';
+
+export function getMaxManualTransactionId(dc) {
+  return executeQuery(getMaxManualTransactionIdRef(dc));
+}
+
+export const getMonthlyIncomesRef = (dcOrVars, vars) => {
+  const { dc: dcInstance, vars: inputVars} = validateArgs(connectorConfig, dcOrVars, vars, true);
+  dcInstance._useGeneratedSdk();
+  return queryRef(dcInstance, 'GetMonthlyIncomes', inputVars);
+}
+getMonthlyIncomesRef.operationName = 'GetMonthlyIncomes';
+
+export function getMonthlyIncomes(dcOrVars, vars) {
+  return executeQuery(getMonthlyIncomesRef(dcOrVars, vars));
+}
+
+export const getManualTransactionsRef = (dcOrVars, vars) => {
+  const { dc: dcInstance, vars: inputVars} = validateArgs(connectorConfig, dcOrVars, vars, true);
+  dcInstance._useGeneratedSdk();
+  return queryRef(dcInstance, 'GetManualTransactions', inputVars);
+}
+getManualTransactionsRef.operationName = 'GetManualTransactions';
+
+export function getManualTransactions(dcOrVars, vars) {
+  return executeQuery(getManualTransactionsRef(dcOrVars, vars));
+}
+
+export const getMonthlyTransactionsRef = (dcOrVars, vars) => {
+  const { dc: dcInstance, vars: inputVars} = validateArgs(connectorConfig, dcOrVars, vars, true);
+  dcInstance._useGeneratedSdk();
+  return queryRef(dcInstance, 'GetMonthlyTransactions', inputVars);
+}
+getMonthlyTransactionsRef.operationName = 'GetMonthlyTransactions';
+
+export function getMonthlyTransactions(dcOrVars, vars) {
+  return executeQuery(getMonthlyTransactionsRef(dcOrVars, vars));
+}
+
+export const getPendingPaymentsForDayRef = (dcOrVars, vars) => {
+  const { dc: dcInstance, vars: inputVars} = validateArgs(connectorConfig, dcOrVars, vars, true);
+  dcInstance._useGeneratedSdk();
+  return queryRef(dcInstance, 'GetPendingPaymentsForDay', inputVars);
+}
+getPendingPaymentsForDayRef.operationName = 'GetPendingPaymentsForDay';
+
+export function getPendingPaymentsForDay(dcOrVars, vars) {
+  return executeQuery(getPendingPaymentsForDayRef(dcOrVars, vars));
+}
+
+export const getNotificationPreferencesRef = (dcOrVars, vars) => {
+  const { dc: dcInstance, vars: inputVars} = validateArgs(connectorConfig, dcOrVars, vars, true);
+  dcInstance._useGeneratedSdk();
+  return queryRef(dcInstance, 'GetNotificationPreferences', inputVars);
+}
+getNotificationPreferencesRef.operationName = 'GetNotificationPreferences';
+
+export function getNotificationPreferences(dcOrVars, vars) {
+  return executeQuery(getNotificationPreferencesRef(dcOrVars, vars));
+}
+
+export const getActivePushSubscriptionsRef = (dcOrVars, vars) => {
+  const { dc: dcInstance, vars: inputVars} = validateArgs(connectorConfig, dcOrVars, vars, true);
+  dcInstance._useGeneratedSdk();
+  return queryRef(dcInstance, 'GetActivePushSubscriptions', inputVars);
+}
+getActivePushSubscriptionsRef.operationName = 'GetActivePushSubscriptions';
+
+export function getActivePushSubscriptions(dcOrVars, vars) {
+  return executeQuery(getActivePushSubscriptionsRef(dcOrVars, vars));
+}
+
+export const getAllActivePushSubscriptionsRef = (dc) => {
+  const { dc: dcInstance} = validateArgs(connectorConfig, dc, undefined);
+  dcInstance._useGeneratedSdk();
+  return queryRef(dcInstance, 'GetAllActivePushSubscriptions');
+}
+getAllActivePushSubscriptionsRef.operationName = 'GetAllActivePushSubscriptions';
+
+export function getAllActivePushSubscriptions(dc) {
+  return executeQuery(getAllActivePushSubscriptionsRef(dc));
+}
+
+export const getMaxPushSubscriptionIdRef = (dc) => {
+  const { dc: dcInstance} = validateArgs(connectorConfig, dc, undefined);
+  dcInstance._useGeneratedSdk();
+  return queryRef(dcInstance, 'GetMaxPushSubscriptionId');
+}
+getMaxPushSubscriptionIdRef.operationName = 'GetMaxPushSubscriptionId';
+
+export function getMaxPushSubscriptionId(dc) {
+  return executeQuery(getMaxPushSubscriptionIdRef(dc));
 }
 

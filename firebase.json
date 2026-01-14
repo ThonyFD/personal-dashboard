@@ -3,6 +3,7 @@
     "source": "dataconnect"
   },
   "hosting": {
+    "site": "personal-finantial-dashboard",
     "public": "web/dashboard/dist",
     "ignore": [
       "firebase.json",

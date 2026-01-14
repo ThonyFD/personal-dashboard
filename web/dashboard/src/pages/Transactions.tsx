@@ -37,7 +37,7 @@ export default function Transactions() {
   const filteredTransactions = useMemo(() => {
     if (!transactions) return []
 
-    let filtered = transactions.filter(txn => {
+    const filtered = transactions.filter(txn => {
       const matchesSearch = searchTerm === '' ||
         txn.merchant_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
         txn.card_last4?.includes(searchTerm)

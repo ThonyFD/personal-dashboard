@@ -50,10 +50,15 @@ Serverless AI agent that monitors Gmail for financial transactions, extracts key
 ### Beneficios
 
 ✅ **Resiliencia Total**: Nunca deja de procesar emails completamente
+
 ✅ **Cero Downtime**: Push falla → Polling se activa automáticamente
+
 ✅ **Alertas Proactivas**: Detecta expiración de tokens antes de que cause problemas
+
 ✅ **Costo Optimizado**: Mantiene free tier (~$10/mes)
+
 ✅ **Mantenimiento Automático**: Renovación de tokens y watch sin intervención
+
 
 ## Project Structure
 
