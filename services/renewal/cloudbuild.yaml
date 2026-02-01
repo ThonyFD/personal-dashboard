@@ -1,0 +1,12 @@
+steps:
+  - name: gcr.io/cloud-builders/docker
+    args:
+      - build
+      - -f
+      - services/renewal/Dockerfile.new
+      - -t
+      - gcr.io/$PROJECT_ID/gmail-renewal
+      - .
+
+images:
+  - gcr.io/$PROJECT_ID/gmail-renewal
