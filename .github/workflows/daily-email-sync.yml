@@ -1,0 +1,59 @@
+name: Daily Email Sync
+
+on:
+  schedule:
+    # Ejecutar diariamente a las 6:00 AM (hora Panama GMT-5 = 11:00 UTC)
+    - cron: '0 11 * * *'
+
+  # Permitir ejecución manual desde GitHub UI
+  workflow_dispatch:
+
+jobs:
+  sync-emails:
+    runs-on: ubuntu-latest
+
+    # Configurar permisos para GCP Workload Identity
+    permissions:
+      contents: read
+      id-token: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: 'package-lock.json'
+
+      - name: Install dependencies
+        run: npm ci
+
+      # Autenticación con GCP usando Workload Identity (más seguro que service account keys)
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
+
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Run daily email sync
+        env:
+          GOOGLE_CLOUD_PROJECT: mail-reader-433802
+        run: |
+          echo "🚀 Starting daily email sync..."
+          npx tsx scripts/sync-emails-daily.ts
+          echo "✅ Sync completed"
+
+      - name: Upload logs on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: sync-logs
+          path: |
+            *.log
+          retention-days: 7

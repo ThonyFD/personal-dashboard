@@ -1,0 +1,28 @@
+{
+  "name": "finance-agent-monorepo",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Monorepo for AI Finance Agent",
+  "workspaces": [
+    "services/*",
+    "web/dashboard",
+    "packages/*",
+    "ops"
+  ],
+  "scripts": {
+    "build:all": "npm run build --workspaces --if-present",
+    "test:all": "vitest run",
+    "lint:all": "eslint . --ext .ts,.tsx",
+    "format:all": "prettier --write ."
+  },
+  "devDependencies": {
+    "@typescript-eslint/eslint-plugin": "^6.14.0",
+    "@typescript-eslint/parser": "^6.14.0",
+    "eslint": "^8.55.0",
+    "prettier": "^3.1.1",
+    "tsx": "^4.21.0",
+    "vitest": "^1.0.4"
+  },
+  "author": "",
+  "license": "MIT"
+}
