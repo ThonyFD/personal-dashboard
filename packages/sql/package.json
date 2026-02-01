@@ -1,0 +1,7 @@
+{
+    "name": "@finance-agent/sql",
+    "version": "1.0.0",
+    "private": true,
+    "description": "Shared SQL schemas and migrations",
+    "main": "index.js"
+}
