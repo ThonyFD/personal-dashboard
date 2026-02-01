@@ -195,9 +195,9 @@ query GetMerchant($id: Int!) @auth(level: PUBLIC) {
   }
 }
 
-# Get merchant by name
+# Get merchant by normalized name
 query GetMerchantByName($name: String!) @auth(level: PUBLIC) {
-  merchants(where: { name: { eq: $name } }, limit: 1) {
+  merchants(where: { normalizedName: { eq: $name } }, limit: 1) {
     id
     name
     normalizedName
@@ -213,7 +213,7 @@ query GetMerchantByName($name: String!) @auth(level: PUBLIC) {
   }
 }
 
-# Dashboard KPIs - Total spending by date range
+# Dashboard KPIs - Total spending by date range (excludes INCOME)
 query GetSpendingSummary(
   $startDate: Date
   $endDate: Date
@@ -223,7 +223,7 @@ query GetSpendingSummary(
       _and: [
         { txnDate: { ge: $startDate } }
         { txnDate: { le: $endDate } }
-        { txnType: { eq: PURCHASE } }
+        { txnType: { ne: INCOME } }
       ]
     }
   ) {
@@ -231,6 +231,28 @@ query GetSpendingSummary(
     txnDate
     txnType
     provider
+  }
+}
+
+# Dashboard KPIs - Total income by date range (only INCOME - credits received)
+query GetIncomeSummary(
+  $startDate: Date
+  $endDate: Date
+) @auth(level: PUBLIC) {
+  transactions(
+    where: {
+      _and: [
+        { txnDate: { ge: $startDate } }
+        { txnDate: { le: $endDate } }
+        { txnType: { eq: INCOME } }
+      ]
+    }
+  ) {
+    amount
+    txnDate
+    txnType
+    provider
+    merchantName
   }
 }
 
@@ -371,7 +393,7 @@ query SearchTransactions(
   }
 }
 
-# Get daily spending totals
+# Get daily spending totals (excludes INCOME - credits received)
 query GetDailySpending(
   $startDate: Date!
   $endDate: Date!
@@ -381,6 +403,7 @@ query GetDailySpending(
       _and: [
         { txnDate: { ge: $startDate } }
         { txnDate: { le: $endDate } }
+        { txnType: { ne: INCOME } }
       ]
     }
     orderBy: { txnDate: ASC }
@@ -388,6 +411,30 @@ query GetDailySpending(
     txnDate
     amount
     txnType
+  }
+}
+
+# Get daily income totals (only INCOME - credits received via Yappy, etc.)
+query GetDailyIncome(
+  $startDate: Date!
+  $endDate: Date!
+) @auth(level: PUBLIC) {
+  transactions(
+    where: {
+      _and: [
+        { txnDate: { ge: $startDate } }
+        { txnDate: { le: $endDate } }
+        { txnType: { eq: INCOME } }
+      ]
+    }
+    orderBy: { txnDate: ASC }
+  ) {
+    txnDate
+    amount
+    txnType
+    merchantName
+    provider
+    referenceNumber
   }
 }
 
@@ -643,7 +690,8 @@ query GetManualTransactions(
   }
 }
 
-# Get all transactions (auto + manual) for a specific month
+# Get all expense transactions (auto + manual) for a specific month
+# Excludes INCOME (credits received) - use GetMonthlyIncome for those
 # Note: This returns auto transactions only. Manual transactions are fetched separately
 query GetMonthlyTransactions(
   $startDate: Date!
@@ -654,6 +702,7 @@ query GetMonthlyTransactions(
       _and: [
         { txnDate: { ge: $startDate } }
         { txnDate: { le: $endDate } }
+        { txnType: { ne: INCOME } }
       ]
     }
     orderBy: [{ txnDate: ASC }, { createdAt: ASC }]
@@ -670,6 +719,48 @@ query GetMonthlyTransactions(
     description
     isPaid
     manualOverride
+    merchant {
+      id
+      name
+      categoryId
+      categoryRef {
+        id
+        name
+        icon
+        color
+      }
+    }
+    createdAt
+  }
+}
+
+# Get income transactions (credits received) for a specific month
+# Use this for separate income reports (Yappy received payments, etc.)
+query GetMonthlyIncome(
+  $startDate: Date!
+  $endDate: Date!
+) @auth(level: PUBLIC) {
+  transactions(
+    where: {
+      _and: [
+        { txnDate: { ge: $startDate } }
+        { txnDate: { le: $endDate } }
+        { txnType: { eq: INCOME } }
+      ]
+    }
+    orderBy: [{ txnDate: ASC }, { createdAt: ASC }]
+  ) {
+    id
+    amount
+    currency
+    txnType
+    channel
+    txnDate
+    displayDay
+    merchantName
+    provider
+    description
+    referenceNumber
     merchant {
       id
       name

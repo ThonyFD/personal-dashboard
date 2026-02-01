@@ -131,6 +131,17 @@ mutation UpdateTransactionNotes(
   )
 }
 
+# Update transaction type (for migrations like PAYMENT -> INCOME)
+mutation UpdateTransactionType(
+  $id: Int!
+  $txnType: TxnType!
+) @auth(level: PUBLIC) {
+  transaction_update(
+    key: { id: $id }
+    data: { txnType: $txnType }
+  )
+}
+
 # Delete transaction
 mutation DeleteTransaction($id: Int!) @auth(level: PUBLIC) {
   transaction_delete(key: { id: $id })

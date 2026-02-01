@@ -9,7 +9,6 @@ enum TxnType {
   WITHDRAWAL
   TRANSFER
   FEE
-  INCOME
   OTHER
 }
 
@@ -157,14 +156,11 @@ type ManualTransaction @table(name: "manual_transactions") {
   isPaid: Boolean @col(name: "is_paid") @default(value: true)
   notes: String @col(name: "notes", dataType: "text")
   merchantId: Int @col(name: "merchant_id")
-  categoryId: Int @col(name: "category_id")
   createdAt: Timestamp! @col(name: "created_at") @default(expr: "request.time")
   updatedAt: Timestamp! @col(name: "updated_at") @default(expr: "request.time")
 
   # Many-to-one relationship with Merchant
   merchant: Merchant @ref(fields: "merchantId", references: "id")
-  # Many-to-one relationship with Category
-  category: Category @ref(fields: "categoryId", references: "id")
 }
 
 # Push Subscriptions: browser push notification subscriptions for reminders
