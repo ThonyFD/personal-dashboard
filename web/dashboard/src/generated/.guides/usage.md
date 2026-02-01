@@ -14,7 +14,7 @@ If a user is not using a supported framework, they can use the generated SDK dir
 Here's an example of how to use it with the first 5 operations:
 
 ```js
-import { createEmail, updateEmailParsed, createMerchant, createTransaction, updateTransactionMerchant, updateTransactionNotes, deleteTransaction, deleteEmail, updateGmailSyncState, deleteMerchant } from '@dataconnect/default';
+import { createEmail, updateEmailParsed, createMerchant, createTransaction, updateTransactionMerchant, updateTransactionNotes, updateTransactionType, deleteTransaction, deleteEmail, updateGmailSyncState } from '@dataconnect/default';
 
 
 // Operation CreateEmail:  For variables, look at type CreateEmailVars in ../index.d.ts
@@ -35,6 +35,9 @@ const { data } = await UpdateTransactionMerchant(dataConnect, updateTransactionM
 // Operation UpdateTransactionNotes:  For variables, look at type UpdateTransactionNotesVars in ../index.d.ts
 const { data } = await UpdateTransactionNotes(dataConnect, updateTransactionNotesVars);
 
+// Operation UpdateTransactionType:  For variables, look at type UpdateTransactionTypeVars in ../index.d.ts
+const { data } = await UpdateTransactionType(dataConnect, updateTransactionTypeVars);
+
 // Operation DeleteTransaction:  For variables, look at type DeleteTransactionVars in ../index.d.ts
 const { data } = await DeleteTransaction(dataConnect, deleteTransactionVars);
 
@@ -43,9 +46,6 @@ const { data } = await DeleteEmail(dataConnect, deleteEmailVars);
 
 // Operation UpdateGmailSyncState:  For variables, look at type UpdateGmailSyncStateVars in ../index.d.ts
 const { data } = await UpdateGmailSyncState(dataConnect, updateGmailSyncStateVars);
-
-// Operation DeleteMerchant:  For variables, look at type DeleteMerchantVars in ../index.d.ts
-const { data } = await DeleteMerchant(dataConnect, deleteMerchantVars);
 
 
 ```

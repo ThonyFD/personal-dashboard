@@ -15,12 +15,14 @@ This README will guide you through the process of using the generated JavaScript
   - [*GetMerchant*](#getmerchant)
   - [*GetMerchantByName*](#getmerchantbyname)
   - [*GetSpendingSummary*](#getspendingsummary)
+  - [*GetIncomeSummary*](#getincomesummary)
   - [*GetTopMerchants*](#gettopmerchants)
   - [*GetSpendingByCategory*](#getspendingbycategory)
   - [*ListEmails*](#listemails)
   - [*GetEmail*](#getemail)
   - [*SearchTransactions*](#searchtransactions)
   - [*GetDailySpending*](#getdailyspending)
+  - [*GetDailyIncome*](#getdailyincome)
   - [*GetGmailSyncState*](#getgmailsyncstate)
   - [*GetTransactionsByMerchant*](#gettransactionsbymerchant)
   - [*ListCategories*](#listcategories)
@@ -39,6 +41,7 @@ This README will guide you through the process of using the generated JavaScript
   - [*GetMonthlyIncomes*](#getmonthlyincomes)
   - [*GetManualTransactions*](#getmanualtransactions)
   - [*GetMonthlyTransactions*](#getmonthlytransactions)
+  - [*GetMonthlyIncome*](#getmonthlyincome)
   - [*GetPendingPaymentsForDay*](#getpendingpaymentsforday)
   - [*GetNotificationPreferences*](#getnotificationpreferences)
   - [*GetActivePushSubscriptions*](#getactivepushsubscriptions)
@@ -51,6 +54,7 @@ This README will guide you through the process of using the generated JavaScript
   - [*CreateTransaction*](#createtransaction)
   - [*UpdateTransactionMerchant*](#updatetransactionmerchant)
   - [*UpdateTransactionNotes*](#updatetransactionnotes)
+  - [*UpdateTransactionType*](#updatetransactiontype)
   - [*DeleteTransaction*](#deletetransaction)
   - [*DeleteEmail*](#deleteemail)
   - [*UpdateGmailSyncState*](#updategmailsyncstate)
@@ -1061,6 +1065,128 @@ executeQuery(ref).then((response) => {
 });
 ```
 
+## GetIncomeSummary
+You can execute the `GetIncomeSummary` query using the following action shortcut function, or by calling `executeQuery()` after calling the following `QueryRef` function, both of which are defined in [generated/index.d.ts](./index.d.ts):
+```typescript
+getIncomeSummary(vars?: GetIncomeSummaryVariables): QueryPromise<GetIncomeSummaryData, GetIncomeSummaryVariables>;
+
+interface GetIncomeSummaryRef {
+  ...
+  /* Allow users to create refs without passing in DataConnect */
+  (vars?: GetIncomeSummaryVariables): QueryRef<GetIncomeSummaryData, GetIncomeSummaryVariables>;
+}
+export const getIncomeSummaryRef: GetIncomeSummaryRef;
+```
+You can also pass in a `DataConnect` instance to the action shortcut function or `QueryRef` function.
+```typescript
+getIncomeSummary(dc: DataConnect, vars?: GetIncomeSummaryVariables): QueryPromise<GetIncomeSummaryData, GetIncomeSummaryVariables>;
+
+interface GetIncomeSummaryRef {
+  ...
+  (dc: DataConnect, vars?: GetIncomeSummaryVariables): QueryRef<GetIncomeSummaryData, GetIncomeSummaryVariables>;
+}
+export const getIncomeSummaryRef: GetIncomeSummaryRef;
+```
+
+If you need the name of the operation without creating a ref, you can retrieve the operation name by calling the `operationName` property on the getIncomeSummaryRef:
+```typescript
+const name = getIncomeSummaryRef.operationName;
+console.log(name);
+```
+
+### Variables
+The `GetIncomeSummary` query has an optional argument of type `GetIncomeSummaryVariables`, which is defined in [generated/index.d.ts](./index.d.ts). It has the following fields:
+
+```typescript
+export interface GetIncomeSummaryVariables {
+  startDate?: DateString | null;
+  endDate?: DateString | null;
+}
+```
+### Return Type
+Recall that executing the `GetIncomeSummary` query returns a `QueryPromise` that resolves to an object with a `data` property.
+
+The `data` property is an object of type `GetIncomeSummaryData`, which is defined in [generated/index.d.ts](./index.d.ts). It has the following fields:
+```typescript
+export interface GetIncomeSummaryData {
+  transactions: ({
+    amount: number;
+    txnDate: DateString;
+    txnType: TxnType;
+    provider: string;
+    merchantName?: string | null;
+  })[];
+}
+```
+### Using `GetIncomeSummary`'s action shortcut function
+
+```typescript
+import { getDataConnect } from 'firebase/data-connect';
+import { connectorConfig, getIncomeSummary, GetIncomeSummaryVariables } from '@dataconnect/default';
+
+// The `GetIncomeSummary` query has an optional argument of type `GetIncomeSummaryVariables`:
+const getIncomeSummaryVars: GetIncomeSummaryVariables = {
+  startDate: ..., // optional
+  endDate: ..., // optional
+};
+
+// Call the `getIncomeSummary()` function to execute the query.
+// You can use the `await` keyword to wait for the promise to resolve.
+const { data } = await getIncomeSummary(getIncomeSummaryVars);
+// Variables can be defined inline as well.
+const { data } = await getIncomeSummary({ startDate: ..., endDate: ..., });
+// Since all variables are optional for this query, you can omit the `GetIncomeSummaryVariables` argument.
+const { data } = await getIncomeSummary();
+
+// You can also pass in a `DataConnect` instance to the action shortcut function.
+const dataConnect = getDataConnect(connectorConfig);
+const { data } = await getIncomeSummary(dataConnect, getIncomeSummaryVars);
+
+console.log(data.transactions);
+
+// Or, you can use the `Promise` API.
+getIncomeSummary(getIncomeSummaryVars).then((response) => {
+  const data = response.data;
+  console.log(data.transactions);
+});
+```
+
+### Using `GetIncomeSummary`'s `QueryRef` function
+
+```typescript
+import { getDataConnect, executeQuery } from 'firebase/data-connect';
+import { connectorConfig, getIncomeSummaryRef, GetIncomeSummaryVariables } from '@dataconnect/default';
+
+// The `GetIncomeSummary` query has an optional argument of type `GetIncomeSummaryVariables`:
+const getIncomeSummaryVars: GetIncomeSummaryVariables = {
+  startDate: ..., // optional
+  endDate: ..., // optional
+};
+
+// Call the `getIncomeSummaryRef()` function to get a reference to the query.
+const ref = getIncomeSummaryRef(getIncomeSummaryVars);
+// Variables can be defined inline as well.
+const ref = getIncomeSummaryRef({ startDate: ..., endDate: ..., });
+// Since all variables are optional for this query, you can omit the `GetIncomeSummaryVariables` argument.
+const ref = getIncomeSummaryRef();
+
+// You can also pass in a `DataConnect` instance to the `QueryRef` function.
+const dataConnect = getDataConnect(connectorConfig);
+const ref = getIncomeSummaryRef(dataConnect, getIncomeSummaryVars);
+
+// Call `executeQuery()` on the reference to execute the query.
+// You can use the `await` keyword to wait for the promise to resolve.
+const { data } = await executeQuery(ref);
+
+console.log(data.transactions);
+
+// Or, you can use the `Promise` API.
+executeQuery(ref).then((response) => {
+  const data = response.data;
+  console.log(data.transactions);
+});
+```
+
 ## GetTopMerchants
 You can execute the `GetTopMerchants` query using the following action shortcut function, or by calling `executeQuery()` after calling the following `QueryRef` function, both of which are defined in [generated/index.d.ts](./index.d.ts):
 ```typescript
@@ -1811,6 +1937,125 @@ const ref = getDailySpendingRef({ startDate: ..., endDate: ..., });
 // You can also pass in a `DataConnect` instance to the `QueryRef` function.
 const dataConnect = getDataConnect(connectorConfig);
 const ref = getDailySpendingRef(dataConnect, getDailySpendingVars);
+
+// Call `executeQuery()` on the reference to execute the query.
+// You can use the `await` keyword to wait for the promise to resolve.
+const { data } = await executeQuery(ref);
+
+console.log(data.transactions);
+
+// Or, you can use the `Promise` API.
+executeQuery(ref).then((response) => {
+  const data = response.data;
+  console.log(data.transactions);
+});
+```
+
+## GetDailyIncome
+You can execute the `GetDailyIncome` query using the following action shortcut function, or by calling `executeQuery()` after calling the following `QueryRef` function, both of which are defined in [generated/index.d.ts](./index.d.ts):
+```typescript
+getDailyIncome(vars: GetDailyIncomeVariables): QueryPromise<GetDailyIncomeData, GetDailyIncomeVariables>;
+
+interface GetDailyIncomeRef {
+  ...
+  /* Allow users to create refs without passing in DataConnect */
+  (vars: GetDailyIncomeVariables): QueryRef<GetDailyIncomeData, GetDailyIncomeVariables>;
+}
+export const getDailyIncomeRef: GetDailyIncomeRef;
+```
+You can also pass in a `DataConnect` instance to the action shortcut function or `QueryRef` function.
+```typescript
+getDailyIncome(dc: DataConnect, vars: GetDailyIncomeVariables): QueryPromise<GetDailyIncomeData, GetDailyIncomeVariables>;
+
+interface GetDailyIncomeRef {
+  ...
+  (dc: DataConnect, vars: GetDailyIncomeVariables): QueryRef<GetDailyIncomeData, GetDailyIncomeVariables>;
+}
+export const getDailyIncomeRef: GetDailyIncomeRef;
+```
+
+If you need the name of the operation without creating a ref, you can retrieve the operation name by calling the `operationName` property on the getDailyIncomeRef:
+```typescript
+const name = getDailyIncomeRef.operationName;
+console.log(name);
+```
+
+### Variables
+The `GetDailyIncome` query requires an argument of type `GetDailyIncomeVariables`, which is defined in [generated/index.d.ts](./index.d.ts). It has the following fields:
+
+```typescript
+export interface GetDailyIncomeVariables {
+  startDate: DateString;
+  endDate: DateString;
+}
+```
+### Return Type
+Recall that executing the `GetDailyIncome` query returns a `QueryPromise` that resolves to an object with a `data` property.
+
+The `data` property is an object of type `GetDailyIncomeData`, which is defined in [generated/index.d.ts](./index.d.ts). It has the following fields:
+```typescript
+export interface GetDailyIncomeData {
+  transactions: ({
+    txnDate: DateString;
+    amount: number;
+    txnType: TxnType;
+    merchantName?: string | null;
+    provider: string;
+    referenceNumber?: string | null;
+  })[];
+}
+```
+### Using `GetDailyIncome`'s action shortcut function
+
+```typescript
+import { getDataConnect } from 'firebase/data-connect';
+import { connectorConfig, getDailyIncome, GetDailyIncomeVariables } from '@dataconnect/default';
+
+// The `GetDailyIncome` query requires an argument of type `GetDailyIncomeVariables`:
+const getDailyIncomeVars: GetDailyIncomeVariables = {
+  startDate: ..., 
+  endDate: ..., 
+};
+
+// Call the `getDailyIncome()` function to execute the query.
+// You can use the `await` keyword to wait for the promise to resolve.
+const { data } = await getDailyIncome(getDailyIncomeVars);
+// Variables can be defined inline as well.
+const { data } = await getDailyIncome({ startDate: ..., endDate: ..., });
+
+// You can also pass in a `DataConnect` instance to the action shortcut function.
+const dataConnect = getDataConnect(connectorConfig);
+const { data } = await getDailyIncome(dataConnect, getDailyIncomeVars);
+
+console.log(data.transactions);
+
+// Or, you can use the `Promise` API.
+getDailyIncome(getDailyIncomeVars).then((response) => {
+  const data = response.data;
+  console.log(data.transactions);
+});
+```
+
+### Using `GetDailyIncome`'s `QueryRef` function
+
+```typescript
+import { getDataConnect, executeQuery } from 'firebase/data-connect';
+import { connectorConfig, getDailyIncomeRef, GetDailyIncomeVariables } from '@dataconnect/default';
+
+// The `GetDailyIncome` query requires an argument of type `GetDailyIncomeVariables`:
+const getDailyIncomeVars: GetDailyIncomeVariables = {
+  startDate: ..., 
+  endDate: ..., 
+};
+
+// Call the `getDailyIncomeRef()` function to get a reference to the query.
+const ref = getDailyIncomeRef(getDailyIncomeVars);
+// Variables can be defined inline as well.
+const ref = getDailyIncomeRef({ startDate: ..., endDate: ..., });
+
+// You can also pass in a `DataConnect` instance to the `QueryRef` function.
+const dataConnect = getDataConnect(connectorConfig);
+const ref = getDailyIncomeRef(dataConnect, getDailyIncomeVars);
 
 // Call `executeQuery()` on the reference to execute the query.
 // You can use the `await` keyword to wait for the promise to resolve.
@@ -3801,6 +4046,142 @@ executeQuery(ref).then((response) => {
 });
 ```
 
+## GetMonthlyIncome
+You can execute the `GetMonthlyIncome` query using the following action shortcut function, or by calling `executeQuery()` after calling the following `QueryRef` function, both of which are defined in [generated/index.d.ts](./index.d.ts):
+```typescript
+getMonthlyIncome(vars: GetMonthlyIncomeVariables): QueryPromise<GetMonthlyIncomeData, GetMonthlyIncomeVariables>;
+
+interface GetMonthlyIncomeRef {
+  ...
+  /* Allow users to create refs without passing in DataConnect */
+  (vars: GetMonthlyIncomeVariables): QueryRef<GetMonthlyIncomeData, GetMonthlyIncomeVariables>;
+}
+export const getMonthlyIncomeRef: GetMonthlyIncomeRef;
+```
+You can also pass in a `DataConnect` instance to the action shortcut function or `QueryRef` function.
+```typescript
+getMonthlyIncome(dc: DataConnect, vars: GetMonthlyIncomeVariables): QueryPromise<GetMonthlyIncomeData, GetMonthlyIncomeVariables>;
+
+interface GetMonthlyIncomeRef {
+  ...
+  (dc: DataConnect, vars: GetMonthlyIncomeVariables): QueryRef<GetMonthlyIncomeData, GetMonthlyIncomeVariables>;
+}
+export const getMonthlyIncomeRef: GetMonthlyIncomeRef;
+```
+
+If you need the name of the operation without creating a ref, you can retrieve the operation name by calling the `operationName` property on the getMonthlyIncomeRef:
+```typescript
+const name = getMonthlyIncomeRef.operationName;
+console.log(name);
+```
+
+### Variables
+The `GetMonthlyIncome` query requires an argument of type `GetMonthlyIncomeVariables`, which is defined in [generated/index.d.ts](./index.d.ts). It has the following fields:
+
+```typescript
+export interface GetMonthlyIncomeVariables {
+  startDate: DateString;
+  endDate: DateString;
+}
+```
+### Return Type
+Recall that executing the `GetMonthlyIncome` query returns a `QueryPromise` that resolves to an object with a `data` property.
+
+The `data` property is an object of type `GetMonthlyIncomeData`, which is defined in [generated/index.d.ts](./index.d.ts). It has the following fields:
+```typescript
+export interface GetMonthlyIncomeData {
+  transactions: ({
+    id: number;
+    amount: number;
+    currency?: string | null;
+    txnType: TxnType;
+    channel: ChannelType;
+    txnDate: DateString;
+    displayDay?: number | null;
+    merchantName?: string | null;
+    provider: string;
+    description?: string | null;
+    referenceNumber?: string | null;
+    merchant?: {
+      id: number;
+      name: string;
+      categoryId?: number | null;
+      categoryRef?: {
+        id: number;
+        name: string;
+        icon: string;
+        color: string;
+      } & Category_Key;
+    } & Merchant_Key;
+      createdAt: TimestampString;
+  } & Transaction_Key)[];
+}
+```
+### Using `GetMonthlyIncome`'s action shortcut function
+
+```typescript
+import { getDataConnect } from 'firebase/data-connect';
+import { connectorConfig, getMonthlyIncome, GetMonthlyIncomeVariables } from '@dataconnect/default';
+
+// The `GetMonthlyIncome` query requires an argument of type `GetMonthlyIncomeVariables`:
+const getMonthlyIncomeVars: GetMonthlyIncomeVariables = {
+  startDate: ..., 
+  endDate: ..., 
+};
+
+// Call the `getMonthlyIncome()` function to execute the query.
+// You can use the `await` keyword to wait for the promise to resolve.
+const { data } = await getMonthlyIncome(getMonthlyIncomeVars);
+// Variables can be defined inline as well.
+const { data } = await getMonthlyIncome({ startDate: ..., endDate: ..., });
+
+// You can also pass in a `DataConnect` instance to the action shortcut function.
+const dataConnect = getDataConnect(connectorConfig);
+const { data } = await getMonthlyIncome(dataConnect, getMonthlyIncomeVars);
+
+console.log(data.transactions);
+
+// Or, you can use the `Promise` API.
+getMonthlyIncome(getMonthlyIncomeVars).then((response) => {
+  const data = response.data;
+  console.log(data.transactions);
+});
+```
+
+### Using `GetMonthlyIncome`'s `QueryRef` function
+
+```typescript
+import { getDataConnect, executeQuery } from 'firebase/data-connect';
+import { connectorConfig, getMonthlyIncomeRef, GetMonthlyIncomeVariables } from '@dataconnect/default';
+
+// The `GetMonthlyIncome` query requires an argument of type `GetMonthlyIncomeVariables`:
+const getMonthlyIncomeVars: GetMonthlyIncomeVariables = {
+  startDate: ..., 
+  endDate: ..., 
+};
+
+// Call the `getMonthlyIncomeRef()` function to get a reference to the query.
+const ref = getMonthlyIncomeRef(getMonthlyIncomeVars);
+// Variables can be defined inline as well.
+const ref = getMonthlyIncomeRef({ startDate: ..., endDate: ..., });
+
+// You can also pass in a `DataConnect` instance to the `QueryRef` function.
+const dataConnect = getDataConnect(connectorConfig);
+const ref = getMonthlyIncomeRef(dataConnect, getMonthlyIncomeVars);
+
+// Call `executeQuery()` on the reference to execute the query.
+// You can use the `await` keyword to wait for the promise to resolve.
+const { data } = await executeQuery(ref);
+
+console.log(data.transactions);
+
+// Or, you can use the `Promise` API.
+executeQuery(ref).then((response) => {
+  const data = response.data;
+  console.log(data.transactions);
+});
+```
+
 ## GetPendingPaymentsForDay
 You can execute the `GetPendingPaymentsForDay` query using the following action shortcut function, or by calling `executeQuery()` after calling the following `QueryRef` function, both of which are defined in [generated/index.d.ts](./index.d.ts):
 ```typescript
@@ -5100,6 +5481,118 @@ const ref = updateTransactionNotesRef({ id: ..., notes: ..., });
 // You can also pass in a `DataConnect` instance to the `MutationRef` function.
 const dataConnect = getDataConnect(connectorConfig);
 const ref = updateTransactionNotesRef(dataConnect, updateTransactionNotesVars);
+
+// Call `executeMutation()` on the reference to execute the mutation.
+// You can use the `await` keyword to wait for the promise to resolve.
+const { data } = await executeMutation(ref);
+
+console.log(data.transaction_update);
+
+// Or, you can use the `Promise` API.
+executeMutation(ref).then((response) => {
+  const data = response.data;
+  console.log(data.transaction_update);
+});
+```
+
+## UpdateTransactionType
+You can execute the `UpdateTransactionType` mutation using the following action shortcut function, or by calling `executeMutation()` after calling the following `MutationRef` function, both of which are defined in [generated/index.d.ts](./index.d.ts):
+```typescript
+updateTransactionType(vars: UpdateTransactionTypeVariables): MutationPromise<UpdateTransactionTypeData, UpdateTransactionTypeVariables>;
+
+interface UpdateTransactionTypeRef {
+  ...
+  /* Allow users to create refs without passing in DataConnect */
+  (vars: UpdateTransactionTypeVariables): MutationRef<UpdateTransactionTypeData, UpdateTransactionTypeVariables>;
+}
+export const updateTransactionTypeRef: UpdateTransactionTypeRef;
+```
+You can also pass in a `DataConnect` instance to the action shortcut function or `MutationRef` function.
+```typescript
+updateTransactionType(dc: DataConnect, vars: UpdateTransactionTypeVariables): MutationPromise<UpdateTransactionTypeData, UpdateTransactionTypeVariables>;
+
+interface UpdateTransactionTypeRef {
+  ...
+  (dc: DataConnect, vars: UpdateTransactionTypeVariables): MutationRef<UpdateTransactionTypeData, UpdateTransactionTypeVariables>;
+}
+export const updateTransactionTypeRef: UpdateTransactionTypeRef;
+```
+
+If you need the name of the operation without creating a ref, you can retrieve the operation name by calling the `operationName` property on the updateTransactionTypeRef:
+```typescript
+const name = updateTransactionTypeRef.operationName;
+console.log(name);
+```
+
+### Variables
+The `UpdateTransactionType` mutation requires an argument of type `UpdateTransactionTypeVariables`, which is defined in [generated/index.d.ts](./index.d.ts). It has the following fields:
+
+```typescript
+export interface UpdateTransactionTypeVariables {
+  id: number;
+  txnType: TxnType;
+}
+```
+### Return Type
+Recall that executing the `UpdateTransactionType` mutation returns a `MutationPromise` that resolves to an object with a `data` property.
+
+The `data` property is an object of type `UpdateTransactionTypeData`, which is defined in [generated/index.d.ts](./index.d.ts). It has the following fields:
+```typescript
+export interface UpdateTransactionTypeData {
+  transaction_update?: Transaction_Key | null;
+}
+```
+### Using `UpdateTransactionType`'s action shortcut function
+
+```typescript
+import { getDataConnect } from 'firebase/data-connect';
+import { connectorConfig, updateTransactionType, UpdateTransactionTypeVariables } from '@dataconnect/default';
+
+// The `UpdateTransactionType` mutation requires an argument of type `UpdateTransactionTypeVariables`:
+const updateTransactionTypeVars: UpdateTransactionTypeVariables = {
+  id: ..., 
+  txnType: ..., 
+};
+
+// Call the `updateTransactionType()` function to execute the mutation.
+// You can use the `await` keyword to wait for the promise to resolve.
+const { data } = await updateTransactionType(updateTransactionTypeVars);
+// Variables can be defined inline as well.
+const { data } = await updateTransactionType({ id: ..., txnType: ..., });
+
+// You can also pass in a `DataConnect` instance to the action shortcut function.
+const dataConnect = getDataConnect(connectorConfig);
+const { data } = await updateTransactionType(dataConnect, updateTransactionTypeVars);
+
+console.log(data.transaction_update);
+
+// Or, you can use the `Promise` API.
+updateTransactionType(updateTransactionTypeVars).then((response) => {
+  const data = response.data;
+  console.log(data.transaction_update);
+});
+```
+
+### Using `UpdateTransactionType`'s `MutationRef` function
+
+```typescript
+import { getDataConnect, executeMutation } from 'firebase/data-connect';
+import { connectorConfig, updateTransactionTypeRef, UpdateTransactionTypeVariables } from '@dataconnect/default';
+
+// The `UpdateTransactionType` mutation requires an argument of type `UpdateTransactionTypeVariables`:
+const updateTransactionTypeVars: UpdateTransactionTypeVariables = {
+  id: ..., 
+  txnType: ..., 
+};
+
+// Call the `updateTransactionTypeRef()` function to get a reference to the mutation.
+const ref = updateTransactionTypeRef(updateTransactionTypeVars);
+// Variables can be defined inline as well.
+const ref = updateTransactionTypeRef({ id: ..., txnType: ..., });
+
+// You can also pass in a `DataConnect` instance to the `MutationRef` function.
+const dataConnect = getDataConnect(connectorConfig);
+const ref = updateTransactionTypeRef(dataConnect, updateTransactionTypeVars);
 
 // Call `executeMutation()` on the reference to execute the mutation.
 // You can use the `await` keyword to wait for the promise to resolve.

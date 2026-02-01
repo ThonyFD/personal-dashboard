@@ -23,6 +23,7 @@ export enum TxnType {
   WITHDRAWAL = "WITHDRAWAL",
   TRANSFER = "TRANSFER",
   FEE = "FEE",
+  INCOME = "INCOME",
   OTHER = "OTHER",
 };
 
@@ -296,6 +297,22 @@ export interface GetCategoryVariables {
   id: number;
 }
 
+export interface GetDailyIncomeData {
+  transactions: ({
+    txnDate: DateString;
+    amount: number;
+    txnType: TxnType;
+    merchantName?: string | null;
+    provider: string;
+    referenceNumber?: string | null;
+  })[];
+}
+
+export interface GetDailyIncomeVariables {
+  startDate: DateString;
+  endDate: DateString;
+}
+
 export interface GetDailySpendingData {
   transactions: ({
     txnDate: DateString;
@@ -350,6 +367,21 @@ export interface GetGmailSyncStateData {
     watchExpiration?: TimestampString | null;
     updatedAt: TimestampString;
   } & GmailSyncState_Key;
+}
+
+export interface GetIncomeSummaryData {
+  transactions: ({
+    amount: number;
+    txnDate: DateString;
+    txnType: TxnType;
+    provider: string;
+    merchantName?: string | null;
+  })[];
+}
+
+export interface GetIncomeSummaryVariables {
+  startDate?: DateString | null;
+  endDate?: DateString | null;
 }
 
 export interface GetLatestEmailData {
@@ -480,6 +512,39 @@ export interface GetMerchantsCountData {
 export interface GetMerchantsCountVariables {
   categoryId?: number | null;
   searchTerm?: string | null;
+}
+
+export interface GetMonthlyIncomeData {
+  transactions: ({
+    id: number;
+    amount: number;
+    currency?: string | null;
+    txnType: TxnType;
+    channel: ChannelType;
+    txnDate: DateString;
+    displayDay?: number | null;
+    merchantName?: string | null;
+    provider: string;
+    description?: string | null;
+    referenceNumber?: string | null;
+    merchant?: {
+      id: number;
+      name: string;
+      categoryId?: number | null;
+      categoryRef?: {
+        id: number;
+        name: string;
+        icon: string;
+        color: string;
+      } & Category_Key;
+    } & Merchant_Key;
+      createdAt: TimestampString;
+  } & Transaction_Key)[];
+}
+
+export interface GetMonthlyIncomeVariables {
+  startDate: DateString;
+  endDate: DateString;
 }
 
 export interface GetMonthlyIncomesData {
@@ -1023,6 +1088,15 @@ export interface UpdateTransactionPaidStatusVariables {
   isPaid: boolean;
 }
 
+export interface UpdateTransactionTypeData {
+  transaction_update?: Transaction_Key | null;
+}
+
+export interface UpdateTransactionTypeVariables {
+  id: number;
+  txnType: TxnType;
+}
+
 interface CreateEmailRef {
   /* Allow users to create refs without passing in DataConnect */
   (vars: CreateEmailVariables): MutationRef<CreateEmailData, CreateEmailVariables>;
@@ -1094,6 +1168,18 @@ export const updateTransactionNotesRef: UpdateTransactionNotesRef;
 
 export function updateTransactionNotes(vars: UpdateTransactionNotesVariables): MutationPromise<UpdateTransactionNotesData, UpdateTransactionNotesVariables>;
 export function updateTransactionNotes(dc: DataConnect, vars: UpdateTransactionNotesVariables): MutationPromise<UpdateTransactionNotesData, UpdateTransactionNotesVariables>;
+
+interface UpdateTransactionTypeRef {
+  /* Allow users to create refs without passing in DataConnect */
+  (vars: UpdateTransactionTypeVariables): MutationRef<UpdateTransactionTypeData, UpdateTransactionTypeVariables>;
+  /* Allow users to pass in custom DataConnect instances */
+  (dc: DataConnect, vars: UpdateTransactionTypeVariables): MutationRef<UpdateTransactionTypeData, UpdateTransactionTypeVariables>;
+  operationName: string;
+}
+export const updateTransactionTypeRef: UpdateTransactionTypeRef;
+
+export function updateTransactionType(vars: UpdateTransactionTypeVariables): MutationPromise<UpdateTransactionTypeData, UpdateTransactionTypeVariables>;
+export function updateTransactionType(dc: DataConnect, vars: UpdateTransactionTypeVariables): MutationPromise<UpdateTransactionTypeData, UpdateTransactionTypeVariables>;
 
 interface DeleteTransactionRef {
   /* Allow users to create refs without passing in DataConnect */
@@ -1443,6 +1529,18 @@ export const getSpendingSummaryRef: GetSpendingSummaryRef;
 export function getSpendingSummary(vars?: GetSpendingSummaryVariables): QueryPromise<GetSpendingSummaryData, GetSpendingSummaryVariables>;
 export function getSpendingSummary(dc: DataConnect, vars?: GetSpendingSummaryVariables): QueryPromise<GetSpendingSummaryData, GetSpendingSummaryVariables>;
 
+interface GetIncomeSummaryRef {
+  /* Allow users to create refs without passing in DataConnect */
+  (vars?: GetIncomeSummaryVariables): QueryRef<GetIncomeSummaryData, GetIncomeSummaryVariables>;
+  /* Allow users to pass in custom DataConnect instances */
+  (dc: DataConnect, vars?: GetIncomeSummaryVariables): QueryRef<GetIncomeSummaryData, GetIncomeSummaryVariables>;
+  operationName: string;
+}
+export const getIncomeSummaryRef: GetIncomeSummaryRef;
+
+export function getIncomeSummary(vars?: GetIncomeSummaryVariables): QueryPromise<GetIncomeSummaryData, GetIncomeSummaryVariables>;
+export function getIncomeSummary(dc: DataConnect, vars?: GetIncomeSummaryVariables): QueryPromise<GetIncomeSummaryData, GetIncomeSummaryVariables>;
+
 interface GetTopMerchantsRef {
   /* Allow users to create refs without passing in DataConnect */
   (vars?: GetTopMerchantsVariables): QueryRef<GetTopMerchantsData, GetTopMerchantsVariables>;
@@ -1514,6 +1612,18 @@ export const getDailySpendingRef: GetDailySpendingRef;
 
 export function getDailySpending(vars: GetDailySpendingVariables): QueryPromise<GetDailySpendingData, GetDailySpendingVariables>;
 export function getDailySpending(dc: DataConnect, vars: GetDailySpendingVariables): QueryPromise<GetDailySpendingData, GetDailySpendingVariables>;
+
+interface GetDailyIncomeRef {
+  /* Allow users to create refs without passing in DataConnect */
+  (vars: GetDailyIncomeVariables): QueryRef<GetDailyIncomeData, GetDailyIncomeVariables>;
+  /* Allow users to pass in custom DataConnect instances */
+  (dc: DataConnect, vars: GetDailyIncomeVariables): QueryRef<GetDailyIncomeData, GetDailyIncomeVariables>;
+  operationName: string;
+}
+export const getDailyIncomeRef: GetDailyIncomeRef;
+
+export function getDailyIncome(vars: GetDailyIncomeVariables): QueryPromise<GetDailyIncomeData, GetDailyIncomeVariables>;
+export function getDailyIncome(dc: DataConnect, vars: GetDailyIncomeVariables): QueryPromise<GetDailyIncomeData, GetDailyIncomeVariables>;
 
 interface GetGmailSyncStateRef {
   /* Allow users to create refs without passing in DataConnect */
@@ -1730,6 +1840,18 @@ export const getMonthlyTransactionsRef: GetMonthlyTransactionsRef;
 
 export function getMonthlyTransactions(vars: GetMonthlyTransactionsVariables): QueryPromise<GetMonthlyTransactionsData, GetMonthlyTransactionsVariables>;
 export function getMonthlyTransactions(dc: DataConnect, vars: GetMonthlyTransactionsVariables): QueryPromise<GetMonthlyTransactionsData, GetMonthlyTransactionsVariables>;
+
+interface GetMonthlyIncomeRef {
+  /* Allow users to create refs without passing in DataConnect */
+  (vars: GetMonthlyIncomeVariables): QueryRef<GetMonthlyIncomeData, GetMonthlyIncomeVariables>;
+  /* Allow users to pass in custom DataConnect instances */
+  (dc: DataConnect, vars: GetMonthlyIncomeVariables): QueryRef<GetMonthlyIncomeData, GetMonthlyIncomeVariables>;
+  operationName: string;
+}
+export const getMonthlyIncomeRef: GetMonthlyIncomeRef;
+
+export function getMonthlyIncome(vars: GetMonthlyIncomeVariables): QueryPromise<GetMonthlyIncomeData, GetMonthlyIncomeVariables>;
+export function getMonthlyIncome(dc: DataConnect, vars: GetMonthlyIncomeVariables): QueryPromise<GetMonthlyIncomeData, GetMonthlyIncomeVariables>;
 
 interface GetPendingPaymentsForDayRef {
   /* Allow users to create refs without passing in DataConnect */

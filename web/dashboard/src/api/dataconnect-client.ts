@@ -640,7 +640,6 @@ export async function createPushSubscription(data: {
   endpoint: string;
   keys: string;
   userAgent?: string;
-  isActive: boolean;
 }): Promise<void> {
   try {
     const { createPushSubscription: createMutation } = await import('../generated/esm/index.esm.js');
@@ -651,7 +650,6 @@ export async function createPushSubscription(data: {
       endpoint: data.endpoint,
       keys: data.keys,
       userAgent: data.userAgent || null,
-      isActive: data.isActive,
     });
   } catch (error) {
     console.error('Error creating push subscription:', error);
@@ -664,14 +662,12 @@ export async function createPushSubscription(data: {
  */
 export async function deactivatePushSubscription(data: {
   id: number;
-  isActive: boolean;
 }): Promise<void> {
   try {
     const { deactivatePushSubscription: updateMutation } = await import('../generated/esm/index.esm.js');
 
     await updateMutation(dataConnect, {
       id: data.id,
-      isActive: data.isActive,
     });
   } catch (error) {
     console.error('Error deactivating push subscription:', error);
