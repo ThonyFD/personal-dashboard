@@ -122,6 +122,7 @@ dist
 # SECURITY: Secrets and credentials - NEVER COMMIT
 *.key
 *.pem
+*.pickle
 credentials.json
 service-account.json
 client_secret*.json
@@ -129,6 +130,21 @@ oauth2.keys.json
 token.json
 **/credentials.json
 **/token.json
+
+# Personal/sensitive data files - NEVER COMMIT TO PUBLIC REPO
+*.xlsx
+*.csv
+downloaded-logs*.json
+.backfill-checkpoint.json
+ops/.backfill-checkpoint.json
+ops/token.pickle
+
+# Test files with config
+test-query.mjs
+
+# Misc generated/temp files
+lint_output.md
+*.psd
 
 # Terraform
 **/.terraform/
@@ -168,3 +184,6 @@ delete-banistmo.js
 
 # macOS
 .DS_Store
+
+# Scripts archive (obsolete scripts kept for reference)
+scripts/archive/
