@@ -1,57 +1,29 @@
 #!/bin/bash
-
-# Gmail Poller Service Deployment Script
-
 set -e
 
-echo "🚀 Deploying Gmail Poller Service..."
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+REPO_ROOT="$(cd "${SCRIPT_DIR}/../.." && pwd)"
 
-# Variables
-PROJECT_ID="${GOOGLE_CLOUD_PROJECT:-mail-reader-433802}"
+PROJECT_ID="${GOOGLE_CLOUD_PROJECT:-$(gcloud config get-value project 2>/dev/null)}"
 REGION="${GOOGLE_CLOUD_REGION:-us-central1}"
-SERVICE_NAME="gmail-poller"
 
-echo "📍 Project: $PROJECT_ID"
-echo "📍 Region: $REGION"
-echo "📍 Service: $SERVICE_NAME"
+if [ -z "$PROJECT_ID" ] || [ "$PROJECT_ID" = "(unset)" ]; then
+  echo "ERROR: GOOGLE_CLOUD_PROJECT not set and no gcloud project configured."
+  exit 1
+fi
 
-# Build the service
-echo "🔨 Building service..."
-npm run build
+IMAGE_NAME="gcr.io/${PROJECT_ID}/gmail-poller"
 
-# Deploy to Cloud Run
-echo "☁️  Deploying to Cloud Run..."
-gcloud run deploy $SERVICE_NAME \
-  --source . \
-  --platform=managed \
-  --region=$REGION \
+echo "Building ${IMAGE_NAME}..."
+gcloud builds submit \
+  --project "$PROJECT_ID" \
+  --region "$REGION" \
+  --config "${REPO_ROOT}/services/poller/cloudbuild.yaml" \
+  "$REPO_ROOT"
+
+echo "Deploying gmail-poller..."
+gcloud run deploy gmail-poller \
+  --image "${IMAGE_NAME}:latest" \
+  --region "$REGION" \
   --allow-unauthenticated \
-  --project=$PROJECT_ID \
-  --memory=256Mi \
-  --cpu=1 \
-  --max-instances=1 \
-  --timeout=300 \
-  --concurrency=1
-
-# Get the service URL
-SERVICE_URL=$(gcloud run services describe $SERVICE_NAME \
-  --platform=managed \
-  --region=$REGION \
-  --project=$PROJECT_ID \
-  --format="value(status.url)")
-
-echo ""
-echo "✅ Deployment completed!"
-echo "🌐 Service URL: $SERVICE_URL"
-echo ""
-echo "🧪 Test the service:"
-echo "curl $SERVICE_URL/health"
-echo ""
-echo "⏰ To setup Cloud Scheduler:"
-echo "gcloud scheduler jobs create http gmail-poller \\"
-echo "  --schedule=\"0 * * * *\" \\"
-echo "  --http-method=POST \\"
-echo "  --uri=\"$SERVICE_URL/scheduled-poll\" \\"
-echo "  --oidc-service-account-email=\"finance-agent-sa@$PROJECT_ID.iam.gserviceaccount.com\" \\"
-echo "  --location=$REGION \\"
-echo "  --project=$PROJECT_ID"
+  --project "$PROJECT_ID"
