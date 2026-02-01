@@ -15,6 +15,7 @@ export const TxnType = {
   WITHDRAWAL: "WITHDRAWAL",
   TRANSFER: "TRANSFER",
   FEE: "FEE",
+  INCOME: "INCOME",
   OTHER: "OTHER",
 }
 
@@ -88,6 +89,17 @@ updateTransactionNotesRef.operationName = 'UpdateTransactionNotes';
 
 export function updateTransactionNotes(dcOrVars, vars) {
   return executeMutation(updateTransactionNotesRef(dcOrVars, vars));
+}
+
+export const updateTransactionTypeRef = (dcOrVars, vars) => {
+  const { dc: dcInstance, vars: inputVars} = validateArgs(connectorConfig, dcOrVars, vars, true);
+  dcInstance._useGeneratedSdk();
+  return mutationRef(dcInstance, 'UpdateTransactionType', inputVars);
+}
+updateTransactionTypeRef.operationName = 'UpdateTransactionType';
+
+export function updateTransactionType(dcOrVars, vars) {
+  return executeMutation(updateTransactionTypeRef(dcOrVars, vars));
 }
 
 export const deleteTransactionRef = (dcOrVars, vars) => {
@@ -409,6 +421,17 @@ export function getSpendingSummary(dcOrVars, vars) {
   return executeQuery(getSpendingSummaryRef(dcOrVars, vars));
 }
 
+export const getIncomeSummaryRef = (dcOrVars, vars) => {
+  const { dc: dcInstance, vars: inputVars} = validateArgs(connectorConfig, dcOrVars, vars);
+  dcInstance._useGeneratedSdk();
+  return queryRef(dcInstance, 'GetIncomeSummary', inputVars);
+}
+getIncomeSummaryRef.operationName = 'GetIncomeSummary';
+
+export function getIncomeSummary(dcOrVars, vars) {
+  return executeQuery(getIncomeSummaryRef(dcOrVars, vars));
+}
+
 export const getTopMerchantsRef = (dcOrVars, vars) => {
   const { dc: dcInstance, vars: inputVars} = validateArgs(connectorConfig, dcOrVars, vars);
   dcInstance._useGeneratedSdk();
@@ -473,6 +496,17 @@ getDailySpendingRef.operationName = 'GetDailySpending';
 
 export function getDailySpending(dcOrVars, vars) {
   return executeQuery(getDailySpendingRef(dcOrVars, vars));
+}
+
+export const getDailyIncomeRef = (dcOrVars, vars) => {
+  const { dc: dcInstance, vars: inputVars} = validateArgs(connectorConfig, dcOrVars, vars, true);
+  dcInstance._useGeneratedSdk();
+  return queryRef(dcInstance, 'GetDailyIncome', inputVars);
+}
+getDailyIncomeRef.operationName = 'GetDailyIncome';
+
+export function getDailyIncome(dcOrVars, vars) {
+  return executeQuery(getDailyIncomeRef(dcOrVars, vars));
 }
 
 export const getGmailSyncStateRef = (dc) => {
@@ -671,6 +705,17 @@ getMonthlyTransactionsRef.operationName = 'GetMonthlyTransactions';
 
 export function getMonthlyTransactions(dcOrVars, vars) {
   return executeQuery(getMonthlyTransactionsRef(dcOrVars, vars));
+}
+
+export const getMonthlyIncomeRef = (dcOrVars, vars) => {
+  const { dc: dcInstance, vars: inputVars} = validateArgs(connectorConfig, dcOrVars, vars, true);
+  dcInstance._useGeneratedSdk();
+  return queryRef(dcInstance, 'GetMonthlyIncome', inputVars);
+}
+getMonthlyIncomeRef.operationName = 'GetMonthlyIncome';
+
+export function getMonthlyIncome(dcOrVars, vars) {
+  return executeQuery(getMonthlyIncomeRef(dcOrVars, vars));
 }
 
 export const getPendingPaymentsForDayRef = (dcOrVars, vars) => {

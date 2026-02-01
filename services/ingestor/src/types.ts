@@ -1,6 +1,6 @@
 // Type definitions for AI Finance Agent Ingestor
 
-export type TxnType = 'purchase' | 'payment' | 'refund' | 'withdrawal' | 'transfer' | 'fee' | 'other';
+export type TxnType = 'purchase' | 'payment' | 'refund' | 'withdrawal' | 'transfer' | 'fee' | 'income' | 'other';
 export type ChannelType = 'card' | 'bank_transfer' | 'cash' | 'mobile_payment' | 'other';
 
 export interface EmailData {

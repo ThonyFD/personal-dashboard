@@ -1,0 +1,12 @@
+steps:
+  - name: 'gcr.io/cloud-builders/docker'
+    args:
+      - 'build'
+      - '-t'
+      - 'gcr.io/mail-reader-433802/backfill-week:latest'
+      - '-f'
+      - 'Dockerfile.backfill'
+      - '../../'
+    dir: 'services/ingestor'
+images:
+  - 'gcr.io/mail-reader-433802/backfill-week:latest'

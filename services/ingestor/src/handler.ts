@@ -3,7 +3,7 @@ import { GmailClient } from './gmail/client.js';
 import { DatabaseClient } from './database/client.js';
 import { ParserRegistry } from './parsers/index.js';
 import { Logger } from './utils/logger.js';
-import { generateEmailBodyHash, generateIdempotencyKey, simpleNormalizeMerchantName } from './utils/hash.js';
+import { generateEmailBodyHash, generateIdempotencyKey, normalizeMerchantName } from './utils/hash.js';
 import { autoCategorizeMerchantId } from './utils/category-mapping.js';
 import { GmailNotification, EmailData, TransactionData } from './types.js';
 
@@ -215,7 +215,7 @@ export class IngestionHandler {
 
         merchantId = await this.dbClient.getOrCreateMerchant({
           name: transaction.merchant,
-          normalizedName: simpleNormalizeMerchantName(transaction.merchant),
+          normalizedName: normalizeMerchantName(transaction.merchant),
           categoryId,
         });
       }

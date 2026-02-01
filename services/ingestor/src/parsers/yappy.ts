@@ -31,8 +31,8 @@ export class YappyParser extends BaseParser {
     const referenceNumber = this.extractReference(emailBody);
 
     // Set transaction type based on direction
-    // Send = transfer (debit), Receive = payment (credit)
-    const type = isSend ? 'transfer' : 'payment';
+    // Send = transfer (debit), Receive = income (credit - money received)
+    const type = isSend ? 'transfer' : 'income';
 
     return {
       type,
@@ -66,10 +66,11 @@ export class YappyParser extends BaseParser {
 
   private isIncomingTransaction(emailBody: string, subject: string): boolean {
     // Check subject line for "Recibiste" (You received)
-    const subjectIndicators = /recibiste\s+un\s+yappy|yappy\s+recibido/i;
+    const subjectIndicators = /recibiste\s+un\s+yappy|yappy\s+recibido|te\s+enviaron\s+por\s+yappy/i;
 
     // Check body for receive indicators
-    const bodyIndicators = /recibiste|te\s+pagaron|te\s+enviaron/i;
+    // "Te enviaron por Yappy" = money received (credit)
+    const bodyIndicators = /recibiste|te\s+pagaron|te\s+enviaron|te\s+enviaron\s+por\s+yappy/i;
 
     return subjectIndicators.test(subject) || bodyIndicators.test(emailBody);
   }
