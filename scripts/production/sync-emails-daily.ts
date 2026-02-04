@@ -28,15 +28,15 @@ import { SecretManagerServiceClient } from '@google-cloud/secret-manager';
 import { persistTokens } from 'oauth-token-store';
 
 // Import from ingestor service
-import { DatabaseClient } from '../services/ingestor/src/database/client';
-import { ParserRegistry } from '../services/ingestor/src/parsers';
+import { DatabaseClient } from '../../services/ingestor/src/database/client';
+import { ParserRegistry } from '../../services/ingestor/src/parsers';
 import {
   generateEmailBodyHash,
   generateIdempotencyKey,
   normalizeMerchantName
 } from '../../services/ingestor/src/utils/hash';
-import { autoCategorizeMerchantId } from '../services/ingestor/src/utils/category-mapping';
-import { EmailData, TransactionData, GmailMessage } from '../services/ingestor/src/types';
+import { autoCategorizeMerchantId } from '../../services/ingestor/src/utils/category-mapping';
+import { EmailData, TransactionData, GmailMessage } from '../../services/ingestor/src/types';
 
 interface SyncStats {
   totalEmails: number;
@@ -192,7 +192,7 @@ class DailyEmailSync {
   private async getLastProcessedEmail(): Promise<any> {
     try {
       // Use the generated query from Data Connect
-      const generated = require('../services/ingestor/src/generated/index.cjs.js');
+      const generated = require('../../services/ingestor/src/generated/index.cjs.js');
       const result = await generated.getLatestEmail(this.dbClient['dataConnect']);
 
       if (result.data?.emails && result.data.emails.length > 0) {

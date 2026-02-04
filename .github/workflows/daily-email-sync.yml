@@ -53,9 +53,10 @@ jobs:
       - name: Run daily email sync
         env:
           GOOGLE_CLOUD_PROJECT: mail-reader-433802
+        working-directory: services/ingestor
         run: |
           echo "🚀 Starting daily email sync..."
-          npx tsx scripts/production/sync-emails-daily.ts
+          npx tsx ../../scripts/production/sync-emails-daily.ts
           echo "✅ Sync completed"
 
       - name: Upload logs on failure
