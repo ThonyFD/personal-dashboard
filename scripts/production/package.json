@@ -1,0 +1,13 @@
+{
+  "name": "finance-agent-scripts",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Production scripts for AI Finance Agent",
+  "type": "module",
+  "dependencies": {
+    "googleapis": "^128.0.0",
+    "google-auth-library": "^9.0.0",
+    "@google-cloud/secret-manager": "^5.0.0",
+    "oauth-token-store": "file:../../packages/oauth-token-store"
+  }
+}
