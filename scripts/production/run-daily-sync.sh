@@ -5,17 +5,16 @@
 set -e
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 
 echo "🔄 Daily Email Sync"
 echo "=================="
 echo ""
 
-# Change to project root
-cd "$PROJECT_ROOT"
+# Change to script directory
+cd "$SCRIPT_DIR"
 
 # Run the sync script
-npx tsx scripts/sync-emails-daily.ts
+node ./sync-emails-daily.js
 
 echo ""
 echo "✅ Daily sync completed successfully"
