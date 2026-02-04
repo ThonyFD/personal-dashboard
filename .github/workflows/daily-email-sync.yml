@@ -16,6 +16,9 @@ jobs:
     permissions:
       contents: read
       id-token: write
+    env:
+      GCP_WORKLOAD_IDENTITY_PROVIDER: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER || vars.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+      GCP_SERVICE_ACCOUNT: ${{ secrets.GCP_SERVICE_ACCOUNT || vars.GCP_SERVICE_ACCOUNT }}
 
     steps:
       - name: Checkout code
@@ -31,12 +34,18 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Validate GCP auth inputs
+        if: ${{ env.GCP_WORKLOAD_IDENTITY_PROVIDER == '' || env.GCP_SERVICE_ACCOUNT == '' }}
+        run: |
+          echo "::error::Missing GCP auth inputs. Set repository secrets or variables: GCP_WORKLOAD_IDENTITY_PROVIDER and GCP_SERVICE_ACCOUNT."
+          exit 1
+
       # Autenticación con GCP usando Workload Identity (más seguro que service account keys)
       - name: Authenticate to Google Cloud
         uses: google-github-actions/auth@v2
         with:
-          workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
-          service_account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
+          workload_identity_provider: ${{ env.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ env.GCP_SERVICE_ACCOUNT }}
 
       - name: Set up Cloud SDK
         uses: google-github-actions/setup-gcloud@v2
@@ -46,7 +55,7 @@ jobs:
           GOOGLE_CLOUD_PROJECT: mail-reader-433802
         run: |
           echo "🚀 Starting daily email sync..."
-          npx tsx scripts/sync-emails-daily.ts
+          npx tsx scripts/production/sync-emails-daily.ts
           echo "✅ Sync completed"
 
       - name: Upload logs on failure
