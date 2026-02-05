@@ -14,7 +14,7 @@ echo ""
 cd "$SCRIPT_DIR"
 
 # Run the sync script
-node ./sync-emails-daily.js
+npx tsx sync-emails-daily.ts
 
 echo ""
 echo "✅ Daily sync completed successfully"
