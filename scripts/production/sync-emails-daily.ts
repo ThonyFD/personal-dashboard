@@ -26,6 +26,7 @@ import { google } from 'googleapis';
 import { OAuth2Client } from 'google-auth-library';
 import { SecretManagerServiceClient } from '@google-cloud/secret-manager';
 import { persistTokens } from 'oauth-token-store';
+import { fileURLToPath } from 'url';
 
 // Import from ingestor service
 import { DatabaseClient } from '../../services/ingestor/src/database/client';
@@ -573,7 +574,7 @@ class DailyEmailSync {
 }
 
 // Main execution
-if (require.main === module) {
+if (fileURLToPath(import.meta.url) === process.argv[1]) {
   const sync = new DailyEmailSync();
   sync.run().catch((error) => {
     console.error('Fatal error:', error);
