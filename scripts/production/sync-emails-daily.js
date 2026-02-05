@@ -28,6 +28,8 @@ import { SecretManagerServiceClient } from '@google-cloud/secret-manager';
 import { persistTokens } from 'oauth-token-store';
 import { createRequire } from 'node:module';
 
+const require = createRequire(import.meta.url);
+
 // Import from ingestor service (compiled dist)
 import { DatabaseClient } from '../../services/ingestor/dist/database/client.js';
 import { ParserRegistry } from '../../services/ingestor/dist/parsers/index.js';

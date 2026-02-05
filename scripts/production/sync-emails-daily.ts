@@ -27,6 +27,9 @@ import { OAuth2Client } from 'google-auth-library';
 import { SecretManagerServiceClient } from '@google-cloud/secret-manager';
 import { persistTokens } from 'oauth-token-store';
 import { fileURLToPath } from 'url';
+import { createRequire } from 'module';
+
+const require = createRequire(import.meta.url);
 
 // Import from ingestor service
 import { DatabaseClient } from '../../services/ingestor/src/database/client';
