@@ -61,7 +61,8 @@ export class LLMFallbackParser {
       });
 
       if (!response.ok) {
-        throw new Error(`LLM API error: ${response.status} ${response.statusText}`);
+        const errBody = await response.text();
+        throw new Error(`LLM API error: ${response.status} ${response.statusText} — ${errBody}`);
       }
 
       const data = await response.json() as { content: Array<{ text: string }> };
