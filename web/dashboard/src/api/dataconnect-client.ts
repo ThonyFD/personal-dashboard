@@ -1,12 +1,5 @@
-// Firebase Data Connect client for dashboard
-import { dataConnect } from '../lib/firebase';
-import {
-  listTransactions,
-  listMerchants,
-  updateMerchantCategoryId,
-} from '../generated/esm/index.esm.js';
+import { supabase } from '../lib/supabase';
 
-// Types for dashboard
 export interface Transaction {
   id: number;
   txn_type: string;
@@ -65,254 +58,189 @@ export interface Stats {
   providers: { provider: string; count: number }[];
 }
 
-/**
- * Fetch all transactions
- */
 export async function fetchTransactions(
   limit = 100,
   startDate?: string,
   endDate?: string
 ): Promise<Transaction[]> {
-  try {
-    const result = await listTransactions(dataConnect, {
-      limit,
-      startDate: startDate || undefined,
-      endDate: endDate || undefined,
-    });
+  let query = supabase
+    .from('transactions')
+    .select(`
+      id, txn_type, channel, amount, currency, merchant_name,
+      txn_date, txn_timestamp, provider, card_last4, description,
+      merchants ( name, category_id, categories ( id, name, icon, color ) ),
+      emails ( sender_email, subject, received_at )
+    `)
+    .order('txn_date', { ascending: false })
+    .limit(limit);
 
-    // Map Data Connect response to Transaction type
-    return (result.data.transactions || []).map((edge) => ({
-      id: edge.id,
-      txn_type: edge.txnType,
-      channel: edge.channel,
-      amount: edge.amount,
-      currency: edge.currency,
-      merchant_name: edge.merchantName,
-      txn_date: edge.txnDate,
-      txn_timestamp: edge.txnTimestamp,
-      provider: edge.provider,
-      card_last4: edge.cardLast4,
-      description: edge.description,
-      merchant: edge.merchant ? {
-        name: edge.merchant.name,
-        categoryId: edge.merchant.categoryId,
-        categoryRef: edge.merchant.categoryRef,
-      } : undefined,
-      email: {
-        sender_email: edge.email.senderEmail,
-        subject: edge.email.subject,
-        received_at: edge.email.receivedAt,
-      },
-    }));
-  } catch (error) {
-    console.error('Error fetching transactions:', error);
-    throw error;
-  }
+  if (startDate) query = query.gte('txn_date', startDate);
+  if (endDate) query = query.lte('txn_date', endDate);
+
+  const { data, error } = await query;
+  if (error) throw error;
+
+  return (data ?? []).map((row: any) => ({
+    id: row.id,
+    txn_type: row.txn_type,
+    channel: row.channel,
+    amount: Number(row.amount),
+    currency: row.currency,
+    merchant_name: row.merchant_name,
+    txn_date: row.txn_date,
+    txn_timestamp: row.txn_timestamp,
+    provider: row.provider,
+    card_last4: row.card_last4,
+    description: row.description,
+    merchant: row.merchants ? {
+      name: row.merchants.name,
+      categoryId: row.merchants.category_id,
+      categoryRef: row.merchants.categories ?? undefined,
+    } : undefined,
+    email: {
+      sender_email: row.emails.sender_email,
+      subject: row.emails.subject,
+      received_at: row.emails.received_at,
+    },
+  }));
 }
 
-/**
- * Fetch merchants with pagination and search
- */
 export async function fetchMerchantsPaginated(
   page = 1,
   pageSize = 50,
   searchTerm = '',
   categoryFilter = ''
 ): Promise<{ merchants: Merchant[]; totalCount: number; totalPages: number }> {
-  try {
-    // Get paginated merchants
-    const offset = (page - 1) * pageSize;
-    const merchantsResult = await listMerchants(dataConnect, {
-      limit: pageSize,
-      offset: offset,
-      categoryId: categoryFilter ? parseInt(categoryFilter) : undefined,
-      searchTerm: searchTerm || undefined,
-    });
+  const offset = (page - 1) * pageSize;
 
-    const dbMerchants = merchantsResult.data.merchants || [];
+  let query = supabase
+    .from('merchants')
+    .select(`
+      id, name, category_id, transaction_count, total_amount,
+      categories ( id, name, icon, color )
+    `, { count: 'exact' })
+    .order('transaction_count', { ascending: false })
+    .range(offset, offset + pageSize - 1);
 
-    // Convert to our Merchant interface format
-    const merchants: Merchant[] = dbMerchants.map((m: any) => ({
-      id: m.id,
-      name: m.name,
-      categoryId: m.categoryId,
-      categoryRef: m.categoryRef,
-      transaction_count: m.transactionCount || 0,
-      total_amount: m.totalAmount || 0,
-      inDatabase: true, // All merchants from DB are in database
-    }));
+  if (searchTerm) query = query.ilike('name', `%${searchTerm}%`);
+  if (categoryFilter) query = query.eq('category_id', Number(categoryFilter));
 
-    // For now, estimate total count - in a real app you'd want a separate count query
-    // This is a temporary solution until the generated SDK includes getMerchantsCount
-    const totalCount = merchants.length < pageSize ? (page - 1) * pageSize + merchants.length : page * pageSize + 1;
-    const totalPages = Math.ceil(totalCount / pageSize);
+  const { data, error, count } = await query;
+  if (error) throw error;
 
-    console.log(`Fetched ${merchants.length} merchants (page ${page}, estimated total: ${totalCount})`);
-    return { merchants, totalCount, totalPages };
-  } catch (error) {
-    console.error('Error fetching merchants:', error);
-    throw error;
-  }
+  const merchants: Merchant[] = (data ?? []).map((m: any) => ({
+    id: m.id,
+    name: m.name,
+    categoryId: m.category_id,
+    categoryRef: m.categories ?? undefined,
+    transaction_count: m.transaction_count ?? 0,
+    total_amount: m.total_amount ? Number(m.total_amount) : 0,
+    inDatabase: true,
+  }));
+
+  const totalCount = count ?? merchants.length;
+  const totalPages = Math.ceil(totalCount / pageSize);
+
+  return { merchants, totalCount, totalPages };
 }
 
-/**
- * Legacy function for backward compatibility - returns all merchants without pagination
- * WARNING: This is expensive and should be replaced with fetchMerchantsPaginated
- */
 export async function fetchMerchants(): Promise<Merchant[]> {
-  try {
-    // For backward compatibility, fetch all merchants in chunks
-    const allMerchants: Merchant[] = [];
-    let page = 1;
-    const pageSize = 1000;
+  const allMerchants: Merchant[] = [];
+  let page = 1;
 
-    while (true) {
-      const { merchants, totalPages } = await fetchMerchantsPaginated(page, pageSize);
-      allMerchants.push(...merchants);
-
-      if (page >= totalPages) break;
-      page++;
-    }
-
-    console.log(`Legacy fetch: Returning ${allMerchants.length} merchants`);
-    return allMerchants;
-  } catch (error) {
-    console.error('Error fetching merchants:', error);
-    throw error;
+  while (true) {
+    const { merchants, totalPages } = await fetchMerchantsPaginated(page, 1000);
+    allMerchants.push(...merchants);
+    if (page >= totalPages) break;
+    page++;
   }
+
+  return allMerchants;
 }
 
-/**
- * Fetch dashboard stats
- */
 export async function fetchStats(startDate?: string, endDate?: string): Promise<Stats> {
-  try {
-    // Get transactions for the specified date range
-    const allTransactions = await fetchTransactions(10000, startDate, endDate);
+  const allTransactions = await fetchTransactions(10000, startDate, endDate);
 
-    console.log(`fetchStats: Got ${allTransactions.length} total transactions`);
+  const total_transactions = allTransactions.length;
+  let payment_amount = 0, payment_count = 0;
+  let purchase_amount = 0, purchase_count = 0;
 
-    // Calculate stats
-    const total_transactions = allTransactions.length;
-
-    // Calculate separate totals for PAYMENT and PURCHASE
-    let payment_amount = 0;
-    let payment_count = 0;
-    let purchase_amount = 0;
-    let purchase_count = 0;
-
-    allTransactions.forEach(txn => {
-      if (txn.txn_type === 'PAYMENT') {
-        payment_amount += txn.amount;
-        payment_count += 1;
-      } else if (txn.txn_type === 'PURCHASE') {
-        purchase_amount += txn.amount;
-        purchase_count += 1;
-      }
-    });
-
-    const total_amount = payment_amount + purchase_amount;
-
-    // Current month stats (only calculated if no date filter)
-    let this_month_amount = 0;
-    let this_month_transactions = 0;
-
-    if (!startDate && !endDate) {
-      const now = new Date();
-      const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-      const monthTransactions = allTransactions.filter(txn => {
-        const txnDate = new Date(txn.txn_date);
-        return txnDate >= firstDayOfMonth;
-      });
-
-      this_month_amount = monthTransactions.reduce((sum, txn) => {
-        if (txn.txn_type === 'PURCHASE' || txn.txn_type === 'PAYMENT') {
-          return sum + txn.amount;
-        }
-        return sum;
-      }, 0);
-
-      this_month_transactions = monthTransactions.length;
-    } else {
-      // When filtering by date, use the filtered amount as "period amount"
-      this_month_amount = total_amount;
-      this_month_transactions = total_transactions;
+  allTransactions.forEach(txn => {
+    if (txn.txn_type === 'PAYMENT') {
+      payment_amount += txn.amount;
+      payment_count += 1;
+    } else if (txn.txn_type === 'PURCHASE') {
+      purchase_amount += txn.amount;
+      purchase_count += 1;
     }
+  });
 
-    // Provider stats
-    const providerMap = new Map<string, number>();
-    allTransactions.forEach(txn => {
-      providerMap.set(txn.provider, (providerMap.get(txn.provider) || 0) + 1);
-    });
+  const total_amount = payment_amount + purchase_amount;
 
-    const providers = Array.from(providerMap.entries()).map(([provider, count]) => ({
-      provider,
-      count,
-    }));
+  let this_month_amount = 0;
+  let this_month_transactions = 0;
 
-    // Calculate top merchant by transaction count
-    const merchantMap = new Map<string, { count: number; amount: number }>();
-    allTransactions.forEach(txn => {
-      const merchantName = txn.merchant_name || 'Unknown';
-      if (!merchantMap.has(merchantName)) {
-        merchantMap.set(merchantName, { count: 0, amount: 0 });
-      }
-      const merchant = merchantMap.get(merchantName)!;
-      merchant.count += 1;
-      if (txn.txn_type === 'PURCHASE' || txn.txn_type === 'PAYMENT') {
-        merchant.amount += txn.amount;
-      }
-    });
-
-    // Find merchant with most transactions
-    let top_merchant: string | null = null;
-    let top_merchant_amount = 0;
-    let maxCount = 0;
-    merchantMap.forEach((stats, merchantName) => {
-      if (stats.count > maxCount) {
-        maxCount = stats.count;
-        top_merchant = merchantName;
-        top_merchant_amount = stats.amount;
-      }
-    });
-
-    return {
-      total_transactions,
-      total_amount,
-      payment_amount,
-      payment_count,
-      purchase_amount,
-      purchase_count,
-      this_month_amount,
-      this_month_transactions,
-      top_merchant,
-      top_merchant_amount,
-      providers,
-    };
-  } catch (error) {
-    console.error('Error fetching stats:', error);
-    throw error;
+  if (!startDate && !endDate) {
+    const now = new Date();
+    const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+    const monthTxns = allTransactions.filter(txn => new Date(txn.txn_date) >= firstDayOfMonth);
+    this_month_transactions = monthTxns.length;
+    this_month_amount = monthTxns.reduce((sum, txn) => {
+      return (txn.txn_type === 'PURCHASE' || txn.txn_type === 'PAYMENT') ? sum + txn.amount : sum;
+    }, 0);
+  } else {
+    this_month_amount = total_amount;
+    this_month_transactions = total_transactions;
   }
+
+  const providerMap = new Map<string, number>();
+  const merchantMap = new Map<string, { count: number; amount: number }>();
+
+  allTransactions.forEach(txn => {
+    providerMap.set(txn.provider, (providerMap.get(txn.provider) ?? 0) + 1);
+
+    const merchantName = txn.merchant_name ?? 'Unknown';
+    const entry = merchantMap.get(merchantName) ?? { count: 0, amount: 0 };
+    entry.count += 1;
+    if (txn.txn_type === 'PURCHASE' || txn.txn_type === 'PAYMENT') {
+      entry.amount += txn.amount;
+    }
+    merchantMap.set(merchantName, entry);
+  });
+
+  let top_merchant: string | null = null;
+  let top_merchant_amount = 0;
+  let maxCount = 0;
+  merchantMap.forEach((stats, name) => {
+    if (stats.count > maxCount) {
+      maxCount = stats.count;
+      top_merchant = name;
+      top_merchant_amount = stats.amount;
+    }
+  });
+
+  const providers = Array.from(providerMap.entries()).map(([provider, count]) => ({ provider, count }));
+
+  return {
+    total_transactions, total_amount,
+    payment_amount, payment_count,
+    purchase_amount, purchase_count,
+    this_month_amount, this_month_transactions,
+    top_merchant, top_merchant_amount,
+    providers,
+  };
 }
 
-/**
- * Update merchant category
- */
 export async function updateMerchantCategoryById(merchantId: number, categoryId: number): Promise<void> {
-  try {
-    const result = await updateMerchantCategoryId(dataConnect, {
-      id: merchantId,
-      categoryId: categoryId,
-    });
-  } catch (error) {
-    console.error('Error updating merchant category:', error);
-    console.error('Error details:', JSON.stringify(error, null, 2));
-    throw error;
-  }
+  const { error } = await supabase
+    .from('merchants')
+    .update({ category_id: categoryId })
+    .eq('id', merchantId);
+  if (error) throw error;
 }
 
 // ============================================
-// MONTHLY CONTROL FUNCTIONS
+// MONTHLY CONTROL
 // ============================================
 
 export interface MonthlyIncome {
@@ -331,379 +259,202 @@ export interface ManualTransaction {
   day?: number;
   description: string;
   amount: number;
-  transactionType?: string; // 'Inversión', 'Deuda', 'Ahorro', null
-  paymentMethod?: string; // 'BG', 'TDC(BANISTMO)', etc
+  transactionType?: string;
+  paymentMethod?: string;
   isPaid: boolean;
   notes?: string;
   merchantId?: number;
   categoryId?: number;
 }
 
-/**
- * Fetch monthly incomes for a specific month
- */
 export async function fetchMonthlyIncomes(year: number, month: number): Promise<MonthlyIncome[]> {
-  try {
-    const { getMonthlyIncomes } = await import('../generated/esm/index.esm.js');
-    const result = await getMonthlyIncomes(dataConnect, { year, month });
+  const { data, error } = await supabase
+    .from('monthly_incomes')
+    .select('*')
+    .eq('year', year)
+    .eq('month', month)
+    .order('source');
 
-    return (result.data.monthlyIncomes || []).map((income: any) => ({
-      id: income.id,
-      year: income.year,
-      month: income.month,
-      source: income.source,
-      amount: income.amount,
-      notes: income.notes,
-    }));
-  } catch (error) {
-    console.error('Error fetching monthly incomes:', error);
-    throw error;
-  }
+  if (error) throw error;
+
+  return (data ?? []).map((r: any) => ({
+    id: r.id, year: r.year, month: r.month,
+    source: r.source, amount: Number(r.amount), notes: r.notes,
+  }));
 }
 
-/**
- * Get the next available ID for monthly incomes
- * Queries the database for the max ID and returns max + 1
- */
-async function getNextMonthlyIncomeId(): Promise<number> {
-  try {
-    const { getMaxMonthlyIncomeId } = await import('../generated/esm/index.esm.js');
-    const result = await getMaxMonthlyIncomeId(dataConnect, {});
-
-    const maxId = result.data.monthlyIncomes?.[0]?.id;
-    // If no records exist, start from 1, otherwise increment max
-    return maxId ? maxId + 1 : 1;
-  } catch (error) {
-    console.error('Error fetching max monthly income ID:', error);
-    // Fallback to a safe starting ID if query fails
-    return Date.now() % 1000000; // Use timestamp-based ID as fallback
-  }
-}
-
-/**
- * Get the next available ID for manual transactions
- * Queries the database for the max ID and returns max + 1
- */
-async function getNextManualTransactionId(): Promise<number> {
-  try {
-    const { getMaxManualTransactionId } = await import('../generated/esm/index.esm.js');
-    const result = await getMaxManualTransactionId(dataConnect, {});
-
-    const maxId = result.data.manualTransactions?.[0]?.id;
-    // If no records exist, start from 1, otherwise increment max
-    return maxId ? maxId + 1 : 1;
-  } catch (error) {
-    console.error('Error fetching max manual transaction ID:', error);
-    // Fallback to a safe starting ID if query fails
-    return Date.now() % 1000000; // Use timestamp-based ID as fallback
-  }
-}
-
-/**
- * Create monthly income
- */
 export async function createMonthlyIncome(income: Omit<MonthlyIncome, 'id'>): Promise<number> {
-  try {
-    const { createMonthlyIncome: createMutation } = await import('../generated/esm/index.esm.js');
+  const { data, error } = await supabase
+    .from('monthly_incomes')
+    .insert({
+      year: income.year, month: income.month,
+      source: income.source, amount: income.amount,
+      notes: income.notes ?? null,
+    })
+    .select('id')
+    .single();
 
-    // Get the next available ID from the database
-    const id = await getNextMonthlyIncomeId();
-
-    await createMutation(dataConnect, {
-      id,
-      year: income.year,
-      month: income.month,
-      source: income.source,
-      amount: income.amount,
-      notes: income.notes || null,
-    });
-
-    return id;
-  } catch (error) {
-    console.error('Error creating monthly income:', error);
-    throw error;
-  }
+  if (error) throw error;
+  return data.id;
 }
 
-/**
- * Update monthly income
- */
 export async function updateMonthlyIncome(id: number, updates: Partial<MonthlyIncome>): Promise<void> {
-  try {
-    const { updateMonthlyIncome: updateMutation } = await import('../generated/esm/index.esm.js');
+  const patch: Record<string, unknown> = {};
+  if (updates.source !== undefined) patch.source = updates.source;
+  if (updates.amount !== undefined) patch.amount = updates.amount;
+  if (updates.notes !== undefined) patch.notes = updates.notes;
 
-    await updateMutation(dataConnect, {
-      id,
-      source: updates.source || null,
-      amount: updates.amount || null,
-      notes: updates.notes || null,
-    });
-  } catch (error) {
-    console.error('Error updating monthly income:', error);
-    throw error;
-  }
+  const { error } = await supabase.from('monthly_incomes').update(patch).eq('id', id);
+  if (error) throw error;
 }
 
-/**
- * Delete monthly income
- */
 export async function deleteMonthlyIncome(id: number): Promise<void> {
-  try {
-    const { deleteMonthlyIncome: deleteMutation } = await import('../generated/esm/index.esm.js');
-
-    await deleteMutation(dataConnect, { id });
-  } catch (error) {
-    console.error('Error deleting monthly income:', error);
-    throw error;
-  }
+  const { error } = await supabase.from('monthly_incomes').delete().eq('id', id);
+  if (error) throw error;
 }
 
-/**
- * Fetch manual transactions for a specific month
- */
 export async function fetchManualTransactions(
   year: number,
   month: number,
   isPaid?: boolean
 ): Promise<ManualTransaction[]> {
-  try {
-    const { getManualTransactions } = await import('../generated/esm/index.esm.js');
+  let query = supabase
+    .from('manual_transactions')
+    .select('*')
+    .eq('year', year)
+    .eq('month', month)
+    .order('day', { ascending: true, nullsFirst: false });
 
-    // Build variables - only include isPaid if it's explicitly set (not undefined)
-    // Passing null causes the filter to not match any records
-    const variables: any = { year, month };
-    if (isPaid !== undefined) {
-      variables.isPaid = isPaid;
-    }
+  if (isPaid !== undefined) query = query.eq('is_paid', isPaid);
 
-    const result = await getManualTransactions(dataConnect, variables);
+  const { data, error } = await query;
+  if (error) throw error;
 
-    return (result.data.manualTransactions || []).map((txn: any) => ({
-      id: txn.id,
-      year: txn.year,
-      month: txn.month,
-      day: txn.day,
-      description: txn.description,
-      amount: txn.amount,
-      transactionType: txn.transactionType,
-      paymentMethod: txn.paymentMethod,
-      isPaid: txn.isPaid,
-      notes: txn.notes,
-      merchantId: txn.merchantId,
-      categoryId: txn.categoryId,
-    }));
-  } catch (error) {
-    console.error('Error fetching manual transactions:', error);
-    throw error;
-  }
+  return (data ?? []).map((r: any) => ({
+    id: r.id, year: r.year, month: r.month, day: r.day,
+    description: r.description, amount: Number(r.amount),
+    transactionType: r.transaction_type, paymentMethod: r.payment_method,
+    isPaid: r.is_paid, notes: r.notes,
+    merchantId: r.merchant_id, categoryId: r.category_id,
+  }));
 }
 
-/**
- * Create manual transaction
- */
 export async function createManualTransaction(transaction: Omit<ManualTransaction, 'id'>): Promise<number> {
-  try {
-    const { createManualTransaction: createMutation } = await import('../generated/esm/index.esm.js');
+  const { data, error } = await supabase
+    .from('manual_transactions')
+    .insert({
+      year: transaction.year, month: transaction.month, day: transaction.day ?? null,
+      description: transaction.description, amount: transaction.amount,
+      transaction_type: transaction.transactionType ?? null,
+      payment_method: transaction.paymentMethod ?? null,
+      is_paid: transaction.isPaid, notes: transaction.notes ?? null,
+      merchant_id: transaction.merchantId ?? null,
+      category_id: transaction.categoryId ?? null,
+    })
+    .select('id')
+    .single();
 
-    // Get the next available ID from the database
-    const id = await getNextManualTransactionId();
-
-    await createMutation(dataConnect, {
-      id,
-      year: transaction.year,
-      month: transaction.month,
-      day: transaction.day || null,
-      description: transaction.description,
-      amount: transaction.amount,
-      transactionType: transaction.transactionType || null,
-      paymentMethod: transaction.paymentMethod || null,
-      isPaid: transaction.isPaid,
-      notes: transaction.notes || null,
-      merchantId: transaction.merchantId || null,
-      categoryId: transaction.categoryId || null,
-    });
-
-    return id;
-  } catch (error) {
-    console.error('Error creating manual transaction:', error);
-    throw error;
-  }
+  if (error) throw error;
+  return data.id;
 }
 
-/**
- * Update manual transaction
- */
 export async function updateManualTransaction(id: number, updates: Partial<ManualTransaction>): Promise<void> {
-  try {
-    const { updateManualTransaction: updateMutation } = await import('../generated/esm/index.esm.js');
+  const patch: Record<string, unknown> = {};
+  if (updates.day !== undefined) patch.day = updates.day;
+  if (updates.description !== undefined) patch.description = updates.description;
+  if (updates.amount !== undefined) patch.amount = updates.amount;
+  if (updates.transactionType !== undefined) patch.transaction_type = updates.transactionType;
+  if (updates.paymentMethod !== undefined) patch.payment_method = updates.paymentMethod;
+  if (updates.isPaid !== undefined) patch.is_paid = updates.isPaid;
+  if (updates.notes !== undefined) patch.notes = updates.notes;
+  if (updates.merchantId !== undefined) patch.merchant_id = updates.merchantId;
+  if (updates.categoryId !== undefined) patch.category_id = updates.categoryId;
 
-    await updateMutation(dataConnect, {
-      id,
-      day: updates.day !== undefined ? updates.day : null,
-      description: updates.description || null,
-      amount: updates.amount || null,
-      transactionType: updates.transactionType !== undefined ? updates.transactionType : null,
-      paymentMethod: updates.paymentMethod !== undefined ? updates.paymentMethod : null,
-      isPaid: updates.isPaid !== undefined ? updates.isPaid : null,
-      notes: updates.notes !== undefined ? updates.notes : null,
-      merchantId: updates.merchantId !== undefined ? updates.merchantId : null,
-      categoryId: updates.categoryId !== undefined ? updates.categoryId : null,
-    });
-  } catch (error) {
-    console.error('Error updating manual transaction:', error);
-    throw error;
-  }
+  const { error } = await supabase.from('manual_transactions').update(patch).eq('id', id);
+  if (error) throw error;
 }
 
-/**
- * Delete manual transaction
- */
 export async function deleteManualTransaction(id: number): Promise<void> {
-  try {
-    const { deleteManualTransaction: deleteMutation } = await import('../generated/esm/index.esm.js');
-
-    await deleteMutation(dataConnect, { id });
-  } catch (error) {
-    console.error('Error deleting manual transaction:', error);
-    throw error;
-  }
+  const { error } = await supabase.from('manual_transactions').delete().eq('id', id);
+  if (error) throw error;
 }
 
-/**
- * Toggle paid status of a manual transaction
- */
 export async function toggleManualTransactionPaidStatus(id: number, isPaid: boolean): Promise<void> {
-  try {
-    const { updateManualTransactionPaidStatus } = await import('../generated/esm/index.esm.js');
-
-    await updateManualTransactionPaidStatus(dataConnect, { id, isPaid });
-  } catch (error) {
-    console.error('Error toggling manual transaction paid status:', error);
-    throw error;
-  }
+  const { error } = await supabase
+    .from('manual_transactions')
+    .update({ is_paid: isPaid })
+    .eq('id', id);
+  if (error) throw error;
 }
 
-/**
- * Export transactions as CSV
- */
 export async function exportTransactionsCSV(startDate?: string, endDate?: string): Promise<Blob> {
-  try {
-    const transactions = await fetchTransactions(1000);
+  const transactions = await fetchTransactions(1000, startDate, endDate);
 
-    // Filter by date if provided
-    let filtered = transactions;
-    if (startDate || endDate) {
-      filtered = transactions.filter(txn => {
-        const txnDate = new Date(txn.txn_date);
-        if (startDate && txnDate < new Date(startDate)) return false;
-        if (endDate && txnDate > new Date(endDate)) return false;
-        return true;
-      });
-    }
+  const headers = ['Date', 'Merchant', 'Type', 'Channel', 'Amount', 'Currency', 'Provider', 'Card', 'Description'];
+  const rows = transactions.map(txn => [
+    txn.txn_date, txn.merchant_name ?? '', txn.txn_type, txn.channel,
+    txn.amount.toString(), txn.currency ?? 'USD', txn.provider,
+    txn.card_last4 ?? '', txn.description ?? '',
+  ]);
 
-    // Create CSV
-    const headers = ['Date', 'Merchant', 'Type', 'Channel', 'Amount', 'Currency', 'Provider', 'Card', 'Description'];
-    const rows = filtered.map(txn => [
-      txn.txn_date,
-      txn.merchant_name || '',
-      txn.txn_type,
-      txn.channel,
-      txn.amount.toString(),
-      txn.currency || 'USD',
-      txn.provider,
-      txn.card_last4 || '',
-      txn.description || '',
-    ]);
+  const csvContent = [
+    headers.join(','),
+    ...rows.map(row => row.map(cell => `"${cell}"`).join(',')),
+  ].join('\n');
 
-    const csvContent = [
-      headers.join(','),
-      ...rows.map(row => row.map(cell => `"${cell}"`).join(',')),
-    ].join('\n');
-
-    return new Blob([csvContent], { type: 'text/csv' });
-  } catch (error) {
-    console.error('Error exporting transactions:', error);
-    throw error;
-  }
+  return new Blob([csvContent], { type: 'text/csv' });
 }
 
 // ============================================
-// PUSH NOTIFICATION FUNCTIONS
+// PUSH NOTIFICATIONS
 // ============================================
 
-/**
- * Create push subscription
- */
 export async function createPushSubscription(data: {
-  id: number;
   userEmail: string;
   endpoint: string;
   keys: string;
   userAgent?: string;
 }): Promise<void> {
-  try {
-    const { createPushSubscription: createMutation } = await import('../generated/esm/index.esm.js');
-
-    await createMutation(dataConnect, {
-      id: data.id,
-      userEmail: data.userEmail,
+  const { error } = await supabase
+    .from('push_subscriptions')
+    .insert({
+      user_email: data.userEmail,
       endpoint: data.endpoint,
-      keys: data.keys,
-      userAgent: data.userAgent || null,
+      keys: JSON.parse(data.keys),
+      user_agent: data.userAgent ?? null,
+      is_active: true,
     });
-  } catch (error) {
-    console.error('Error creating push subscription:', error);
-    throw error;
-  }
+  if (error) throw error;
 }
 
-/**
- * Deactivate push subscription
- */
-export async function deactivatePushSubscription(data: {
-  id: number;
-}): Promise<void> {
-  try {
-    const { deactivatePushSubscription: updateMutation } = await import('../generated/esm/index.esm.js');
-
-    await updateMutation(dataConnect, {
-      id: data.id,
-    });
-  } catch (error) {
-    console.error('Error deactivating push subscription:', error);
-    throw error;
-  }
+export async function deactivatePushSubscription(data: { id: number }): Promise<void> {
+  const { error } = await supabase
+    .from('push_subscriptions')
+    .update({ is_active: false })
+    .eq('id', data.id);
+  if (error) throw error;
 }
 
-/**
- * Get active push subscriptions for a user
- */
-export async function getActivePushSubscriptions(data: {
-  userEmail: string;
-}): Promise<any> {
-  try {
-    const { getActivePushSubscriptions: query } = await import('../generated/esm/index.esm.js');
+export async function getActivePushSubscriptions(data: { userEmail: string }): Promise<any> {
+  const { data: rows, error } = await supabase
+    .from('push_subscriptions')
+    .select('*')
+    .eq('user_email', data.userEmail)
+    .eq('is_active', true);
 
-    return await query(dataConnect, {
-      userEmail: data.userEmail,
-    });
-  } catch (error) {
-    console.error('Error getting active push subscriptions:', error);
-    throw error;
-  }
+  if (error) throw error;
+  // Keep backward-compatible shape: { data: { pushSubscriptions: [...] } }
+  return { data: { pushSubscriptions: rows ?? [] } };
 }
 
-/**
- * Get maximum push subscription ID
- */
 export async function getMaxPushSubscriptionId(): Promise<any> {
-  try {
-    const { getMaxPushSubscriptionId: query } = await import('../generated/esm/index.esm.js');
+  const { data, error } = await supabase
+    .from('push_subscriptions')
+    .select('id')
+    .order('id', { ascending: false })
+    .limit(1)
+    .maybeSingle();
 
-    return await query(dataConnect, {});
-  } catch (error) {
-    console.error('Error getting max push subscription ID:', error);
-    // Fallback to a safe starting ID if query fails
-    return { data: { pushSubscriptions: [{ id: Date.now() % 1000000 }] } };
-  }
+  if (error) throw error;
+  return { data: { pushSubscriptions: data ? [{ id: data.id }] : [] } };
 }

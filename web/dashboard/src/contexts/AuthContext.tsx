@@ -1,14 +1,18 @@
-import React, { createContext, useContext, useEffect, useState } from 'react';
-import {
-  signInWithPopup,
-  signOut as firebaseSignOut,
-  onIdTokenChanged,
-  User
-} from 'firebase/auth';
-import { auth, googleProvider } from '../lib/firebase';
+import React, { createContext, useContext, useEffect, useMemo, useState } from 'react';
+import type { Session, User } from '@supabase/supabase-js';
+import { supabase } from '../lib/supabase';
+
+// Normalized user shape compatible with what App.tsx expects
+export interface AppUser {
+  email: string | null;
+  displayName: string | null;
+  photoURL: string | null;
+  id: string;
+}
 
 interface AuthContextType {
-  user: User | null;
+  user: AppUser | null;
+  session: Session | null;
   loading: boolean;
   signInWithGoogle: () => Promise<void>;
   signOut: () => Promise<void>;
@@ -24,51 +28,60 @@ export const useAuth = () => {
   return context;
 };
 
+function toAppUser(user: User): AppUser {
+  return {
+    id: user.id,
+    email: user.email ?? null,
+    displayName: user.user_metadata?.full_name ?? user.user_metadata?.name ?? user.email ?? null,
+    photoURL: user.user_metadata?.avatar_url ?? user.user_metadata?.picture ?? null,
+  };
+}
+
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [user, setUser] = useState<User | null>(null);
+  const [user, setUser] = useState<AppUser | null>(null);
+  const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // use onIdTokenChanged to handle token refreshes automatically
-    const unsubscribe = onIdTokenChanged(auth, async (user) => {
-      if (user) {
-        // Force token refresh if needed, though onIdTokenChanged handles most cases
-        // You can also get the token here: const token = await user.getIdToken();
-        console.log('Auth state changed: User signed in/token refreshed');
-      } else {
-        console.log('Auth state changed: User signed out');
-      }
-      setUser(user);
+    // Load initial session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
+      setUser(session?.user ? toAppUser(session.user) : null);
       setLoading(false);
     });
 
-    return unsubscribe;
+    // Subscribe to auth state changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setSession(session);
+      setUser(session?.user ? toAppUser(session.user) : null);
+      setLoading(false);
+    });
+
+    return () => subscription.unsubscribe();
   }, []);
 
   const signInWithGoogle = async () => {
-    try {
-      await signInWithPopup(auth, googleProvider);
-    } catch (error) {
-      console.error('Error signing in with Google:', error);
-      throw error;
-    }
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: { redirectTo: globalThis.location.origin },
+    });
+    if (error) throw error;
   };
 
   const signOut = async () => {
-    try {
-      await firebaseSignOut(auth);
-    } catch (error) {
-      console.error('Error signing out:', error);
-      throw error;
-    }
+    const { error } = await supabase.auth.signOut();
+    if (error) throw error;
   };
 
-  const value = {
-    user,
-    loading,
-    signInWithGoogle,
-    signOut,
-  };
+  const value = useMemo(
+    () => ({ user, session, loading, signInWithGoogle, signOut }),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [user, session, loading],
+  );
 
-  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+  return (
+    <AuthContext.Provider value={value}>
+      {children}
+    </AuthContext.Provider>
+  );
 };

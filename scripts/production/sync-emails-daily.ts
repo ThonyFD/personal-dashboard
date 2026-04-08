@@ -27,9 +27,8 @@ import { OAuth2Client } from 'google-auth-library';
 import { SecretManagerServiceClient } from '@google-cloud/secret-manager';
 import { persistTokens } from 'oauth-token-store';
 import { fileURLToPath } from 'url';
-import { createRequire } from 'module';
+import { createClient } from '@supabase/supabase-js';
 
-const require = createRequire(import.meta.url);
 
 // Import from ingestor service
 import { DatabaseClient } from '../../services/ingestor/src/database/client';
@@ -65,6 +64,7 @@ class DailyEmailSync {
   private parserRegistry: ParserRegistry;
   private secretClient: SecretManagerServiceClient;
   private projectId: string;
+  private readonly supabase: ReturnType<typeof createClient>;
   private stats: SyncStats;
 
   constructor() {
@@ -73,6 +73,11 @@ class DailyEmailSync {
     this.parserRegistry = new ParserRegistry();
     this.secretClient = new SecretManagerServiceClient();
     this.projectId = process.env.GOOGLE_CLOUD_PROJECT || 'mail-reader-433802';
+    this.supabase = createClient(
+      process.env.SUPABASE_URL ?? '',
+      process.env.SUPABASE_SERVICE_ROLE_KEY ?? '',
+      { auth: { persistSession: false } }
+    );
     this.stats = {
       totalEmails: 0,
       processedEmails: 0,
@@ -195,15 +200,15 @@ class DailyEmailSync {
    */
   private async getLastProcessedEmail(): Promise<any> {
     try {
-      // Use the generated query from Data Connect
-      const generated = require('../../services/ingestor/src/generated/index.cjs.js');
-      const result = await generated.getLatestEmail(this.dbClient['dataConnect']);
+      const { data, error } = await this.supabase
+        .from('emails')
+        .select('received_at')
+        .order('received_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
 
-      if (result.data?.emails && result.data.emails.length > 0) {
-        return result.data.emails[0];
-      }
-
-      return null;
+      if (error) throw error;
+      return data ? { receivedAt: data.received_at } : null;
     } catch (error) {
       console.error('Error fetching last email:', error);
       return null;

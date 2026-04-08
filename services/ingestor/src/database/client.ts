@@ -1,140 +1,83 @@
-// Firebase Data Connect client
-import { initializeApp, getApps } from 'firebase/app';
-import { getDataConnect } from 'firebase/data-connect';
-import { createRequire } from 'module';
-// Import from generated SDK (CommonJS)
-const require = createRequire(import.meta.url);
-const generated = require('../generated/index.cjs.js');
-const {
-  connectorConfig,
-  createEmail,
-  createMerchant,
-  createTransaction,
-  updateEmailParsed,
-  getGmailSyncState,
-  updateGmailSyncState,
-  getMerchantByName,
-  getAllEmails,
-  getEmailsAfterDate,
-  getLatestEmail,
-  getAllTransactions,
-  getTransactionsAfterDate,
-  getLatestTransaction,
-  ChannelType,
-  TxnType,
-} = generated;
+import { createClient, SupabaseClient } from '@supabase/supabase-js';
 import { Logger } from '../utils/logger.js';
 import { EmailData, TransactionData, MerchantData } from '../types.js';
 
+// Supabase client (service_role key bypasses RLS — safe for backend)
+function createSupabaseClient(): SupabaseClient {
+  const url = process.env.SUPABASE_URL;
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+  if (!url || !key) {
+    throw new Error('Missing SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY environment variables');
+  }
+
+  return createClient(url, key, {
+    auth: { persistSession: false },
+  });
+}
 
 export class DatabaseClient {
-  private dataConnect: ReturnType<typeof getDataConnect>;
-  private idCounter: number = 0;
+  private readonly supabase: SupabaseClient;
 
   constructor() {
-    // Initialize Firebase App if not already initialized
-    if (!getApps().length) {
-      const firebaseConfig = {
-        projectId: process.env.GOOGLE_CLOUD_PROJECT || process.env.GCP_PROJECT || 'mail-reader-433802',
-      };
-
-      initializeApp(firebaseConfig);
-
-      Logger.info('Firebase App initialized', {
-        event: 'firebase_app_init',
-        projectId: firebaseConfig.projectId,
-      });
-    }
-
-    // Initialize Firebase Data Connect
-    this.dataConnect = getDataConnect(connectorConfig);
-
-    Logger.info('Firebase Data Connect initialized', {
-      event: 'db_init',
-      connector: 'default',
-    });
+    this.supabase = createSupabaseClient();
+    Logger.info('Supabase client initialized', { event: 'db_init' });
   }
 
   /**
-   * Generate a safe INT32 ID
-   * Uses current time in seconds (not milliseconds) + counter
-   * Max INT32: 2,147,483,647
-   * Current time in seconds: ~1,762,182,412 (still fits in INT32)
-   */
-  private generateSafeId(): number {
-    const baseId = Math.floor(Date.now() / 1000); // Convert to seconds
-    this.idCounter = (this.idCounter + 1) % 1000; // Counter 0-999
-
-    // Combine: seconds * 1000 + counter
-    // This gives us unique IDs but keeps them under INT32 max
-    const id = baseId * 1000 + this.idCounter;
-
-    // Ensure it's within INT32 range
-    const MAX_INT32 = 2147483647;
-    if (id > MAX_INT32) {
-      // Fallback to random in safe range
-      return Math.floor(Math.random() * MAX_INT32);
-    }
-
-    return id;
-  }
-
-  /**
-   * Insert an email
-   * Generates ID and inserts using Data Connect SDK
+   * Insert an email record.
+   * Returns the inserted ID, or the existing ID on duplicate.
    */
   async insertEmail(data: EmailData): Promise<number> {
     const timer = Logger.startTimer();
 
     try {
-      // Generate unique ID using safe INT32 method
-      const id = this.generateSafeId();
+      const { data: row, error } = await this.supabase
+        .from('emails')
+        .insert({
+          gmail_message_id: data.gmailMessageId,
+          gmail_history_id: data.gmailHistoryId ? Number.parseInt(data.gmailHistoryId, 10) : null,
+          sender_email: data.senderEmail,
+          sender_name: data.senderName || null,
+          subject: data.subject || null,
+          received_at: data.receivedAt.toISOString(),
+          body_hash: data.bodyHash,
+          labels: data.labels || null,
+          provider: data.provider || null,
+          parsed: false,
+        })
+        .select('id')
+        .single();
 
-      // Convert Date to ISO timestamp string
-      const receivedAt = data.receivedAt.toISOString();
+      if (error) {
+        // 23505 = unique_violation (gmail_message_id already exists)
+        if (error.code === '23505') {
+          Logger.warn('Email already exists, fetching existing ID', {
+            event: 'email_duplicate',
+            gmailMessageId: data.gmailMessageId,
+          });
 
-      // Convert gmailHistoryId to number if present
-      const gmailHistoryId = data.gmailHistoryId
-        ? parseInt(data.gmailHistoryId, 10)
-        : null;
+          const { data: existing } = await this.supabase
+            .from('emails')
+            .select('id')
+            .eq('gmail_message_id', data.gmailMessageId)
+            .single();
 
-      // Call the generated mutation
-      await createEmail(this.dataConnect, {
-        id,
-        gmailMessageId: data.gmailMessageId,
-        gmailHistoryId,
-        senderEmail: data.senderEmail,
-        senderName: data.senderName || null,
-        subject: data.subject || null,
-        receivedAt,
-        bodyHash: data.bodyHash,
-        labels: data.labels || null,
-        provider: data.provider || null,
-        parsed: false,
-      });
+          return existing?.id ?? -1;
+        }
+        throw error;
+      }
 
       Logger.info('Email inserted', {
         event: 'email_inserted',
         duration_ms: timer(),
-        emailId: id,
+        emailId: row.id,
         gmailMessageId: data.gmailMessageId,
       });
 
-      return id;
+      return row.id;
 
     } catch (error) {
-      // Check if it's a duplicate key error
-      if (error instanceof Error && error.message.includes('duplicate key')) {
-        Logger.warn('Email already exists, fetching existing ID', {
-          event: 'email_duplicate',
-          gmailMessageId: data.gmailMessageId,
-        });
-
-        // In production, query for existing email by gmailMessageId
-        // For now, return a placeholder ID
-        return this.generateSafeId();
-      }
-
       Logger.error('Failed to insert email', {
         event: 'email_insert_failed',
         duration_ms: timer(),
@@ -145,69 +88,71 @@ export class DatabaseClient {
   }
 
   /**
-   * Get or create a merchant
-   * Returns the merchant ID
+   * Get existing merchant by normalized name, or create it.
+   * Returns the merchant ID.
    */
   async getOrCreateMerchant(data: MerchantData): Promise<number> {
     const timer = Logger.startTimer();
 
     try {
-      // First, try to find existing merchant by normalized_name
-      const existingResult = await getMerchantByName(this.dataConnect, {
-        name: data.normalizedName,
-      });
+      // Look for existing merchant
+      const { data: existing } = await this.supabase
+        .from('merchants')
+        .select('id')
+        .eq('normalized_name', data.normalizedName)
+        .maybeSingle();
 
-      if (existingResult.data?.merchant) {
+      if (existing) {
         Logger.info('Merchant found', {
           event: 'merchant_found',
           duration_ms: timer(),
-          merchantId: existingResult.data.merchant.id,
+          merchantId: existing.id,
           normalizedName: data.normalizedName,
         });
-
-        return existingResult.data.merchant.id;
+        return existing.id;
       }
 
-      // Merchant doesn't exist, create it
-      const id = this.generateSafeId();
+      // Insert new merchant
+      const { data: row, error } = await this.supabase
+        .from('merchants')
+        .insert({
+          name: data.name,
+          normalized_name: data.normalizedName,
+          category_id: data.categoryId || null,
+        })
+        .select('id')
+        .single();
 
-      await createMerchant(this.dataConnect, {
-        id,
-        name: data.name,
-        normalizedName: data.normalizedName,
-        categoryId: data.categoryId || null,
-      });
+      if (error) {
+        // Race condition: another request created the merchant between our check and insert
+        if (error.code === '23505') {
+          Logger.warn('Merchant duplicate detected, querying for existing ID', {
+            event: 'merchant_duplicate',
+            normalizedName: data.normalizedName,
+          });
+
+          const { data: retry } = await this.supabase
+            .from('merchants')
+            .select('id')
+            .eq('normalized_name', data.normalizedName)
+            .single();
+
+          if (retry) return retry.id;
+          throw new Error(`Merchant duplicate detected but not found: ${data.normalizedName}`);
+        }
+        throw error;
+      }
 
       Logger.info('Merchant created', {
         event: 'merchant_created',
         duration_ms: timer(),
-        merchantId: id,
+        merchantId: row.id,
         normalizedName: data.normalizedName,
       });
 
-      return id;
+      return row.id;
 
     } catch (error) {
-      if (error instanceof Error && error.message.includes('duplicate key')) {
-        // Race condition: merchant was created between our check and insert
-        // Query again to get the ID
-        Logger.warn('Merchant duplicate detected, querying for existing ID', {
-          event: 'merchant_duplicate',
-          normalizedName: data.normalizedName,
-        });
-
-        const existingResult = await getMerchantByName(this.dataConnect, {
-          name: data.normalizedName,
-        });
-
-        if (existingResult.data?.merchant) {
-          return existingResult.data.merchant.id;
-        }
-
-        // This should never happen, but fallback
-        throw new Error(`Merchant duplicate detected but not found: ${data.normalizedName}`);
-      }
-
       Logger.error('Failed to create merchant', {
         event: 'merchant_create_failed',
         duration_ms: timer(),
@@ -218,66 +163,60 @@ export class DatabaseClient {
   }
 
   /**
-   * Insert a transaction
-   * Returns the transaction ID or -1 if duplicate
+   * Insert a transaction.
+   * Returns the inserted ID, or -1 on duplicate (idempotency_key conflict).
    */
   async insertTransaction(data: TransactionData): Promise<number> {
     const timer = Logger.startTimer();
 
     try {
-      // Generate unique ID using safe INT32 method
-      const id = this.generateSafeId();
+      const { data: row, error } = await this.supabase
+        .from('transactions')
+        .insert({
+          email_id: data.emailId,
+          merchant_id: data.merchantId || null,
+          txn_type: data.txnType.toUpperCase(),
+          channel: data.channel.toUpperCase(),
+          amount: data.amount,
+          currency: data.currency || 'USD',
+          merchant_name: data.merchantName || null,
+          merchant_raw: data.merchantRaw || null,
+          txn_date: data.txnDate.toISOString().split('T')[0],
+          txn_timestamp: data.txnTimestamp?.toISOString() || null,
+          card_last4: data.cardLast4 || null,
+          account_last4: data.accountLast4 || null,
+          provider: data.provider,
+          reference_number: data.referenceNumber || null,
+          description: data.description || null,
+          notes: data.notes || null,
+          idempotency_key: data.idempotencyKey,
+        })
+        .select('id')
+        .single();
 
-      // Convert transaction type to enum
-      const txnType = data.txnType.toUpperCase() as keyof typeof TxnType;
-      const channel = data.channel.toUpperCase() as keyof typeof ChannelType;
-
-      // Convert Date to ISO string
-      const txnDate = data.txnDate.toISOString().split('T')[0]; // YYYY-MM-DD
-      const txnTimestamp = data.txnTimestamp?.toISOString() || null;
-
-      await createTransaction(this.dataConnect, {
-        id,
-        emailId: data.emailId,
-        merchantId: data.merchantId || null,
-        txnType: TxnType[txnType],
-        channel: ChannelType[channel],
-        amount: data.amount,
-        currency: data.currency || 'USD',
-        merchantName: data.merchantName || null,
-        merchantRaw: data.merchantRaw || null,
-        txnDate,
-        txnTimestamp,
-        cardLast4: data.cardLast4 || null,
-        accountLast4: data.accountLast4 || null,
-        provider: data.provider,
-        referenceNumber: data.referenceNumber || null,
-        description: data.description || null,
-        notes: data.notes || null,
-        idempotencyKey: data.idempotencyKey,
-      });
+      if (error) {
+        if (error.code === '23505') {
+          Logger.warn('Transaction already exists (duplicate)', {
+            event: 'duplicate_transaction',
+            idempotencyKey: data.idempotencyKey,
+          });
+          return -1;
+        }
+        throw error;
+      }
 
       Logger.info('Transaction inserted', {
         event: 'transaction_inserted',
         duration_ms: timer(),
-        transactionId: id,
+        transactionId: row.id,
         idempotencyKey: data.idempotencyKey,
         amount: data.amount,
         merchant: data.merchantName,
       });
 
-      return id;
+      return row.id;
 
     } catch (error) {
-      // Check if it's a duplicate key error
-      if (error instanceof Error && (error.message.includes('duplicate') || error.message.includes('idempotency'))) {
-        Logger.warn('Transaction already exists (duplicate)', {
-          event: 'duplicate_transaction',
-          idempotencyKey: data.idempotencyKey,
-        });
-        return -1;
-      }
-
       Logger.error('Failed to insert transaction', {
         event: 'transaction_insert_failed',
         duration_ms: timer(),
@@ -289,16 +228,18 @@ export class DatabaseClient {
   }
 
   /**
-   * Mark an email as parsed
+   * Mark an email as parsed.
    */
   async markEmailParsed(emailId: number): Promise<void> {
     const timer = Logger.startTimer();
 
     try {
-      await updateEmailParsed(this.dataConnect, {
-        id: emailId,
-        parsed: true,
-      });
+      const { error } = await this.supabase
+        .from('emails')
+        .update({ parsed: true })
+        .eq('id', emailId);
+
+      if (error) throw error;
 
       Logger.info('Email marked as parsed', {
         event: 'email_marked_parsed',
@@ -318,27 +259,30 @@ export class DatabaseClient {
   }
 
   /**
-   * Get the last processed historyId
+   * Get the last processed Gmail historyId.
    */
   async getLastHistoryId(): Promise<string | null> {
     const timer = Logger.startTimer();
 
     try {
-      const result = await getGmailSyncState(this.dataConnect);
+      const { data, error } = await this.supabase
+        .from('gmail_sync_state')
+        .select('last_history_id, last_synced_at')
+        .eq('id', 1)
+        .maybeSingle();
 
-      if (!result.data?.gmailSyncState) {
-        Logger.warn('Gmail sync state not found', {
-          event: 'sync_state_not_found',
-        });
+      if (error) throw error;
+
+      if (!data) {
+        Logger.warn('Gmail sync state not found', { event: 'sync_state_not_found' });
         return null;
       }
 
-      const historyId = String(result.data.gmailSyncState.lastHistoryId);
-
+      const historyId = String(data.last_history_id);
       Logger.info('Retrieved last historyId', {
         event: 'get_last_history_id',
         historyId,
-        lastSyncedAt: result.data.gmailSyncState.lastSyncedAt,
+        lastSyncedAt: data.last_synced_at,
         duration_ms: timer(),
       });
 
@@ -355,17 +299,22 @@ export class DatabaseClient {
   }
 
   /**
-   * Update the last processed historyId
+   * Update the last processed Gmail historyId.
    */
   async updateLastHistoryId(historyId: string, watchExpiration?: string): Promise<void> {
     const timer = Logger.startTimer();
 
     try {
-      await updateGmailSyncState(this.dataConnect, {
-        lastHistoryId: parseInt(historyId, 10),
-        lastSyncedAt: new Date().toISOString(),
-        watchExpiration: watchExpiration || null,
-      });
+      const { error } = await this.supabase
+        .from('gmail_sync_state')
+        .upsert({
+          id: 1,
+          last_history_id: Number.parseInt(historyId, 10),
+          last_synced_at: new Date().toISOString(),
+          watch_expiration: watchExpiration || null,
+        }, { onConflict: 'id' });
+
+      if (error) throw error;
 
       Logger.info('Updated last historyId', {
         event: 'update_last_history_id',
@@ -386,7 +335,7 @@ export class DatabaseClient {
   }
 
   /**
-   * Get email statistics for monitoring
+   * Get email statistics for monitoring.
    */
   async getEmailStats(): Promise<{
     total: number;
@@ -397,38 +346,29 @@ export class DatabaseClient {
     const timer = Logger.startTimer();
     try {
       const now = new Date();
-      const oneDayAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
-      const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+      const oneDayAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000).toISOString();
+      const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000).toISOString();
 
-      // Get total count
-      const totalResult = await getAllEmails(this.dataConnect);
-      const total = totalResult.data.emails?.length || 0;
+      const [totalResult, last24hResult, last7dResult, latestResult] = await Promise.all([
+        this.supabase.from('emails').select('*', { count: 'exact', head: true }),
+        this.supabase.from('emails').select('*', { count: 'exact', head: true }).gte('received_at', oneDayAgo),
+        this.supabase.from('emails').select('*', { count: 'exact', head: true }).gte('received_at', sevenDaysAgo),
+        this.supabase.from('emails').select('received_at').order('received_at', { ascending: false }).limit(1),
+      ]);
 
-      // Get last 24h count
-      const last24hResult = await getEmailsAfterDate(this.dataConnect, {
-        minDate: oneDayAgo.toISOString(),
-      });
-      const last24h = last24hResult.data.emails?.length || 0;
-
-      // Get last 7d count
-      const last7dResult = await getEmailsAfterDate(this.dataConnect, {
-        minDate: sevenDaysAgo.toISOString(),
-      });
-      const last7d = last7dResult.data.emails?.length || 0;
-
-      // Get latest email
-      const latestResult = await getLatestEmail(this.dataConnect);
-      const latestReceivedAt = latestResult.data.emails?.[0]?.receivedAt || null;
+      const total = totalResult.count ?? 0;
+      const last24h = last24hResult.count ?? 0;
+      const last7d = last7dResult.count ?? 0;
+      const latestReceivedAt = latestResult.data?.[0]?.received_at ?? null;
 
       Logger.info('Email stats retrieved', {
         event: 'get_email_stats',
         duration_ms: timer(),
-        total,
-        last24h,
-        last7d,
+        total, last24h, last7d,
       });
 
       return { total, last24h, last7d, latestReceivedAt };
+
     } catch (error) {
       Logger.error('Failed to get email stats', {
         event: 'get_email_stats_failed',
@@ -440,7 +380,7 @@ export class DatabaseClient {
   }
 
   /**
-   * Get transaction statistics for monitoring
+   * Get transaction statistics for monitoring.
    */
   async getTransactionStats(): Promise<{
     total: number;
@@ -451,41 +391,29 @@ export class DatabaseClient {
     const timer = Logger.startTimer();
     try {
       const now = new Date();
-      const oneDayAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
-      const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+      const oneDayAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+      const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
 
-      // Format dates as YYYY-MM-DD for Date type
-      const formatDate = (date: Date) => date.toISOString().split('T')[0];
+      const [totalResult, last24hResult, last7dResult, latestResult] = await Promise.all([
+        this.supabase.from('transactions').select('*', { count: 'exact', head: true }),
+        this.supabase.from('transactions').select('*', { count: 'exact', head: true }).gte('txn_date', oneDayAgo),
+        this.supabase.from('transactions').select('*', { count: 'exact', head: true }).gte('txn_date', sevenDaysAgo),
+        this.supabase.from('transactions').select('txn_date').order('txn_date', { ascending: false }).limit(1),
+      ]);
 
-      // Get total count
-      const totalResult = await getAllTransactions(this.dataConnect);
-      const total = totalResult.data.transactions?.length || 0;
-
-      // Get last 24h count
-      const last24hResult = await getTransactionsAfterDate(this.dataConnect, {
-        minDate: formatDate(oneDayAgo),
-      });
-      const last24h = last24hResult.data.transactions?.length || 0;
-
-      // Get last 7d count
-      const last7dResult = await getTransactionsAfterDate(this.dataConnect, {
-        minDate: formatDate(sevenDaysAgo),
-      });
-      const last7d = last7dResult.data.transactions?.length || 0;
-
-      // Get latest transaction
-      const latestResult = await getLatestTransaction(this.dataConnect);
-      const latestDate = latestResult.data.transactions?.[0]?.txnDate || null;
+      const total = totalResult.count ?? 0;
+      const last24h = last24hResult.count ?? 0;
+      const last7d = last7dResult.count ?? 0;
+      const latestDate = latestResult.data?.[0]?.txn_date ?? null;
 
       Logger.info('Transaction stats retrieved', {
         event: 'get_transaction_stats',
         duration_ms: timer(),
-        total,
-        last24h,
-        last7d,
+        total, last24h, last7d,
       });
 
       return { total, last24h, last7d, latestDate };
+
     } catch (error) {
       Logger.error('Failed to get transaction stats', {
         event: 'get_transaction_stats_failed',
@@ -496,13 +424,7 @@ export class DatabaseClient {
     }
   }
 
-  /**
-   * Close connection (no-op for Data Connect)
-   */
   async close(): Promise<void> {
-    // Firebase Data Connect handles connections automatically
-    Logger.info('Database client closed', {
-      event: 'db_close',
-    });
+    Logger.info('Database client closed', { event: 'db_close' });
   }
 }

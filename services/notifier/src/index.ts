@@ -1,13 +1,19 @@
 import express from 'express';
 import * as admin from 'firebase-admin';
+import { createClient, SupabaseClient } from '@supabase/supabase-js';
 
 const app = express();
 app.use(express.json());
 
-// Initialize Firebase Admin
+// Firebase Admin — only used for FCM push notifications
 admin.initializeApp({
   projectId: process.env.GOOGLE_CLOUD_PROJECT || 'mail-reader-433802',
 });
+
+// Supabase — service_role key bypasses RLS
+const supabaseUrl = process.env.SUPABASE_URL ?? '';
+const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY ?? '';
+const supabase: SupabaseClient = createClient(supabaseUrl, supabaseKey, { auth: { persistSession: false } });
 
 interface Logger {
   info(message: string, context?: any): void;
@@ -57,10 +63,15 @@ interface PushSubscription {
   isActive: boolean;
 }
 
+function getDayLabel(i: number, date: Date): string {
+  if (i === 0) return 'Hoy';
+  if (i === 1) return 'Mañana';
+  return date.toLocaleDateString('es-PA', { month: 'short', day: 'numeric' });
+}
+
 // Get pending payments for today + next 3 days
 async function getPendingPayments(): Promise<DayPayments[]> {
   const now = new Date();
-  // Convert to Panama timezone
   const panamaTime = new Date(now.toLocaleString('en-US', { timeZone: 'America/Panama' }));
 
   const results: DayPayments[] = [];
@@ -73,89 +84,59 @@ async function getPendingPayments(): Promise<DayPayments[]> {
     const month = date.getMonth() + 1;
     const day = date.getDate();
 
-    // Query Firebase Data Connect REST API
-    const response = await fetch(
-      `https://firebasedataconnect.googleapis.com/v1beta/projects/mail-reader-433802/locations/us-central1/services/personal-dashboard/connectors/connector:executeQuery`,
-      {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${await getAccessToken()}`,
-        },
-        body: JSON.stringify({
-          name: 'GetPendingPaymentsForDay',
-          variables: { year, month, day },
-        }),
-      }
-    );
+    const { data, error } = await supabase
+      .from('manual_transactions')
+      .select('id, description, amount, payment_method, transaction_type, notes')
+      .eq('year', year)
+      .eq('month', month)
+      .eq('day', day)
+      .eq('is_paid', false);
 
-    if (!response.ok) {
-      throw new Error(`Failed to fetch payments for ${year}-${month}-${day}`);
-    }
+    if (error) throw new Error(`Failed to fetch payments for ${year}-${month}-${day}: ${error.message}`);
 
-    const data: any = await response.json();
-    const payments = data.data?.manualTransactions || [];
+    const payments: PendingPayment[] = (data ?? []).map((r: any) => ({
+      id: r.id,
+      description: r.description,
+      amount: Number(r.amount),
+      paymentMethod: r.payment_method,
+      transactionType: r.transaction_type,
+      notes: r.notes,
+    }));
 
     if (payments.length > 0) {
-      const dayLabel = i === 0 ? 'Hoy' : i === 1 ? 'Mañana' : date.toLocaleDateString('es-PA', { month: 'short', day: 'numeric' });
-      results.push({
-        date,
-        dayLabel,
-        dayOffset: i,
-        payments,
-      });
+      results.push({ date, dayLabel: getDayLabel(i, date), dayOffset: i, payments });
     }
   }
 
   return results;
 }
 
-// Get Google Cloud access token
-async function getAccessToken(): Promise<string> {
-  const client = await admin.credential.applicationDefault().getAccessToken();
-  return client.access_token;
-}
-
 // Get all active push subscriptions
 async function getActivePushSubscriptions(): Promise<PushSubscription[]> {
-  const response = await fetch(
-    `https://firebasedataconnect.googleapis.com/v1beta/projects/mail-reader-433802/locations/us-central1/services/personal-dashboard/connectors/connector:executeQuery`,
-    {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${await getAccessToken()}`,
-      },
-      body: JSON.stringify({
-        name: 'GetAllActivePushSubscriptions',
-      }),
-    }
-  );
+  const { data, error } = await supabase
+    .from('push_subscriptions')
+    .select('id, user_email, endpoint, keys, is_active')
+    .eq('is_active', true);
 
-  if (!response.ok) {
-    throw new Error('Failed to fetch active subscriptions');
-  }
+  if (error) throw new Error(`Failed to fetch active subscriptions: ${error.message}`);
 
-  const data: any = await response.json();
-  return data.data?.pushSubscriptions || [];
+  return (data ?? []).map((r: any) => ({
+    id: r.id,
+    userEmail: r.user_email,
+    endpoint: r.endpoint,
+    keys: typeof r.keys === 'string' ? r.keys : JSON.stringify(r.keys),
+    isActive: r.is_active,
+  }));
 }
 
 // Deactivate a subscription
 async function deactivateSubscription(id: number): Promise<void> {
-  await fetch(
-    `https://firebasedataconnect.googleapis.com/v1beta/projects/mail-reader-433802/locations/us-central1/services/personal-dashboard/connectors/connector:executeMutation`,
-    {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${await getAccessToken()}`,
-      },
-      body: JSON.stringify({
-        name: 'DeactivatePushSubscription',
-        variables: { id, isActive: false },
-      }),
-    }
-  );
+  const { error } = await supabase
+    .from('push_subscriptions')
+    .update({ is_active: false })
+    .eq('id', id);
+
+  if (error) throw new Error(`Failed to deactivate subscription ${id}: ${error.message}`);
 }
 
 // Send push notification
