@@ -45,6 +45,8 @@ export class DatabaseClient {
           labels: data.labels || null,
           provider: data.provider || null,
           parsed: false,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
         })
         .select('id')
         .single();
@@ -195,6 +197,8 @@ export class DatabaseClient {
           description: data.description || null,
           notes: data.notes || null,
           idempotency_key: data.idempotencyKey,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
         })
         .select('id')
         .single();
