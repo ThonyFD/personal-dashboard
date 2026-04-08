@@ -119,6 +119,11 @@ export class DatabaseClient {
           name: data.name,
           normalized_name: data.normalizedName,
           category_id: data.categoryId || null,
+          first_seen_at: new Date().toISOString(),
+          transaction_count: 0,
+          total_amount: 0,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
         })
         .select('id')
         .single();
