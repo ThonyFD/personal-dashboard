@@ -71,14 +71,17 @@ jobs:
         run: npm ci
 
       - name: Authenticate to Google Cloud
+        id: auth
         uses: google-github-actions/auth@v2
         with:
           workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
           service_account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
+          token_format: 'access_token'
 
       - name: Send notifications
         env:
           GOOGLE_CLOUD_PROJECT: mail-reader-433802
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          FIREBASE_ACCESS_TOKEN: ${{ steps.auth.outputs.access_token }}
         run: npx tsx scripts/production/send-notifications.ts

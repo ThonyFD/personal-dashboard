@@ -22,6 +22,12 @@ const supabase = createClient(
 
 initializeApp({
   projectId: process.env.GOOGLE_CLOUD_PROJECT || 'mail-reader-433802',
+  credential: {
+    getAccessToken: async () => ({
+      access_token: process.env.FIREBASE_ACCESS_TOKEN ?? '',
+      expires_in: 3600,
+    }),
+  },
 });
 
 interface PendingPayment {
