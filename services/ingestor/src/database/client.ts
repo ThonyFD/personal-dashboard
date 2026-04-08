@@ -83,7 +83,7 @@ export class DatabaseClient {
       Logger.error('Failed to insert email', {
         event: 'email_insert_failed',
         duration_ms: timer(),
-        error: error instanceof Error ? error.message : String(error),
+        error: error instanceof Error ? error.message : (error as any)?.message ?? JSON.stringify(error),
       });
       throw error;
     }
@@ -160,7 +160,7 @@ export class DatabaseClient {
       Logger.error('Failed to create merchant', {
         event: 'merchant_create_failed',
         duration_ms: timer(),
-        error: error instanceof Error ? error.message : String(error),
+        error: error instanceof Error ? error.message : (error as any)?.message ?? JSON.stringify(error),
       });
       throw error;
     }
@@ -227,7 +227,7 @@ export class DatabaseClient {
         event: 'transaction_insert_failed',
         duration_ms: timer(),
         idempotencyKey: data.idempotencyKey,
-        error: error instanceof Error ? error.message : String(error),
+        error: error instanceof Error ? error.message : (error as any)?.message ?? JSON.stringify(error),
       });
       throw error;
     }
@@ -258,7 +258,7 @@ export class DatabaseClient {
         event: 'email_mark_parsed_failed',
         duration_ms: timer(),
         emailId,
-        error: error instanceof Error ? error.message : String(error),
+        error: error instanceof Error ? error.message : (error as any)?.message ?? JSON.stringify(error),
       });
       throw error;
     }
@@ -298,7 +298,7 @@ export class DatabaseClient {
       Logger.error('Failed to get last historyId', {
         event: 'get_last_history_id_failed',
         duration_ms: timer(),
-        error: error instanceof Error ? error.message : String(error),
+        error: error instanceof Error ? error.message : (error as any)?.message ?? JSON.stringify(error),
       });
       return null;
     }
@@ -334,7 +334,7 @@ export class DatabaseClient {
         event: 'update_last_history_id_failed',
         duration_ms: timer(),
         historyId,
-        error: error instanceof Error ? error.message : String(error),
+        error: error instanceof Error ? error.message : (error as any)?.message ?? JSON.stringify(error),
       });
       throw error;
     }
@@ -379,7 +379,7 @@ export class DatabaseClient {
       Logger.error('Failed to get email stats', {
         event: 'get_email_stats_failed',
         duration_ms: timer(),
-        error: error instanceof Error ? error.message : String(error),
+        error: error instanceof Error ? error.message : (error as any)?.message ?? JSON.stringify(error),
       });
       throw error;
     }
@@ -424,7 +424,7 @@ export class DatabaseClient {
       Logger.error('Failed to get transaction stats', {
         event: 'get_transaction_stats_failed',
         duration_ms: timer(),
-        error: error instanceof Error ? error.message : String(error),
+        error: error instanceof Error ? error.message : (error as any)?.message ?? JSON.stringify(error),
       });
       throw error;
     }
