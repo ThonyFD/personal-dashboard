@@ -10,8 +10,8 @@ import { GmailMessage, ParsedTransaction } from '../types.js';
 import { Logger } from '../utils/logger.js';
 
 export class ParserRegistry {
-  private parsers: BaseParser[];
-  private llmFallback: LLMFallbackParser;
+  private readonly parsers: BaseParser[];
+  private readonly llmFallback: LLMFallbackParser;
 
   constructor() {
     this.parsers = [
@@ -75,7 +75,7 @@ export class ParserRegistry {
       subject,
     });
 
-    const transaction = await this.llmFallback.parse(emailBody, message);
+    const transaction = await this.llmFallback.parse(emailBody, message, senderEmail, subject);
     if (transaction) {
       return {
         provider: 'llm',
@@ -93,4 +93,8 @@ export class ParserRegistry {
   }
 }
 
-export { BACParser, BanistmoParser, BanisiParser, ClaveParser, YappyParser };
+export { BACParser } from './bac.js';
+export { BanistmoParser } from './banistmo.js';
+export { BanisiParser } from './banisi.js';
+export { ClaveParser } from './clave.js';
+export { YappyParser } from './yappy.js';

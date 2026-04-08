@@ -163,10 +163,8 @@ export class IngestionHandler {
         provider,
       });
 
-      // Parse transaction if provider detected
-      if (provider) {
-        await this.parseAndStoreTransaction(emailId, emailBody, message, senderEmail, subject);
-      }
+      // Always attempt to parse — regex parsers run first, LLM fallback covers unknown senders
+      await this.parseAndStoreTransaction(emailId, emailBody, message, senderEmail, subject);
 
       Logger.info('Message processing complete', {
         event: 'message_processed',
