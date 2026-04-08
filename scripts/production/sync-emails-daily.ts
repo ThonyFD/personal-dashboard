@@ -125,9 +125,9 @@ class DailyEmailSync {
 
       persistTokens(
         {
-          access_token: tokens.access_token,
+          access_token: tokens.access_token ?? undefined,
           refresh_token: tokens.refresh_token || refreshToken,
-          expiry_date: tokens.expiry_date,
+          expiry_date: tokens.expiry_date ?? undefined,
         },
         {
           projectId: this.projectId,
@@ -208,7 +208,7 @@ class DailyEmailSync {
         .maybeSingle();
 
       if (error) throw error;
-      return data ? { receivedAt: data.received_at } : null;
+      return data ? { receivedAt: (data as { received_at: string }).received_at } : null;
     } catch (error) {
       console.error('Error fetching last email:', error);
       return null;
@@ -232,7 +232,7 @@ class DailyEmailSync {
 
     try {
       do {
-        const response = await this.gmail.users.messages.list({
+        const response: any = await this.gmail.users.messages.list({
           userId: 'me',
           q: query,
           maxResults: MAX_RESULTS_PER_PAGE,
@@ -391,10 +391,13 @@ class DailyEmailSync {
       return true;
 
     } catch (error) {
-      const errorMsg = error instanceof Error ? error.message : String(error);
+      // Supabase returns PostgrestError objects, not Error instances
+      const errorMsg = error instanceof Error
+        ? error.message
+        : (error as any)?.message ?? JSON.stringify(error);
 
       // Check if it's a duplicate error (not a real failure)
-      if (errorMsg.includes('duplicate key')) {
+      if (errorMsg.includes('duplicate key') || (error as any)?.code === '23505') {
         console.log(`      ⊘ Already processed (duplicate)`);
         this.stats.duplicatesSkipped++;
         this.stats.processedEmails++;
