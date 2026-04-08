@@ -5,6 +5,11 @@ on:
     # 6:00 AM Panama (GMT-5) = 11:00 UTC
     - cron: '0 11 * * *'
   workflow_dispatch:
+    inputs:
+      lookback_days:
+        description: 'Days to look back (overrides automatic calculation)'
+        required: false
+        type: number
 
 jobs:
   # ── 1. Sync emails from Gmail → Supabase ──────────────────────────────────
@@ -39,6 +44,7 @@ jobs:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          LOOKBACK_DAYS: ${{ inputs.lookback_days }}
         run: npx tsx scripts/production/sync-emails-daily.ts
 
       - name: Upload logs on failure
