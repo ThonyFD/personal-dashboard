@@ -49,38 +49,7 @@ jobs:
           path: '*.log'
           retention-days: 7
 
-  # ── 2. Renew Gmail watch (expires every 7 days) ───────────────────────────
-  renew-watch:
-    name: Renew Gmail Watch
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      id-token: write
-
-    steps:
-      - uses: actions/checkout@v4
-
-      - uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-          cache: 'npm'
-          cache-dependency-path: 'package-lock.json'
-
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Authenticate to Google Cloud
-        uses: google-github-actions/auth@v2
-        with:
-          workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
-          service_account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
-
-      - name: Renew Gmail watch
-        env:
-          GOOGLE_CLOUD_PROJECT: mail-reader-433802
-        run: npx tsx scripts/production/renew-gmail-watch.ts
-
-  # ── 3. Send push notifications for pending payments ───────────────────────
+  # ── 2. Send push notifications for pending payments ───────────────────────
   send-notifications:
     name: Send Payment Notifications
     runs-on: ubuntu-latest
