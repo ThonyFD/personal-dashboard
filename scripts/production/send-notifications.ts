@@ -9,7 +9,8 @@
  *   SUPABASE_SERVICE_ROLE_KEY
  */
 
-import * as admin from 'firebase-admin';
+import { initializeApp } from 'firebase-admin/app';
+import { getMessaging } from 'firebase-admin/messaging';
 import { createClient } from '@supabase/supabase-js';
 import { fileURLToPath } from 'url';
 
@@ -19,8 +20,14 @@ const supabase = createClient(
   { auth: { persistSession: false } }
 );
 
-admin.initializeApp({
+initializeApp({
   projectId: process.env.GOOGLE_CLOUD_PROJECT || 'mail-reader-433802',
+  credential: {
+    getAccessToken: async () => ({
+      access_token: process.env.FIREBASE_ACCESS_TOKEN ?? '',
+      expires_in: 3600,
+    }),
+  },
 });
 
 interface PendingPayment {
@@ -96,7 +103,7 @@ async function run(): Promise<void> {
       const keys = typeof sub.keys === 'string' ? JSON.parse(sub.keys) : sub.keys;
       const fcmToken = keys.fcmToken || sub.endpoint;
 
-      await admin.messaging().send({
+      await getMessaging().send({
         token: fcmToken,
         notification: { title, body },
         webpush: {

@@ -149,6 +149,12 @@ class DailyEmailSync {
   private async calculateDateQuery(): Promise<string | null> {
     console.log('📅 Calculating sync window...');
 
+    const overrideDays = process.env.LOOKBACK_DAYS ? Number.parseInt(process.env.LOOKBACK_DAYS, 10) : null;
+    if (overrideDays && overrideDays > 0) {
+      console.log(`   Using LOOKBACK_DAYS override: ${overrideDays} days\n`);
+      return this.formatDateQuery(overrideDays);
+    }
+
     try {
       // Get the last processed email from database
       const lastEmail = await this.getLastProcessedEmail();
