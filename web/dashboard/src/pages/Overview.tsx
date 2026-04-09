@@ -1,15 +1,99 @@
 import { useQuery } from '@tanstack/react-query'
-import { fetchStats, fetchTransactions } from '../api/dataconnect-client'
+import { fetchStats } from '../api/dataconnect-client'
 import { format } from 'date-fns'
 import { formatCurrency } from '../utils/format'
 import { useState, useMemo } from 'react'
 import { getDateRange, type PeriodType } from '../utils/dateRange'
+
+const GITHUB_OWNER = 'ThonyFD'
+const GITHUB_REPO = 'personal-dashboard'
+const WORKFLOW_FILE = 'daily-email-sync.yml'
+const GITHUB_REF = 'main'
+
+async function triggerEmailSync(lookbackDays?: number): Promise<void> {
+  const token = import.meta.env.VITE_GITHUB_TOKEN
+  if (!token) throw new Error('VITE_GITHUB_TOKEN is not set')
+
+  const body: Record<string, unknown> = { ref: GITHUB_REF }
+  if (lookbackDays) body.inputs = { lookback_days: String(lookbackDays) }
+
+  const res = await fetch(
+    `https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}/actions/workflows/${WORKFLOW_FILE}/dispatches`,
+    {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${token}`,
+        Accept: 'application/vnd.github+json',
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(body),
+    }
+  )
+  if (!res.ok) {
+    const text = await res.text()
+    throw new Error(`GitHub API error ${res.status}: ${text}`)
+  }
+}
+
+const SYNC_BUTTON_COLORS: Record<string, string> = {
+  success: '#38a169',
+  error: '#e53e3e',
+  idle: '#2b6cb0',
+  loading: '#2b6cb0',
+}
+
+const SYNC_BUTTON_LABELS: Record<string, string> = {
+  loading: 'Syncing...',
+  success: 'Triggered!',
+  error: 'Error',
+  idle: 'Sync Emails',
+}
+
+function SyncButton({ syncState, onClick }: Readonly<{ syncState: string; onClick: () => void }>) {
+  return (
+    <button
+      onClick={onClick}
+      disabled={syncState === 'loading'}
+      style={{
+        padding: '0.4rem 0.9rem',
+        border: 'none',
+        borderRadius: '4px',
+        backgroundColor: SYNC_BUTTON_COLORS[syncState] ?? '#2b6cb0',
+        color: 'white',
+        cursor: syncState === 'loading' ? 'not-allowed' : 'pointer',
+        fontSize: '0.85rem',
+        fontWeight: '500',
+        opacity: syncState === 'loading' ? 0.7 : 1,
+        whiteSpace: 'nowrap',
+      }}
+    >
+      {SYNC_BUTTON_LABELS[syncState] ?? 'Sync Emails'}
+    </button>
+  )
+}
 
 export default function Overview() {
   const [currentPage, setCurrentPage] = useState(1)
   const [itemsPerPage, setItemsPerPage] = useState(10)
   const [periodType, setPeriodType] = useState<PeriodType>('month')
   const [periodOffset, setPeriodOffset] = useState(0)
+  const [syncDays, setSyncDays] = useState<string>('')
+  const [syncState, setSyncState] = useState<'idle' | 'loading' | 'success' | 'error'>('idle')
+  const [syncError, setSyncError] = useState<string>('')
+
+  async function handleSync() {
+    setSyncState('loading')
+    setSyncError('')
+    try {
+      const days = syncDays ? parseInt(syncDays, 10) : undefined
+      await triggerEmailSync(days)
+      setSyncState('success')
+      setTimeout(() => setSyncState('idle'), 4000)
+    } catch (err) {
+      setSyncError(err instanceof Error ? err.message : 'Unknown error')
+      setSyncState('error')
+    }
+  }
 
   // Calculate current date range based on period selection
   const dateRange = useMemo(
@@ -22,27 +106,47 @@ export default function Overview() {
     queryFn: () => fetchStats(dateRange.startDate, dateRange.endDate),
   })
 
-  const { data: allTransactions, isLoading: txnLoading } = useQuery({
-    queryKey: ['transactions', 100, dateRange.startDate, dateRange.endDate],
-    queryFn: () => fetchTransactions(100, dateRange.startDate, dateRange.endDate),
-  })
+  const allTransactions = stats?.transactions ?? []
 
   const paginatedTransactions = useMemo(() => {
-    if (!allTransactions) return []
     const startIndex = (currentPage - 1) * itemsPerPage
     const endIndex = startIndex + itemsPerPage
     return allTransactions.slice(startIndex, endIndex)
   }, [allTransactions, currentPage, itemsPerPage])
 
-  const totalPages = Math.ceil((allTransactions?.length || 0) / itemsPerPage)
+  const totalPages = Math.ceil(allTransactions.length / itemsPerPage)
 
-  if (statsLoading || txnLoading) {
+  if (statsLoading) {
     return <div className="loading">Loading...</div>
   }
 
   return (
     <div>
-      <h1>Dashboard Overview</h1>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '0.75rem', marginBottom: '1rem' }}>
+        <h1 style={{ margin: 0 }}>Dashboard Overview</h1>
+
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
+          <input
+            type="number"
+            value={syncDays}
+            onChange={e => setSyncDays(e.target.value)}
+            placeholder="Days (optional)"
+            min={1}
+            disabled={syncState === 'loading'}
+            style={{
+              padding: '0.4rem 0.6rem',
+              border: '1px solid #ddd',
+              borderRadius: '4px',
+              fontSize: '0.85rem',
+              width: '130px',
+            }}
+          />
+          <SyncButton syncState={syncState} onClick={handleSync} />
+          {syncState === 'error' && (
+            <span style={{ fontSize: '0.78rem', color: '#e53e3e', maxWidth: '200px' }}>{syncError}</span>
+          )}
+        </div>
+      </div>
 
       {/* Period Selector - Mobile Responsive */}
       <div style={{
