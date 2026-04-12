@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 import { fetchStats } from '../api/dataconnect-client'
-import { format } from 'date-fns'
+import { format, parse } from 'date-fns'
 import { formatCurrency } from '../utils/format'
 import { useState, useMemo } from 'react'
 import { getDateRange, type PeriodType } from '../utils/dateRange'
@@ -329,7 +329,7 @@ export default function Overview() {
           <tbody>
             {paginatedTransactions.map((txn) => (
               <tr key={txn.id}>
-                <td>{format(new Date(txn.txn_date), 'MMM dd, yyyy')}</td>
+                <td>{format(parse(txn.txn_date, 'yyyy-MM-dd', new Date()), 'MMM dd, yyyy')}</td>
                 <td>{txn.merchant_name}</td>
                 <td>
                   <span style={{

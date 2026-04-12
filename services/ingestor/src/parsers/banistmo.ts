@@ -1,5 +1,5 @@
 // Banistmo transaction parser
-import { BaseParser, ParserConfig } from './base.js';
+import { BaseParser, ParserConfig, PANAMA_TZ_OFFSET } from './base.js';
 import { ParsedTransaction, GmailMessage } from '../types.js';
 
 const BANISTMO_CONFIG: ParserConfig = {
@@ -172,45 +172,39 @@ export class BanistmoParser extends BaseParser {
 
   protected override extractDate(text: string): Date | null {
     // Banistmo format: "30-oct-2025 a las 4:13 pm"
-    const datePatterns = [
-      /(\d{1,2})-(ene|feb|mar|abr|may|jun|jul|ago|sep|oct|nov|dic)-(\d{4})\s+a\s+las\s+(\d{1,2}):(\d{2})\s*(am|pm)/i,
-      /fecha\s+y\s+hora.*?:?\s*(\d{1,2})-(ene|feb|mar|abr|may|jun|jul|ago|sep|oct|nov|dic)-(\d{4})\s+a\s+las\s+(\d{1,2}):(\d{2})\s*(am|pm)/i,
+    // Both patterns share the same capture groups — try prefix match first, then bare date.
+    const DATE_PART = String.raw`(\d{1,2})-([a-z]{3})-(\d{4})\s+a\s+las\s+(\d{1,2}):(\d{2})\s*(am|pm)`;
+    const patterns = [
+      new RegExp(String.raw`fecha\s+y\s+hora.*?:?\s*` + DATE_PART, 'i'),
+      new RegExp(DATE_PART, 'i'),
     ];
 
-    const monthMap: Record<string, number> = {
-      'ene': 0, 'feb': 1, 'mar': 2, 'abr': 3, 'may': 4, 'jun': 5,
-      'jul': 6, 'ago': 7, 'sep': 8, 'oct': 9, 'nov': 10, 'dic': 11,
+    const monthMap: Record<string, string> = {
+      ene: '01', feb: '02', mar: '03', abr: '04', may: '05', jun: '06',
+      jul: '07', ago: '08', sep: '09', oct: '10', nov: '11', dic: '12',
     };
 
-    for (const pattern of datePatterns) {
-      const match = text.match(pattern);
-      if (match) {
-        try {
-          const day = parseInt(match[1]);
-          const month = monthMap[match[2].toLowerCase()];
-          const year = parseInt(match[3]);
-          let hour = parseInt(match[4]);
-          const minute = parseInt(match[5]);
-          const period = match[6].toLowerCase();
+    for (const pattern of patterns) {
+      const m = pattern.exec(text);
+      if (!m) continue;
 
-          // Convert to 24-hour format
-          if (period === 'pm' && hour !== 12) {
-            hour += 12;
-          } else if (period === 'am' && hour === 12) {
-            hour = 0;
-          }
+      const mm = monthMap[m[2].toLowerCase()];
+      if (!mm) continue;
 
-          const date = new Date(year, month, day, hour, minute, 0);
-          if (!isNaN(date.getTime())) {
-            return date;
-          }
-        } catch {
-          continue;
-        }
-      }
+      const dd = m[1].padStart(2, '0');
+      const yyyy = m[3];
+      let hour = Number.parseInt(m[4], 10);
+      const minute = Number.parseInt(m[5], 10);
+
+      if (m[6].toLowerCase() === 'pm' && hour !== 12) hour += 12;
+      else if (m[6].toLowerCase() === 'am' && hour === 12) hour = 0;
+
+      const hh = String(hour).padStart(2, '0');
+      const min = String(minute).padStart(2, '0');
+      const d = new Date(`${yyyy}-${mm}-${dd}T${hh}:${min}:00${PANAMA_TZ_OFFSET}`);
+      if (!Number.isNaN(d.getTime())) return d;
     }
 
-    // Fallback to base parser
     return super.extractDate(text);
   }
 }
