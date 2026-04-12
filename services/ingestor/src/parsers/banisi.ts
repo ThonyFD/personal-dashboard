@@ -1,5 +1,5 @@
 // Banisi (loan payments and banking notifications) parser
-import { BaseParser, ParserConfig } from './base.js';
+import { BaseParser, ParserConfig, PANAMA_TZ_OFFSET } from './base.js';
 import { ParsedTransaction, GmailMessage } from '../types.js';
 
 const BANISI_CONFIG: ParserConfig = {
@@ -153,40 +153,33 @@ export class BanisiParser extends BaseParser {
 
   protected override extractDate(text: string): Date | null {
     // Banisi date format: "Fecha: 06-10-2025 Hora: 7:47:26 p.m." or "7:47:26 p. m."
-    const dateTimePattern = /fecha:\s*(\d{2})-(\d{2})-(\d{4})\s+hora:\s*(\d{1,2}):(\d{2}):(\d{2})\s+(a\.\s*m\.|p\.\s*m\.)/i;
-    const match = text.match(dateTimePattern);
+    const m = /fecha:\s*(\d{2})-(\d{2})-(\d{4})\s+hora:\s*(\d{1,2}):(\d{2}):(\d{2})\s+([ap]\.\s*m\.)/i.exec(text);
+    if (m) {
+      const dd = m[1];
+      const mm = m[2];
+      const yyyy = m[3];
+      let hour = Number.parseInt(m[4], 10);
+      const minute = Number.parseInt(m[5], 10);
+      const second = Number.parseInt(m[6], 10);
+      const isPM = /p\.\s*m\./i.test(m[7]);
 
-    if (match) {
-      const day = parseInt(match[1]);
-      const month = parseInt(match[2]) - 1; // JavaScript months are 0-indexed
-      const year = parseInt(match[3]);
-      let hour = parseInt(match[4]);
-      const minute = parseInt(match[5]);
-      const second = parseInt(match[6]);
-      const isPM = /p\.\s*m\./i.test(match[7]);
+      if (isPM && hour !== 12) hour += 12;
+      else if (!isPM && hour === 12) hour = 0;
 
-      // Convert to 24-hour format
-      if (isPM && hour !== 12) {
-        hour += 12;
-      } else if (!isPM && hour === 12) {
-        hour = 0;
-      }
-
-      return new Date(year, month, day, hour, minute, second);
+      const hh = String(hour).padStart(2, '0');
+      const min = String(minute).padStart(2, '0');
+      const sec = String(second).padStart(2, '0');
+      const d = new Date(`${yyyy}-${mm}-${dd}T${hh}:${min}:${sec}${PANAMA_TZ_OFFSET}`);
+      if (!Number.isNaN(d.getTime())) return d;
     }
 
-    // Try date-only pattern: "06-10-2025"
-    const datePattern = /(\d{2})-(\d{2})-(\d{4})/;
-    const dateMatch = text.match(datePattern);
-
-    if (dateMatch) {
-      const day = parseInt(dateMatch[1]);
-      const month = parseInt(dateMatch[2]) - 1;
-      const year = parseInt(dateMatch[3]);
-      return new Date(year, month, day);
+    // Date-only pattern: "06-10-2025"  (DD-MM-YYYY)
+    const dm = /(\d{2})-(\d{2})-(\d{4})/.exec(text);
+    if (dm) {
+      const d = new Date(`${dm[3]}-${dm[2]}-${dm[1]}T00:00:00${PANAMA_TZ_OFFSET}`);
+      if (!Number.isNaN(d.getTime())) return d;
     }
 
-    // Fallback to base parser
     return super.extractDate(text);
   }
 }

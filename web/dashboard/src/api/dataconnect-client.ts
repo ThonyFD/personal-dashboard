@@ -56,6 +56,7 @@ export interface Stats {
   top_merchant: string | null;
   top_merchant_amount: number;
   providers: { provider: string; count: number }[];
+  transactions: Transaction[];
 }
 
 export async function fetchTransactions(
@@ -228,6 +229,7 @@ export async function fetchStats(startDate?: string, endDate?: string): Promise<
     this_month_amount, this_month_transactions,
     top_merchant, top_merchant_amount,
     providers,
+    transactions: allTransactions,
   };
 }
 

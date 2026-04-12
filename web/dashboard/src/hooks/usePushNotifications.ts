@@ -6,7 +6,6 @@ import {
   createPushSubscription,
   deactivatePushSubscription,
   getActivePushSubscriptions,
-  getMaxPushSubscriptionId,
 } from '../api/dataconnect-client';
 
 export const usePushNotifications = () => {
@@ -91,24 +90,12 @@ export const usePushNotifications = () => {
       }
       console.log('FCM token obtained:', token.substring(0, 20) + '...');
 
-      // 4. Get next ID for push subscription
-      console.log('Getting next subscription ID...');
-      const maxIdResult = await getMaxPushSubscriptionId();
-      const nextId = (maxIdResult.data.pushSubscriptions?.[0]?.id || 0) + 1;
-      console.log('Next subscription ID:', nextId);
-
-      // 5. Save to database
+      // 4. Save to database
       console.log('Saving subscription to database...');
-      const subscriptionData = {
-        endpoint: token, // FCM uses token as endpoint
-        keys: JSON.stringify({ fcmToken: token }), // Store as JSON
-      };
-
       await createPushSubscription({
-        id: nextId,
         userEmail: user.email,
-        endpoint: subscriptionData.endpoint,
-        keys: subscriptionData.keys,
+        endpoint: token,
+        keys: JSON.stringify({ fcmToken: token }),
         userAgent: navigator.userAgent,
       });
       console.log('Subscription saved successfully');

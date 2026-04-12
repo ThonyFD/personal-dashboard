@@ -1,5 +1,5 @@
 // Yappy (Banco General mobile payment) transaction parser
-import { BaseParser, ParserConfig } from './base.js';
+import { BaseParser, ParserConfig, PANAMA_TZ_OFFSET } from './base.js';
 import { ParsedTransaction, GmailMessage } from '../types.js';
 
 const YAPPY_CONFIG: ParserConfig = {
@@ -230,43 +230,32 @@ export class YappyParser extends BaseParser {
 
   protected override extractDate(text: string): Date | null {
     // Yappy specific date format: "02 nov 2025 06:17 p. m."
-    const yappyDatePattern = /(\d{1,2})\s+(ene|feb|mar|abr|may|jun|jul|ago|sep|oct|nov|dic)\s+(\d{4})\s+(\d{1,2}):(\d{2})\s+(a\.\s*m\.|p\.\s*m\.)/i;
-    const match = text.match(yappyDatePattern);
+    const m = /(\d{1,2})\s+([a-z]{3})\s+(\d{4})\s+(\d{1,2}):(\d{2})\s+([ap]\.\s*m\.)/i.exec(text);
 
-    if (match) {
-      const monthMap: Record<string, number> = {
-        ene: 0,
-        feb: 1,
-        mar: 2,
-        abr: 3,
-        may: 4,
-        jun: 5,
-        jul: 6,
-        ago: 7,
-        sep: 8,
-        oct: 9,
-        nov: 10,
-        dic: 11,
+    if (m) {
+      const monthMap: Record<string, string> = {
+        ene: '01', feb: '02', mar: '03', abr: '04', may: '05', jun: '06',
+        jul: '07', ago: '08', sep: '09', oct: '10', nov: '11', dic: '12',
       };
+      if (!monthMap[m[2].toLowerCase()]) return super.extractDate(text);
 
-      const day = parseInt(match[1]);
-      const month = monthMap[match[2].toLowerCase()];
-      const year = parseInt(match[3]);
-      let hour = parseInt(match[4]);
-      const minute = parseInt(match[5]);
-      const isPM = /p\.\s*m\./i.test(match[6]);
+      const dd = m[1].padStart(2, '0');
+      const mm = monthMap[m[2].toLowerCase()];
+      const yyyy = m[3];
+      let hour = Number.parseInt(m[4], 10);
+      const minute = Number.parseInt(m[5], 10);
+      const isPM = /p\.\s*m\./i.test(m[6]);
 
-      // Convert to 24-hour format
-      if (isPM && hour !== 12) {
-        hour += 12;
-      } else if (!isPM && hour === 12) {
-        hour = 0;
-      }
+      if (isPM && hour !== 12) hour += 12;
+      else if (!isPM && hour === 12) hour = 0;
 
-      return new Date(year, month, day, hour, minute, 0);
+      const hh = String(hour).padStart(2, '0');
+      const min = String(minute).padStart(2, '0');
+
+      const d = new Date(`${yyyy}-${mm}-${dd}T${hh}:${min}:00${PANAMA_TZ_OFFSET}`);
+      if (!Number.isNaN(d.getTime())) return d;
     }
 
-    // Fallback to base parser
     return super.extractDate(text);
   }
 }

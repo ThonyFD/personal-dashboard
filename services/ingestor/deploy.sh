@@ -47,7 +47,7 @@ gcloud run deploy $SERVICE_NAME \
   --cpu=1 \
   --timeout=60s \
   --set-env-vars="GOOGLE_CLOUD_PROJECT=${PROJECT_ID}" \
-  --set-secrets="DATABASE_URL=finance-agent-db-url:latest,ANTHROPIC_API_KEY=anthropic-api-key:latest" \
+  --set-secrets="SUPABASE_URL=supabase-url:latest,SUPABASE_SERVICE_ROLE_KEY=supabase-service-role-key:latest" \
   --service-account="finance-agent-sa@${PROJECT_ID}.iam.gserviceaccount.com" \
   --quiet
 
