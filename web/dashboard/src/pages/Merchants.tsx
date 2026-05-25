@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { fetchMerchantsPaginated, updateMerchantCategoryById } from '../api/dataconnect-client'
+import { fetchMerchantsPaginated, updateMerchantCategoryById } from '../api/supabase-data-client'
 import { formatCurrency } from '../utils/format'
 import { getCategoryColor, getCategoryIcon } from '../utils/categories'
 import { fetchCategories } from '../api/categories-client'

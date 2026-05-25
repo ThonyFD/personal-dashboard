@@ -1,12 +1,12 @@
 import { useState, useEffect } from 'react';
 import { getToken, deleteToken, onMessage } from 'firebase/messaging';
-import { messaging, VAPID_PUBLIC_KEY } from '../lib/firebase';
+import { messaging, VAPID_PUBLIC_KEY } from '../lib/firebase-messaging';
 import { useAuth } from '../contexts/AuthContext';
 import {
   createPushSubscription,
   deactivatePushSubscription,
   getActivePushSubscriptions,
-} from '../api/dataconnect-client';
+} from '../api/supabase-data-client';
 
 export const usePushNotifications = () => {
   const { user } = useAuth();

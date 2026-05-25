@@ -10,6 +10,14 @@ Esto causa que el sistema no pueda leer emails de Gmail.
 
 ## 🛠️ Solución: Generar un Nuevo Refresh Token
 
+## Antes de empezar
+
+Si tu OAuth app sigue en **Testing**, el refresh token nuevo puede volver a expirar en unos días. Antes de generar otro:
+
+1. Ve a **Google Auth Platform** → **Audience**
+2. Cambia **Publishing status** a **In production**
+3. Si solo usas cuentas de una organización Google Workspace, puedes usar **Internal**
+
 ### Método 1: OAuth 2.0 Playground (Recomendado - 5 minutos)
 
 #### Paso 1: Obtener Client ID y Client Secret

@@ -13,11 +13,17 @@ import { initializeApp } from 'firebase-admin/app';
 import { getMessaging } from 'firebase-admin/messaging';
 import { createClient } from '@supabase/supabase-js';
 import { fileURLToPath } from 'url';
+import {
+  getPendingPaymentsNextDays,
+  getActiveSubscriptions,
+  deactivateSubscription,
+  type PendingPayment,
+} from '@personal-dashboard/supabase-queries';
 
 const supabase = createClient(
   process.env.SUPABASE_URL ?? '',
   process.env.SUPABASE_SERVICE_ROLE_KEY ?? '',
-  { auth: { persistSession: false } }
+  { auth: { persistSession: false } },
 );
 
 initializeApp({
@@ -30,68 +36,45 @@ initializeApp({
   },
 });
 
-interface PendingPayment {
-  id: number;
-  description: string;
-  amount: number;
-}
+function buildNotificationText(payments: PendingPayment[]): { title: string; body: string } {
+  const totalAmount = payments.reduce((s, p) => s + p.amount, 0);
+  const title = `💰 ${payments.length} pago${payments.length > 1 ? 's' : ''} pendiente${payments.length > 1 ? 's' : ''}`;
 
-async function getPendingPayments(): Promise<{ label: string; payments: PendingPayment[] }[]> {
-  const now = new Date(new Date().toLocaleString('en-US', { timeZone: 'America/Panama' }));
-  const results: { label: string; payments: PendingPayment[] }[] = [];
-
-  for (let i = 0; i <= 3; i++) {
-    const d = new Date(now);
-    d.setDate(d.getDate() + i);
-
-    const { data, error } = await supabase
-      .from('manual_transactions')
-      .select('id, description, amount')
-      .eq('year', d.getFullYear())
-      .eq('month', d.getMonth() + 1)
-      .eq('day', d.getDate())
-      .eq('is_paid', false);
-
-    if (error) throw error;
-    if (!data || data.length === 0) continue;
-
-    const label = i === 0 ? 'Hoy' : i === 1 ? 'Mañana'
-      : d.toLocaleDateString('es-PA', { month: 'short', day: 'numeric' });
-
-    results.push({ label, payments: data.map((r: any) => ({ id: r.id, description: r.description, amount: Number(r.amount) })) });
+  const byDay = new Map<number, PendingPayment[]>();
+  for (const p of payments) {
+    const list = byDay.get(p.days_ahead) ?? [];
+    list.push(p);
+    byDay.set(p.days_ahead, list);
   }
 
-  return results;
+  let body = `Total: $${totalAmount.toFixed(2)}\n\n`;
+  for (const [daysAhead, group] of [...byDay.entries()].sort((a, b) => a[0] - b[0])) {
+    const label = daysAhead === 0 ? 'Hoy' : daysAhead === 1 ? 'Mañana'
+      : new Date(group[0].due_date).toLocaleDateString('es-PA', { month: 'short', day: 'numeric' });
+    const dayTotal = group.reduce((s, p) => s + p.amount, 0);
+    body += `${label}: ${group.length} pago${group.length > 1 ? 's' : ''} ($${dayTotal.toFixed(2)})\n`;
+  }
+  body += '\nToca para ver detalles';
+
+  return { title, body };
 }
 
 async function run(): Promise<void> {
   console.log('🔔 Sending payment notifications...');
 
-  const pendingDays = await getPendingPayments();
+  const payments = await getPendingPaymentsNextDays(supabase, 4);
 
-  if (pendingDays.length === 0) {
+  if (payments.length === 0) {
     console.log('✓ No pending payments — nothing to notify');
     return;
   }
 
-  const totalPayments = pendingDays.reduce((s, d) => s + d.payments.length, 0);
-  const totalAmount = pendingDays.reduce((s, d) => s + d.payments.reduce((ss, p) => ss + p.amount, 0), 0);
+  const { title, body } = buildNotificationText(payments);
+  const totalAmount = payments.reduce((s, p) => s + p.amount, 0);
 
-  const title = `💰 ${totalPayments} pago${totalPayments > 1 ? 's' : ''} pendiente${totalPayments > 1 ? 's' : ''}`;
-  let body = `Total: $${totalAmount.toFixed(2)}\n\n`;
-  pendingDays.forEach(d => {
-    const dayTotal = d.payments.reduce((s, p) => s + p.amount, 0);
-    body += `${d.label}: ${d.payments.length} pago${d.payments.length > 1 ? 's' : ''} ($${dayTotal.toFixed(2)})\n`;
-  });
-  body += '\nToca para ver detalles';
+  const subs = await getActiveSubscriptions(supabase);
 
-  const { data: subs, error } = await supabase
-    .from('push_subscriptions')
-    .select('id, user_email, keys')
-    .eq('is_active', true);
-
-  if (error) throw error;
-  if (!subs || subs.length === 0) {
+  if (subs.length === 0) {
     console.log('✓ No active subscriptions');
     return;
   }
@@ -100,8 +83,7 @@ async function run(): Promise<void> {
 
   for (const sub of subs) {
     try {
-      const keys = typeof sub.keys === 'string' ? JSON.parse(sub.keys) : sub.keys;
-      const fcmToken = keys.fcmToken || sub.endpoint;
+      const fcmToken = sub.keys.fcmToken || sub.endpoint;
 
       await getMessaging().send({
         token: fcmToken,
@@ -115,9 +97,11 @@ async function run(): Promise<void> {
       console.log(`  ✓ Sent to ${sub.user_email}`);
       sent++;
     } catch (err: any) {
-      if (err.code === 'messaging/invalid-registration-token' ||
-          err.code === 'messaging/registration-token-not-registered') {
-        await supabase.from('push_subscriptions').update({ is_active: false }).eq('id', sub.id);
+      if (
+        err.code === 'messaging/invalid-registration-token' ||
+        err.code === 'messaging/registration-token-not-registered'
+      ) {
+        await deactivateSubscription(supabase, sub.id);
         console.log(`  ⊘ Invalid token deactivated (${sub.user_email})`);
       } else {
         console.error(`  ✗ Failed (${sub.user_email}):`, err.message);
@@ -126,7 +110,7 @@ async function run(): Promise<void> {
     }
   }
 
-  console.log(`\n✅ Done — sent: ${sent}, failed: ${failed}, payments: ${totalPayments}, amount: $${totalAmount.toFixed(2)}`);
+  console.log(`\n✅ Done — sent: ${sent}, failed: ${failed}, payments: ${payments.length}, amount: $${totalAmount.toFixed(2)}`);
 }
 
 if (fileURLToPath(import.meta.url) === process.argv[1]) {

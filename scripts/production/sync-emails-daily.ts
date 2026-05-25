@@ -14,8 +14,7 @@
  * - Auto-updates sync state on success
  *
  * Usage:
- *   cd scripts
- *   npx tsx sync-emails-daily.ts
+ *   npx tsx scripts/production/sync-emails-daily.ts
  *
  * Environment Variables:
  *   GOOGLE_CLOUD_PROJECT - GCP project ID (default: mail-reader-433802)
@@ -28,6 +27,7 @@ import { SecretManagerServiceClient } from '@google-cloud/secret-manager';
 import { persistTokens } from 'oauth-token-store';
 import { fileURLToPath } from 'url';
 import { createClient } from '@supabase/supabase-js';
+import { getLastProcessedEmail } from '@personal-dashboard/supabase-queries';
 
 
 // Import from ingestor service
@@ -98,6 +98,22 @@ class DailyEmailSync {
     return version.payload?.data?.toString() || '';
   }
 
+  private wrapOAuthError(error: unknown): Error {
+    const message = error instanceof Error ? error.message : String(error);
+
+    if (message.includes('invalid_grant')) {
+      return new Error(
+        [
+          'Google rechazo el refresh token (`invalid_grant`).',
+          'Causa comun: el OAuth consent screen sigue en `Testing`, y para `gmail.readonly` Google vence el refresh token a los 7 dias.',
+          'Corrige esto en Google Cloud Auth Platform -> Audience cambiando el app a `In production` (o `Internal` si usas Google Workspace), luego genera un refresh token nuevo y actualiza `gmail-oauth-refresh-token` en Secret Manager.',
+        ].join('\n')
+      );
+    }
+
+    return error instanceof Error ? error : new Error(message);
+  }
+
   /**
    * Initialize Gmail API client with OAuth credentials
    */
@@ -137,6 +153,16 @@ class DailyEmailSync {
         console.error('❌ Failed to persist refreshed tokens:', error);
       });
     });
+
+    try {
+      const accessToken = await this.oauth2Client.getAccessToken();
+      if (!accessToken.token) {
+        throw new Error('Google did not return an access token');
+      }
+      console.log('✓ OAuth refresh validated\n');
+    } catch (error) {
+      throw this.wrapOAuthError(error);
+    }
 
     this.gmail = google.gmail({ version: 'v1', auth: this.oauth2Client });
     console.log('✓ Gmail client initialized\n');
@@ -206,15 +232,7 @@ class DailyEmailSync {
    */
   private async getLastProcessedEmail(): Promise<any> {
     try {
-      const { data, error } = await this.supabase
-        .from('emails')
-        .select('received_at')
-        .order('received_at', { ascending: false })
-        .limit(1)
-        .maybeSingle();
-
-      if (error) throw error;
-      return data ? { receivedAt: (data as { received_at: string }).received_at } : null;
+      return await getLastProcessedEmail(this.supabase);
     } catch (error) {
       console.error('Error fetching last email:', error);
       return null;

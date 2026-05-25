@@ -19,6 +19,7 @@ const open = require('open');
 const SCOPES = ['https://www.googleapis.com/auth/gmail.readonly'];
 const TOKEN_PATH = 'token.json';
 const CREDENTIALS_PATH = 'credentials.json';
+const AUDIENCE_SETTINGS_URL = 'https://console.cloud.google.com/auth/audience';
 
 // Read credentials
 if (!fs.existsSync(CREDENTIALS_PATH)) {
@@ -134,6 +135,13 @@ async function main() {
   console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
   console.log('  Gmail API OAuth Token Generator');
   console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n');
+
+  console.log('IMPORTANT BEFORE AUTHORIZING:\n');
+  console.log(`1. Open ${AUDIENCE_SETTINGS_URL}`);
+  console.log('2. Set the OAuth app to "In production"');
+  console.log('   - Or use "Internal" if this project belongs to a Google Workspace org');
+  console.log('3. If the app stays in "Testing" and you request gmail.readonly,');
+  console.log('   Google can expire the refresh token after 7 days.\n');
 
   // Ask user which method to use
   const rl = readline.createInterface({

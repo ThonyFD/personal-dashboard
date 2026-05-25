@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query'
-import { fetchStats } from '../api/dataconnect-client'
+import { fetchStats } from '../api/supabase-data-client'
 import { format, parse } from 'date-fns'
 import { formatCurrency } from '../utils/format'
 import { useState, useMemo } from 'react'

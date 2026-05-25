@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query'
-import { fetchTransactions } from '../api/dataconnect-client'
+import { fetchMonthlyIncomesInRange, fetchTransactions } from '../api/supabase-data-client'
 import { useState, useMemo } from 'react'
 import { getDateRange, type PeriodType } from '../utils/dateRange'
 import {
@@ -38,9 +38,14 @@ export default function CashFlow() {
     queryFn: () => fetchTransactions(10000, dateRange.startDate, dateRange.endDate),
   })
 
+  const { data: monthlyIncomes, isLoading: isMonthlyIncomesLoading } = useQuery({
+    queryKey: ['monthly-incomes-range', dateRange.startDate, dateRange.endDate],
+    queryFn: () => fetchMonthlyIncomesInRange(dateRange.startDate, dateRange.endDate),
+  })
+
   // Monthly cash flow data
   const monthlyCashFlow = useMemo(() => {
-    if (!allTransactions) return []
+    if (!allTransactions || !monthlyIncomes) return []
 
     const months = eachMonthOfInterval({
       start: parseISO(dateRange.startDate),
@@ -55,6 +60,10 @@ export default function CashFlow() {
         const txnDate = parseISO(txn.txn_date)
         return txnDate >= monthStart && txnDate <= monthEnd
       })
+
+      const monthManualIncomes = monthlyIncomes.filter(income =>
+        income.year === month.getFullYear() && income.month === month.getMonth() + 1
+      )
 
       let income = 0
       let expenses = 0
@@ -71,6 +80,9 @@ export default function CashFlow() {
         }
       })
 
+      const manualIncomeAmount = monthManualIncomes.reduce((sum, income) => sum + income.amount, 0)
+      income += manualIncomeAmount
+
       return {
         month: format(month, 'MMM yyyy'),
         monthShort: format(month, 'MMM yy'),
@@ -78,11 +90,12 @@ export default function CashFlow() {
         expenses,
         net: income - expenses,
         payments,
+        manualIncomeEntries: monthManualIncomes.length,
         purchases,
-        totalTransactions: payments + purchases
+        totalTransactions: payments + purchases + monthManualIncomes.length
       }
     })
-  }, [allTransactions, dateRange])
+  }, [allTransactions, monthlyIncomes, dateRange])
 
   // Recurring expenses analysis
   const recurringExpenses = useMemo(() => {
@@ -181,7 +194,7 @@ export default function CashFlow() {
     }
   }, [monthlyCashFlow])
 
-  if (isLoading) {
+  if (isLoading || isMonthlyIncomesLoading) {
     return <div className="loading">Loading cash flow analysis...</div>
   }
 
@@ -337,7 +350,7 @@ export default function CashFlow() {
       <div className="card" style={{ marginBottom: '1.5rem' }}>
         <h2>Monthly Income vs Expenses</h2>
         <p style={{ fontSize: '0.9rem', color: '#666', marginBottom: '1rem' }}>
-          Track your cash flow patterns over time
+          Track your cash flow patterns over time, including imported manual incomes
         </p>
         <ResponsiveContainer width="100%" height={400}>
           <BarChart data={monthlyCashFlow}>
@@ -474,7 +487,7 @@ export default function CashFlow() {
       <div className="card">
         <h2>Transaction Volume</h2>
         <p style={{ fontSize: '0.9rem', color: '#666', marginBottom: '1rem' }}>
-          Number of transactions per month
+          Number of transaction rows plus manual income entries per month
         </p>
         <ResponsiveContainer width="100%" height={300}>
           <BarChart data={monthlyCashFlow}>
@@ -484,6 +497,7 @@ export default function CashFlow() {
             <Tooltip contentStyle={{ backgroundColor: 'white', border: '1px solid #ccc' }} />
             <Legend />
             <Bar dataKey="payments" fill="#38a169" name="Income Transactions" />
+            <Bar dataKey="manualIncomeEntries" fill="#68d391" name="Manual Income Entries" />
             <Bar dataKey="purchases" fill="#e53e3e" name="Expense Transactions" />
           </BarChart>
         </ResponsiveContainer>

@@ -3,6 +3,16 @@
 ## Problema
 El refresh token de OAuth ha expirado. Necesitas generar nuevas credenciales.
 
+## Importante antes de renovar
+
+Si el OAuth app sigue en **Testing**, el nuevo refresh token puede volver a vencer rápido.
+
+Antes de generar uno nuevo:
+
+1. Ve a **Google Auth Platform** → **Audience**
+2. Cambia **Publishing status** a **In production**
+3. Si solo usas cuentas de una organización Google Workspace, puedes usar **Internal**
+
 ## Pasos para Renovar
 
 ### 1. Obtener Client ID y Client Secret actuales

@@ -91,77 +91,35 @@ export class DatabaseClient {
 
   /**
    * Get existing merchant by normalized name, or create it.
+   * Uses an atomic INSERT ... ON CONFLICT upsert via RPC to eliminate
+   * the race condition of the previous check-then-insert pattern.
    * Returns the merchant ID.
    */
   async getOrCreateMerchant(data: MerchantData): Promise<number> {
     const timer = Logger.startTimer();
 
     try {
-      // Look for existing merchant
-      const { data: existing } = await this.supabase
-        .from('merchants')
-        .select('id')
-        .eq('normalized_name', data.normalizedName)
-        .maybeSingle();
-
-      if (existing) {
-        Logger.info('Merchant found', {
-          event: 'merchant_found',
-          duration_ms: timer(),
-          merchantId: existing.id,
-          normalizedName: data.normalizedName,
+      const { data: merchantId, error } = await this.supabase
+        .rpc('get_or_create_merchant', {
+          p_name:            data.name,
+          p_normalized_name: data.normalizedName,
+          p_category_id:     data.categoryId ?? null,
         });
-        return existing.id;
-      }
 
-      // Insert new merchant
-      const { data: row, error } = await this.supabase
-        .from('merchants')
-        .insert({
-          name: data.name,
-          normalized_name: data.normalizedName,
-          category_id: data.categoryId || null,
-          first_seen_at: new Date().toISOString(),
-          transaction_count: 0,
-          total_amount: 0,
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
-        })
-        .select('id')
-        .single();
+      if (error) throw error;
 
-      if (error) {
-        // Race condition: another request created the merchant between our check and insert
-        if (error.code === '23505') {
-          Logger.warn('Merchant duplicate detected, querying for existing ID', {
-            event: 'merchant_duplicate',
-            normalizedName: data.normalizedName,
-          });
-
-          const { data: retry } = await this.supabase
-            .from('merchants')
-            .select('id')
-            .eq('normalized_name', data.normalizedName)
-            .single();
-
-          if (retry) return retry.id;
-          throw new Error(`Merchant duplicate detected but not found: ${data.normalizedName}`);
-        }
-        throw error;
-      }
-
-      Logger.info('Merchant created', {
-        event: 'merchant_created',
+      Logger.info('Merchant upserted', {
+        event: 'merchant_upserted',
         duration_ms: timer(),
-        merchantId: row.id,
+        merchantId,
         normalizedName: data.normalizedName,
       });
 
-      return row.id;
+      return merchantId as number;
 
     } catch (error) {
-      Logger.error('Failed to create merchant', {
-        event: 'merchant_create_failed',
+      Logger.error('Failed to upsert merchant', {
+        event: 'merchant_upsert_failed',
         duration_ms: timer(),
         error: error instanceof Error ? error.message : (error as any)?.message ?? JSON.stringify(error),
       });

@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { fetchTransactions } from '../api/dataconnect-client'
+import { fetchTransactions } from '../api/supabase-data-client'
 import { useState, useMemo } from 'react'
 import { formatCurrency } from '../utils/format'
 import {

@@ -1,5 +1,5 @@
 // Hashing utilities for idempotency
-import crypto from 'crypto';
+import crypto from 'node:crypto';
 
 export function sha256(data: string): string {
   return crypto.createHash('sha256').update(data).digest('hex');
@@ -23,9 +23,11 @@ export function generateIdempotencyKey(
 
 export function normalizeMerchantName(name: string): string {
   return name
+    .normalize('NFD')                  // Decompose ñ → n + combining tilde (matches SQL unaccent)
+    .replace(/[̀-ͯ]/g, '')   // Strip combining diacritical marks
     .toLowerCase()
-    .replace(/[^a-z0-9\s]/g, '') // Remove special characters
-    .replace(/\s+/g, ' ') // Normalize whitespace
+    .replace(/[^a-z0-9\s]/g, '')       // Strip remaining special characters
+    .replace(/\s+/g, ' ')
     .trim();
 }
 

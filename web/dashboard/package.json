@@ -10,11 +10,14 @@
     "lint": "eslint src --ext ts,tsx"
   },
   "dependencies": {
+    "@firebase/app": "^0.14.4",
+    "@firebase/messaging": "^0.12.23",
+    "@personal-dashboard/supabase-queries": "file:../../packages/supabase-queries",
     "@supabase/supabase-js": "^2.49.4",
     "@tanstack/react-query": "^5.14.0",
     "@types/html2canvas": "^0.5.35",
     "date-fns": "^3.0.0",
-    "firebase": "^12.4.0",
+    "firebase": "^12.13.0",
     "html2canvas": "^1.4.1",
     "jspdf": "^3.0.3",
     "react": "^18.2.0",

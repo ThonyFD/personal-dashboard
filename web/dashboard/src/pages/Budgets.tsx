@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { fetchTransactions, fetchMerchants } from '../api/dataconnect-client'
+import { fetchTransactions } from '../api/supabase-data-client'
+import { fetchCategories } from '../api/categories-client'
 import { useState, useMemo } from 'react'
 import { formatCurrency } from '../utils/format'
 import {
@@ -62,9 +63,9 @@ export default function Budgets() {
     queryFn: () => fetchTransactions(10000, format(periodStart, 'yyyy-MM-dd'), format(periodEnd, 'yyyy-MM-dd')),
   })
 
-  const { data: merchants } = useQuery({
-    queryKey: ['merchants'],
-    queryFn: () => fetchMerchants(),
+  const { data: categories } = useQuery({
+    queryKey: ['categories'],
+    queryFn: () => fetchCategories(),
   })
 
   // Calculate spending by category
@@ -204,12 +205,12 @@ export default function Budgets() {
 
   const handleCreateBudget = (formData: FormData) => {
     const categoryId = parseInt(formData.get('categoryId') as string)
-    const category = merchants?.find(m => m.categoryId === categoryId)
+    const category = categories?.find(c => c.id === categoryId)
     if (!category) return
 
     saveBudgetMutation.mutate({
       categoryId,
-      categoryName: category.categoryRef?.name || 'Unknown',
+      categoryName: category.name,
       monthlyLimit: parseFloat(formData.get('monthlyLimit') as string),
       period: 'monthly',
       isActive: true
@@ -511,13 +512,11 @@ export default function Budgets() {
                   }}
                 >
                   <option value="">Select Category</option>
-                  {Array.from(new Set(merchants?.map(m => m.categoryRef).filter(Boolean)))
-                    .sort((a, b) => a.name.localeCompare(b.name))
-                    .map(category => (
-                      <option key={category.id} value={category.id}>
-                        {category.name}
-                      </option>
-                    ))}
+                  {categories?.map(category => (
+                    <option key={category.id} value={category.id}>
+                      {category.name}
+                    </option>
+                  ))}
                 </select>
               </div>
 

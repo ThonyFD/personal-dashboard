@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query'
-import { fetchTransactions } from '../api/dataconnect-client'
+import { fetchTransactions } from '../api/supabase-data-client'
 import { useState, useMemo } from 'react'
 import { getDateRange, type PeriodType } from '../utils/dateRange'
 import {

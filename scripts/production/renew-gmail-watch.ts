@@ -23,6 +23,22 @@ async function getSecret(name: string): Promise<string> {
   return version.payload?.data?.toString() ?? '';
 }
 
+function wrapOAuthError(error: unknown): Error {
+  const message = error instanceof Error ? error.message : String(error);
+
+  if (message.includes('invalid_grant')) {
+    return new Error(
+      [
+        'Google rechazo el refresh token (`invalid_grant`).',
+        'Si tu OAuth app sigue en `Testing`, los refresh tokens para `gmail.readonly` suelen vencer a los 7 dias.',
+        'Publica el app en `In production` (o `Internal` si aplica), genera un refresh token nuevo y vuelve a guardar `gmail-oauth-refresh-token`.',
+      ].join('\n')
+    );
+  }
+
+  return error instanceof Error ? error : new Error(message);
+}
+
 async function run(): Promise<void> {
   console.log('🔄 Renewing Gmail watch...');
 
@@ -48,6 +64,15 @@ async function run(): Promise<void> {
       { projectId, updateSecretManager: Boolean(tokens.refresh_token) }
     ).catch((err) => console.error('Failed to persist tokens:', err));
   });
+
+  try {
+    const accessToken = await oauth2Client.getAccessToken();
+    if (!accessToken.token) {
+      throw new Error('Google did not return an access token');
+    }
+  } catch (error) {
+    throw wrapOAuthError(error);
+  }
 
   const gmail = google.gmail({ version: 'v1', auth: oauth2Client });
 

@@ -19,7 +19,7 @@ import Exports from './pages/Exports'
 import SystemHealth from './pages/SystemHealth'
 import TermsOfService from './pages/TermsOfService'
 import PrivacyPolicy from './pages/PrivacyPolicy'
-import Debug from './pages/Debug'
+import HomePage from './pages/HomePage'
 import './App.css'
 
 const queryClient = new QueryClient()
@@ -44,7 +44,8 @@ function Navigation() {
 
   return (
     <nav className="nav">
-      <div className="nav-brand" onClick={() => navigate('/')}>
+      <div className="nav-brand" onClick={() => navigate('/app')}>
+        <img src="/logo.svg" alt="AI Finance Agent" className="nav-logo" />
         <h1>AI Finance Agent</h1>
       </div>
 
@@ -86,7 +87,7 @@ function Navigation() {
 
         {/* Navigation links */}
         <div className="menu-links">
-          <Link to="/" onClick={closeMenu}>
+          <Link to="/app" onClick={closeMenu}>
             <span className="menu-icon">📊</span>
             Overview
           </Link>
@@ -138,10 +139,6 @@ function Navigation() {
             <span className="menu-icon">🔧</span>
             System Health
           </Link>
-          <Link to="/debug" onClick={closeMenu}>
-            <span className="menu-icon">🐛</span>
-            Debug
-          </Link>
         </div>
 
         {/* Sign out button */}
@@ -168,10 +165,11 @@ function AppContent() {
       <Navigation />
       <main className="main">
         <Routes>
+          <Route path="/" element={<HomePage />} />
           <Route path="/login" element={<Login />} />
           <Route path="/terms" element={<TermsOfService />} />
           <Route path="/privacy" element={<PrivacyPolicy />} />
-          <Route path="/" element={
+          <Route path="/app" element={
             <ProtectedRoute>
               <Overview />
             </ProtectedRoute>
@@ -234,11 +232,6 @@ function AppContent() {
           <Route path="/system-health" element={
             <ProtectedRoute>
               <SystemHealth />
-            </ProtectedRoute>
-          } />
-          <Route path="/debug" element={
-            <ProtectedRoute>
-              <Debug />
             </ProtectedRoute>
           } />
         </Routes>

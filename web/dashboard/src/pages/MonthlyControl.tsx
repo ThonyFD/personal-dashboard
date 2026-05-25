@@ -13,7 +13,7 @@ import {
   toggleManualTransactionPaidStatus,
   type MonthlyIncome,
   type ManualTransaction,
-} from '../api/dataconnect-client'
+} from '../api/supabase-data-client'
 import { fetchCategories, type Category } from '../api/categories-client'
 import { NotificationSettings } from '../components/NotificationSettings'
 
@@ -563,25 +563,33 @@ export default function MonthlyControl() {
 
       {/* Summary Cards */}
       <div className="summary-cards">
-        <div className="summary-card">
-          <h4>Gastos</h4>
-          <div className="amount">${totals.totalExpenses.toFixed(2)}</div>
+        <div className="summary-metrics-group">
+          <div className="summary-card">
+            <h4>Gastos</h4>
+            <div className="amount">${totals.totalExpenses.toFixed(2)}</div>
+          </div>
+          <div className="summary-card investment">
+            <h4>Inversión</h4>
+            <div className="amount">${totals.totalInvestment.toFixed(2)}</div>
+          </div>
+          <div className="summary-card debt">
+            <h4>Deuda</h4>
+            <div className="amount">${totals.totalDebt.toFixed(2)}</div>
+          </div>
+          <div className="summary-card savings">
+            <h4>Ahorro</h4>
+            <div className="amount">${totals.totalSavings.toFixed(2)}</div>
+          </div>
         </div>
-        <div className="summary-card investment">
-          <h4>Inversión</h4>
-          <div className="amount">${totals.totalInvestment.toFixed(2)}</div>
-        </div>
-        <div className="summary-card debt">
-          <h4>Deuda</h4>
-          <div className="amount">${totals.totalDebt.toFixed(2)}</div>
-        </div>
-        <div className="summary-card savings">
-          <h4>Ahorro</h4>
-          <div className="amount">${totals.totalSavings.toFixed(2)}</div>
-        </div>
-        <div className={`summary-card balance ${totals.finalBalance >= 0 ? 'positive' : 'negative'}`}>
-          <h4>Saldo Final</h4>
-          <div className="amount">${totals.finalBalance.toFixed(2)}</div>
+        <div className="summary-totals-group">
+          <div className={`summary-card balance ${totals.finalBalance >= 0 ? 'positive' : 'negative'}`}>
+            <h4>Saldo Final</h4>
+            <div className="amount">${totals.finalBalance.toFixed(2)}</div>
+          </div>
+          <div className="summary-card total-spent">
+            <h4>Gasto Total</h4>
+            <div className="amount">${totals.totalSpent.toFixed(2)}</div>
+          </div>
         </div>
       </div>
 

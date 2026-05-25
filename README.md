@@ -1,278 +1,196 @@
-# AI Finance Agent
+# Personal Dashboard
 
-Serverless AI agent that monitors Gmail for financial transactions, extracts key data, and powers a React dashboard.
+Sistema que monitorea Gmail para extraer transacciones financieras, las persiste en Supabase y las expone en un dashboard React con recordatorios push.
 
-**Status:** ✅ Production ready
-**Project:** mail-reader-433802
-**Time Zone:** America/Panama (GMT-5)
+**Status:** producción  
+**Proyecto GCP:** `mail-reader-433802`  
+**Zona horaria:** `America/Panama`
 
-## Architecture
+## Arquitectura
 
-### Nueva Arquitectura Híbrida (Push + Polling)
-
-```
-┌─────────────────────────────────────────────────────────────────────────┐
-│                          Gmail Monitoring System                         │
-├─────────────────────────────────────────────────────────────────────────┤
-│  ┌─────────────┐    ┌─────────────┐    ┌─────────────┐    ┌─────────────┐ │
-│  │  Push Mode  │    │ Fallback    │    │  Health     │    │ Auto-Renew  │ │
-│  │  (Primary)  │    │   Polling   │    │ Monitoring  │    │   Token     │ │
-│  └─────────────┘    └─────────────┘    └─────────────┘    └─────────────┘ │
-├─────────────────────────────────────────────────────────────────────────┤
-│  ┌─────────────┐    ┌─────────────┐    ┌─────────────┐    ┌─────────────┐ │
-│  │ Cloud Run   │    │ Cloud Run   │    │ Cloud Run   │    │ Cloud Run   │ │
-│  │ (Ingestor)  │    │ (Poller)    │    │ (Monitor)   │    │ (Renewal)   │ │
-│  └─────────────┘    └─────────────┘    └─────────────┘    └─────────────┘ │
-├─────────────────────────────────────────────────────────────────────────┤
-│  ┌─────────────┐    ┌─────────────┐    ┌─────────────┐    ┌─────────────┐ │
-│  │ Pub/Sub     │    │ Cloud       │    │ Cloud       │    │ Cloud       │ │
-│  │ Push        │    │ Scheduler   │    │ Scheduler   │    │ Scheduler   │ │
-│  │             │    │ (cada 1h)   │    │ (cada 6h)   │    │ (diario)    │ │
-│  └─────────────┘    └─────────────┘    └─────────────┘    └─────────────┘ │
-├─────────────────────────────────────────────────────────────────────────┤
-│  ┌─────────────────────────────────────────────────────────────────────┐ │
-│  │                    Firebase Data Connect (PostgreSQL)                │ │
-│  └─────────────────────────────────────────────────────────────────────┘ │
-├─────────────────────────────────────────────────────────────────────────┤
-│  ┌─────────────────────────────────────────────────────────────────────┐ │
-│  │                        React Dashboard                              │ │
-│  └─────────────────────────────────────────────────────────────────────┘ │
-└─────────────────────────────────────────────────────────────────────────┘
+```text
+Gmail push -> Pub/Sub -> Cloud Run ingestor -> Supabase
+                    \-> GitHub Actions (renew watch, sync defensivo, reminders)
+Dashboard React -> Supabase + Firebase Cloud Messaging
 ```
 
-### Flujo de Operación
+### Flujos activos
 
-1. **Modo Primario (Push)**: Gmail envía notificaciones en tiempo real → Ingestor procesa inmediatamente
-2. **Modo Fallback (Polling)**: Si push falla, Poller consulta cada hora → recupera emails perdidos
-3. **Monitoreo Proactivo**: Health checks cada 6 horas → detecta problemas antes de que fallen
-4. **Renovación Automática**: Renewal diario → mantiene tokens válidos
+1. Gmail envía notificaciones push a Pub/Sub.
+2. `services/ingestor` procesa el correo y guarda emails/transacciones en Supabase.
+3. GitHub Actions renueva el watch de Gmail diariamente.
+4. GitHub Actions corre un sync defensivo y envía recordatorios por FCM.
+5. El dashboard consulta Supabase directo y muestra métricas, transacciones y control mensual.
 
-### Beneficios
+## Estructura
 
-✅ **Resiliencia Total**: Nunca deja de procesar emails completamente
-
-✅ **Cero Downtime**: Push falla → Polling se activa automáticamente
-
-✅ **Alertas Proactivas**: Detecta expiración de tokens antes de que cause problemas
-
-✅ **Costo Optimizado**: Mantiene free tier (~$10/mes)
-
-✅ **Mantenimiento Automático**: Renovación de tokens y watch sin intervención
-
-
-## Project Structure
-
-```
+```text
 personal-dashboard/
-├── infra/           # Infrastructure setup scripts
-│   └── gcloud/      # GCP resource setup (Pub/Sub, secrets, scheduler)
-├── services/        # Backend services
-│   ├── ingestor/    # Email ingestion and parsing service (push primary)
-│   ├── poller/      # Gmail polling service (fallback when push fails)
-│   └── renewal/     # Gmail watch renewal service (runs daily)
-├── dataconnect/     # Firebase Data Connect schema & queries
-├── web/dashboard/   # React dashboard application
-├── scripts/         # Utility scripts (populate data, etc.)
-└── ops/             # Operational tools (backfill, OAuth setup)
+├── infra/             # Setup de GCP y Terraform
+├── services/ingestor/ # Ingesta, parsing y monitoring
+├── web/dashboard/     # Frontend React + Vite
+├── scripts/           # Automatizaciones de producción y mantenimiento
+├── ops/               # OAuth y backfills operativos
+└── .github/workflows/ # Renew watch, sync y reminders
 ```
 
-## Features
+## Stack real
 
-- **Real-time email monitoring** via Gmail Push Notifications
-- **Automatic transaction parsing** for BAC, Clave, Yappy, and Banistmo
-- **LLM fallback** using Anthropic Claude for unknown formats
-- **Idempotent processing** with SHA256 hashing
-- **React dashboard** with overview, transactions, and merchants pages
-- **Secure credential storage** in Google Secret Manager
-- **Cost-effective:** ~$10/month after free tier
-
-## Security
-
-- OAuth credentials stored in Google Secret Manager
-- Workload Identity for service authentication
-- Email body hashing to avoid storing PII
-- Gmail readonly scope only
-- No credentials committed to repository
+- Ingesta: Gmail API, Pub/Sub, Cloud Run
+- Persistencia: Supabase PostgreSQL
+- Frontend: React + Vite + TanStack Query
+- Push notifications: Firebase Cloud Messaging
+- LLM fallback: Google Gemini
+- Secretos: Google Secret Manager
 
 ## Quick Start
 
-### Prerequisites
+### Requisitos
 
-- Google Cloud Project with billing enabled
-- Firebase CLI installed: `npm install -g firebase-tools`
-- gcloud CLI installed and authenticated
 - Node.js 20+
-- Gmail account for monitoring
+- `gcloud` autenticado
+- `firebase-tools` para deploy del dashboard
+- proyecto de Supabase con `service_role` y `anon key`
+- credenciales OAuth de Gmail cargadas en Secret Manager
 
-### Deployment Steps
+### Bootstrapping
 
-1. **Set environment variables**
-   ```bash
-   export GOOGLE_CLOUD_PROJECT="mail-reader-433802"
-   export GOOGLE_CLOUD_REGION="us-central1"
-   ```
-
-2. **Enable GCP APIs**
-   ```bash
-   gcloud services enable run.googleapis.com pubsub.googleapis.com \
-     secretmanager.googleapis.com cloudscheduler.googleapis.com \
-     gmail.googleapis.com firebasedataconnect.googleapis.com
-   ```
-
-3. **Setup OAuth credentials**
-   ```bash
-   cd ops
-   npm install
-   npm run get-token  # Follow interactive prompts
-   ```
-
-4. **Store secrets in Secret Manager**
-   ```bash
-   cd ../infra/gcloud
-   ./setup-secrets.sh
-   # Add your OAuth credentials when prompted
-   ```
-
-5. **Setup Pub/Sub**
-   ```bash
-   ./setup-pubsub.sh
-   ```
-
-6. **Deploy Firebase Data Connect**
-   ```bash
-   firebase login
-   firebase use mail-reader-433802
-   firebase dataconnect:sdk:generate
-   firebase deploy --only dataconnect
-   ```
-
-7. **Deploy ingestor service**
-   ```bash
-   cd ../../services/ingestor
-   npm install
-   npm run build
-   ./deploy.sh
-   ```
-
-8. **Setup Gmail watch**
-   ```bash
-   cd ../../infra/gcloud
-   ./setup-gmail-watch.sh
-   ```
-
-9. **Deploy dashboard**
-   ```bash
-   cd ../../web/dashboard
-   npm install
-   npm run build
-   firebase deploy --only hosting
-   ```
-
-## Supported Banks & Parsers
-
-The system currently supports:
-
-- **BAC** (Banco de América Central) - Credit/debit cards
-- **Clave** - Panama digital payment system
-- **Yappy** - Banco General mobile payments
-- **Banistmo** - Credit/debit cards
-- **LLM Fallback** - Anthropic Claude for unknown formats
-
-Add new parsers in [services/ingestor/src/parsers/](services/ingestor/src/parsers/)
-
-## Components
-
-| Component | Description | Location |
-|-----------|-------------|----------|
-| **Ingestor** | Receives Gmail notifications, parses transactions (modo primario) | [services/ingestor/](services/ingestor/) |
-| **Poller** | Gmail polling service (fallback cuando push falla) | [services/poller/](services/poller/) |
-| **Renewal** | Renews Gmail watch daily (expires every 7 days) | [services/renewal/](services/renewal/) |
-| **Dashboard** | React app with overview, transactions, merchants | [web/dashboard/](web/dashboard/) |
-| **Data Connect** | PostgreSQL schema and GraphQL queries | [dataconnect/](dataconnect/) |
-| **Infrastructure** | GCP setup scripts (Pub/Sub, secrets, etc.) | [infra/gcloud/](infra/gcloud/) |
-| **Backfill** | Process historical emails | [ops/](ops/) |
-
-## Monitoring & Troubleshooting
-
-### Check System Health
+1. Exporta variables base:
 
 ```bash
-# Health check
+export GOOGLE_CLOUD_PROJECT="mail-reader-433802"
+export GOOGLE_CLOUD_REGION="us-central1"
+```
+
+2. Habilita APIs de GCP:
+
+```bash
+gcloud services enable \
+  run.googleapis.com \
+  pubsub.googleapis.com \
+  secretmanager.googleapis.com \
+  gmail.googleapis.com
+```
+
+3. Genera el refresh token de Gmail:
+
+```bash
+cd ops
+npm install
+npm run get-token
+```
+
+4. Carga secretos e infraestructura base:
+
+```bash
+cd ../infra/gcloud
+./setup-secrets.sh
+./setup-pubsub.sh
+./setup-gmail-watch.sh
+```
+
+5. Despliega el ingestor:
+
+```bash
+cd ../../services/ingestor
+npm install
+npm run build
+./deploy.sh
+```
+
+6. Despliega el dashboard:
+
+```bash
+cd ../../web/dashboard
+npm install
+npm run build
+firebase deploy --only hosting
+```
+
+## Componentes
+
+| Componente | Rol | Ubicación |
+|-----------|-----|----------|
+| Ingestor | Recibe Gmail push, parsea y guarda datos | [services/ingestor](/Users/thonyfd/projects/personal-dashboard/services/ingestor) |
+| Dashboard | Consulta Supabase y muestra la UI | [web/dashboard](/Users/thonyfd/projects/personal-dashboard/web/dashboard) |
+| Workflows | Renuevan watch, sincronizan y envían recordatorios | [.github/workflows](/Users/thonyfd/projects/personal-dashboard/.github/workflows) |
+| Infra | Pub/Sub, secretos, alertas y Terraform | [infra](/Users/thonyfd/projects/personal-dashboard/infra) |
+| Ops | OAuth y backfills históricos | [ops](/Users/thonyfd/projects/personal-dashboard/ops) |
+
+## Parsers soportados
+
+- BAC
+- Clave
+- Yappy
+- Banistmo
+- Gemini fallback para formatos no soportados
+
+Los parsers viven en [services/ingestor/src/parsers](/Users/thonyfd/projects/personal-dashboard/services/ingestor/src/parsers).
+
+## Operación
+
+### Health y logs
+
+```bash
 curl https://ingestor-720071149950.us-central1.run.app/health
 
-# View recent logs
-~/google-cloud-sdk/bin/gcloud logging read \
+gcloud logging read \
   "resource.labels.service_name=ingestor" \
-  --limit=50 --project=mail-reader-433802
+  --limit=50 \
+  --project=mail-reader-433802
 
-# Check Pub/Sub subscription
-~/google-cloud-sdk/bin/gcloud pubsub subscriptions describe gmail-ingestor-sub \
+gcloud pubsub subscriptions describe gmail-ingestor-sub \
   --project=mail-reader-433802
 ```
 
-### Common Issues
+### Sync manual
 
-| Issue | Solution |
-|-------|----------|
-| No notifications arriving | Re-run `./setup-gmail-watch.sh` |
-| Service unhealthy | Check logs with `gcloud logging read` |
-| Parser not detecting transactions | Review logs for `parse_failed` events |
-| Database connection fails | Verify Data Connect is deployed: `firebase deploy --only dataconnect` |
+```bash
+./scripts/production/run-daily-sync.sh
+```
 
-### Renew Gmail Watch
-
-Gmail watch expires every 7 days. Renew manually or setup Cloud Scheduler:
+### Renovar watch manualmente
 
 ```bash
 cd infra/gcloud
 ./setup-gmail-watch.sh
 ```
 
-## Cost Estimate
+## Troubleshooting
 
-| Service | Monthly Cost | Notas |
-|---------|--------------|-------|
-| Cloud Run (3 servicios) | $0 (free tier) | Ingestor, Poller, Renewal |
-| Pub/Sub | $0 (free tier) | Push notifications |
-| Firebase Data Connect | $9 (after 3-month trial) | PostgreSQL database |
-| Secret Manager | $0 (free tier) | OAuth credentials |
-| Cloud Scheduler (3 jobs) | $0 (3 jobs free) | Health check, Polling, Renewal |
-| **Total** | **~$10/month** | Mantiene free tier |
+| Problema | Revisión rápida |
+|---------|------------------|
+| No llegan notificaciones | Re-registrar Gmail watch y revisar Pub/Sub |
+| Ingestor unhealthy | Revisar `/health` y logs de Cloud Run |
+| Falla conexión a base de datos | Verificar `SUPABASE_URL` y `SUPABASE_SERVICE_ROLE_KEY` |
+| Dashboard sin datos | Verificar `VITE_SUPABASE_URL` y `VITE_SUPABASE_ANON_KEY` |
+
+## Costos aproximados
+
+| Servicio | Costo |
+|---------|-------|
+| Cloud Run ingestor | normalmente cubierto por free tier |
+| Pub/Sub | normalmente cubierto por free tier |
+| Secret Manager | bajo |
+| Supabase | depende del plan |
+| GitHub Actions | bajo o cero en uso ligero |
 
 ## Roadmap
 
-### Completed ✅
-- Real-time email monitoring via Gmail Push
-- Transaction parsing for BAC, Clave, Yappy, Banistmo
-- PostgreSQL database with Firebase Data Connect
-- React dashboard with overview and transaction list
-- Merchant tracking and statistics
-- Category system with merchant categorization
-- Idempotent processing with deduplication
+### Completado
 
-### Completed ✅
-- Real-time email monitoring via Gmail Push
-- Transaction parsing for BAC, Clave, Yappy, Banistmo
-- PostgreSQL database with Firebase Data Connect
-- React dashboard with overview and transaction list
-- Merchant tracking and statistics
-- Category system with merchant categorization
-- Idempotent processing with deduplication
-- **Nueva Arquitectura Híbrida**: Push + Polling fallback
-- **Monitoreo Proactivo**: Alertas automáticas de expiración de tokens
-- **Resiliencia Total**: Nunca deja de procesar emails
+- Ingesta push desde Gmail
+- Persistencia en Supabase
+- Dashboard React con overview, merchants, reports y monthly control
+- Recordatorios push vía FCM
+- Sync defensivo y renovación de Gmail watch desde GitHub Actions
 
-### Planned 🔧
-- [ ] Charts and visualizations
-- [ ] Transaction time (hour/minute, not just date)
-- [ ] Electronic invoice (factura electrónica) support
-- [ ] Budget tracking and alerts
-- [ ] Mobile app version
-- [ ] Export to PDF reports
+### Pendiente
 
-### Known Issues 🐛
-- Automatic registration not working correctly
-- Categories not updating properly in some cases
+- Mejorar visualizaciones y reportes
+- Soporte de factura electrónica
+- Alertas de presupuesto
+- Experiencia móvil más completa
 
 ## License
 

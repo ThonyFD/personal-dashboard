@@ -1,0 +1,39 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(PGPASSWORD=fxX0PKH1Us1ZH13O psql \"postgresql://postgres:fxX0PKH1Us1ZH13O@db.mnkbvyjljudiyrustpvb.supabase.co:5432/postgres\" -f backups/backup-supabase-clean.sql)",
+      "Read(//Applications/**)",
+      "Read(//opt/homebrew/Cellar/libpq/18.3/bin/**)",
+      "Bash(PGPASSWORD=fxX0PKH1Us1ZH13O /opt/homebrew/opt/libpq/bin/psql \"postgresql://postgres:fxX0PKH1Us1ZH13O@db.mnkbvyjljudiyrustpvb.supabase.co:5432/postgres\" -f backups/backup-supabase-clean.sql)",
+      "Bash(PGPASSWORD=fxX0PKH1Us1ZH13O /opt/homebrew/opt/libpq/bin/psql \"postgresql://postgres.mnkbvyjljudiyrustpvb:fxX0PKH1Us1ZH13O@aws-0-us-east-1.pooler.supabase.com:5432/postgres\" -c \"SELECT version\\(\\);\")",
+      "Bash(nslookup db.mnkbvyjljudiyrustpvb.supabase.co)",
+      "Bash(nslookup mnkbvyjljudiyrustpvb.supabase.co)",
+      "Bash(PGPASSWORD=fxX0PKH1Us1ZH13O /opt/homebrew/opt/libpq/bin/psql \"postgresql://postgres:fxX0PKH1Us1ZH13O@mnkbvyjljudiyrustpvb.supabase.co:5432/postgres\" -c \"SELECT version\\(\\);\")",
+      "Bash(PGPASSWORD=fxX0PKH1Us1ZH13O /opt/homebrew/opt/libpq/bin/psql \"postgresql://postgres:fxX0PKH1Us1ZH13O@mnkbvyjljudiyrustpvb.supabase.co:6543/postgres\" -c \"SELECT version\\(\\);\")",
+      "Bash(wait)",
+      "Bash(nc -zv -w5 mnkbvyjljudiyrustpvb.supabase.co 5432)",
+      "Bash(nc -zv -w5 mnkbvyjljudiyrustpvb.supabase.co 6543)",
+      "Bash(dig db.mnkbvyjljudiyrustpvb.supabase.co)",
+      "Bash(npx supabase:*)",
+      "Bash(supabase --version)",
+      "Bash(supabase projects:*)",
+      "Bash(supabase link:*)",
+      "Bash(supabase db:*)",
+      "Bash(PGPASSWORD=fxX0PKH1Us1ZH13O /opt/homebrew/opt/libpq/bin/psql \"postgresql://postgres.mnkbvyjljudiyrustpvb:fxX0PKH1Us1ZH13O@aws-0-us-west-2.pooler.supabase.com:5432/postgres\" -c \"SELECT version\\(\\);\")",
+      "Bash(supabase --help)",
+      "Bash(grep -v \"^$\")",
+      "Bash(supabase migration:*)",
+      "Bash(mkdir -p /Users/thonyfd/supabase/migrations)",
+      "Bash(cp /Users/thonyfd/projects/personal-dashboard/backups/backup-supabase-clean.sql /Users/thonyfd/supabase/migrations/20260407000001_initial_restore.sql)",
+      "Bash(supabase --workdir /Users/thonyfd projects api-keys --project-ref mnkbvyjljudiyrustpvb)",
+      "Bash(gh run:*)",
+      "Bash(git checkout:*)",
+      "Bash(git merge:*)",
+      "Bash(sed -i:*)",
+      "Bash(sed -i '' '/>>>>>>> development/d' /Users/thonyfd/projects/personal-dashboard/services/ingestor/src/database/client.ts)"
+    ],
+    "additionalDirectories": [
+      "/Users/thonyfd/supabase/migrations"
+    ]
+  }
+}

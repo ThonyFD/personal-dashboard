@@ -1,19 +1,24 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { useNavigate } from 'react-router-dom';
 
 export default function Login() {
-  const { signInWithGoogle } = useAuth();
+  const { signInWithGoogle, user } = useAuth();
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+
+  useEffect(() => {
+    if (user) {
+      navigate('/app');
+    }
+  }, [navigate, user]);
 
   const handleGoogleSignIn = async () => {
     try {
       setError(null);
       setLoading(true);
       await signInWithGoogle();
-      navigate('/');
     } catch (err) {
       setError('Failed to sign in with Google. Please try again.');
       console.error(err);
@@ -40,10 +45,10 @@ export default function Login() {
       }}>
         <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
           <h1 style={{ fontSize: '2rem', fontWeight: 'bold', marginBottom: '0.5rem', color: '#333' }}>
-            Finance Dashboard
+            AI Finance Agent
           </h1>
           <p style={{ color: '#666' }}>
-            Sign in to access your financial data
+            Sign in to access your Gmail-powered finance dashboard
           </p>
         </div>
 
@@ -107,8 +112,20 @@ export default function Login() {
           color: '#666'
         }}>
           <p style={{ margin: 0 }}>
-            By signing in, you agree to access your financial transaction data from your Gmail account.
+            By signing in, you allow the app to authenticate with Google and read the Gmail messages required to extract your financial transaction data.
           </p>
+        </div>
+
+        <div style={{
+          marginTop: '1rem',
+          display: 'flex',
+          justifyContent: 'center',
+          gap: '1rem',
+          fontSize: '0.85rem'
+        }}>
+          <Link to="/privacy">Privacy Policy</Link>
+          <Link to="/terms">Terms of Service</Link>
+          <Link to="/">Home</Link>
         </div>
       </div>
     </div>

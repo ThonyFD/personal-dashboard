@@ -3,13 +3,13 @@
 -- Run this AFTER restoring the backup to Supabase
 --
 -- Steps:
---   1. Restore backup:  psql "postgresql://postgres:[PASSWORD]@db.mnkbvyjljudiyrustpvb.supabase.co:5432/postgres" < backups/backup-fdcdb_dc-20260228.sql
+--   1. Restore backup:  psql "postgresql://postgres:[PASSWORD]@db.mnkbvyjljudiyrustpvb.supabase.co:5432/postgres" < backups/your-backup.sql
 --   2. Run this script: psql "postgresql://postgres:[PASSWORD]@db.mnkbvyjljudiyrustpvb.supabase.co:5432/postgres" < packages/sql/post-restore-supabase.sql
 -- ============================================================
 
 -- ============================================================
 -- 1. CREATE SEQUENCES FOR AUTO-INCREMENT IDs
--- (The backup used Firebase-generated integer IDs, no sequences)
+-- (The legacy backup used integer IDs without sequences)
 -- ============================================================
 
 CREATE SEQUENCE IF NOT EXISTS categories_id_seq;

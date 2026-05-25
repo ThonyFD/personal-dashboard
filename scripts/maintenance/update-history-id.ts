@@ -1,51 +1,55 @@
 #!/usr/bin/env npx tsx
 
 /**
- * Script to update the Gmail sync state history ID
- * This resolves the issue where old messages are being fetched
- * that no longer exist in Gmail
+ * Update the Gmail sync state history ID directly in Supabase.
  */
 
-import { initializeApp, getApps } from 'firebase/app';
-import { getDataConnect } from 'firebase/data-connect';
+import { createClient } from '@supabase/supabase-js';
 
-// Import from generated SDK
-const generated = require('../services/ingestor/src/generated/index.cjs.js');
-const { connectorConfig, updateGmailSyncState } = generated;
+const supabaseUrl = process.env.SUPABASE_URL ?? '';
+const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY ?? '';
+
+if (!supabaseUrl || !supabaseKey) {
+  throw new Error('Missing SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY');
+}
+
+const supabase = createClient(supabaseUrl, supabaseKey, {
+  auth: { persistSession: false },
+});
 
 async function main() {
-  // Get the new history ID from command line or use the one from Gmail Watch
-  const newHistoryId = process.argv[2] || '12199254'; // Latest from Gmail Watch setup
+  const newHistoryId = process.argv[2];
+
+  if (!newHistoryId || Number.isNaN(Number(newHistoryId))) {
+    console.error('Usage: npx tsx scripts/maintenance/update-history-id.ts <history_id>');
+    process.exit(1);
+  }
+
+  const lastSyncedAt = new Date().toISOString();
 
   console.log(`Updating Gmail sync state to historyId: ${newHistoryId}`);
 
-  // Initialize Firebase App
-  if (!getApps().length) {
-    initializeApp({
-      projectId: 'mail-reader-433802',
-    });
-  }
-
-  // Initialize Data Connect
-  const dataConnect = getDataConnect(connectorConfig);
-
-  // Update the sync state
-  const lastSyncedAt = new Date().toISOString();
-
-  try {
-    await updateGmailSyncState(dataConnect, {
-      lastHistoryId: parseInt(newHistoryId, 10),
-      lastSyncedAt,
-      watchExpiration: null,
+  const { error } = await supabase
+    .from('gmail_sync_state')
+    .upsert({
+      id: 1,
+      last_history_id: Number.parseInt(newHistoryId, 10),
+      last_synced_at: lastSyncedAt,
+      watch_expiration: null,
+      updated_at: lastSyncedAt,
     });
 
-    console.log('✓ Successfully updated Gmail sync state');
-    console.log(`  History ID: ${newHistoryId}`);
-    console.log(`  Last Synced: ${lastSyncedAt}`);
-  } catch (error) {
-    console.error('✗ Failed to update Gmail sync state:', error);
+  if (error) {
+    console.error('Failed to update Gmail sync state:', error.message);
     process.exit(1);
   }
+
+  console.log('✓ Successfully updated Gmail sync state');
+  console.log(`  History ID: ${newHistoryId}`);
+  console.log(`  Last Synced: ${lastSyncedAt}`);
 }
 
-main().catch(console.error);
+main().catch((error) => {
+  console.error('Fatal error:', error);
+  process.exit(1);
+});

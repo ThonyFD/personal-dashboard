@@ -221,9 +221,10 @@
 /* Summary Cards */
 .summary-cards {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  grid-template-columns: 2fr 1fr;
   gap: 1rem;
   margin-bottom: 1.5rem;
+  align-items: stretch;
 }
 
 .summary-card {
@@ -288,6 +289,54 @@
 
 .summary-card.balance.negative .amount {
   color: #e53e3e;
+}
+
+.summary-card.total-spent {
+  border-left-color: #805ad5;
+}
+
+.summary-card.total-spent .amount {
+  color: #805ad5;
+}
+
+/* Metrics group — neutral container for the 4 breakdown cards */
+.summary-metrics-group {
+  display: flex;
+  gap: 0.5rem;
+  background: white;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 0.5rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+}
+
+.summary-metrics-group .summary-card {
+  flex: 1;
+  box-shadow: none;
+}
+
+/* Totals group — visually elevated section */
+.summary-totals-group {
+  display: flex;
+  gap: 0.5rem;
+  background: linear-gradient(135deg, #f0f4ff 0%, #fdf0ff 100%);
+  border: 1px solid #d6bcfa;
+  border-radius: 12px;
+  padding: 0.5rem;
+  box-shadow: 0 6px 20px rgba(102, 126, 234, 0.18);
+}
+
+.summary-totals-group .summary-card {
+  flex: 1;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+}
+
+.summary-totals-group .summary-card h4 {
+  font-size: 0.8rem;
+}
+
+.summary-totals-group .summary-card .amount {
+  font-size: 1.6rem;
 }
 
 /* Transactions Section */

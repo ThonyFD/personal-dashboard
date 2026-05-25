@@ -1,6 +1,6 @@
 import { useState, useRef } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { fetchTransactions } from '../api/dataconnect-client'
+import { fetchTransactions } from '../api/supabase-data-client'
 import { formatCurrency } from '../utils/format'
 import { format, startOfMonth, endOfMonth, subMonths } from 'date-fns'
 import html2canvas from 'html2canvas'

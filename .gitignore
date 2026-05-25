@@ -187,3 +187,11 @@ delete-banistmo.js
 
 # Scripts archive (obsolete scripts kept for reference)
 scripts/archive/
+
+# Android generated artifacts and local crash dumps
+android/**/build/
+*.apk
+*.hprof
+
+# App design tool lock files
+*.af~lock~

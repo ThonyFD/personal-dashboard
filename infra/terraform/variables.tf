@@ -9,12 +9,3 @@ variable "region" {
   default     = "us-central1"
 }
 
-variable "ingestor_url" {
-  description = "The URL of the Ingestor Cloud Run service"
-  type        = string
-}
-
-variable "renewal_url" {
-  description = "The URL of the Renewal Cloud Run service"
-  type        = string
-}
