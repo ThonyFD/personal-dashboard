@@ -20,6 +20,7 @@ import SystemHealth from './pages/SystemHealth'
 import TermsOfService from './pages/TermsOfService'
 import PrivacyPolicy from './pages/PrivacyPolicy'
 import HomePage from './pages/HomePage'
+import AlertBanner from './components/AlertBanner'
 import './App.css'
 
 const queryClient = new QueryClient()
@@ -163,6 +164,7 @@ function AppContent() {
   return (
     <div className="app">
       <Navigation />
+      <AlertBanner />
       <main className="main">
         <Routes>
           <Route path="/" element={<HomePage />} />

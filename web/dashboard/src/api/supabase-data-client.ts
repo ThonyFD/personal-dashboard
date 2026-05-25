@@ -22,6 +22,8 @@ import {
   deactivateSubscription as _deactivateSubscription,
   getActivePushSubscriptionsByEmail as _getActivePushSubscriptionsByEmail,
   getMaxPushSubscriptionId as _getMaxPushSubscriptionId,
+  fetchUnresolvedAlerts as _fetchUnresolvedAlerts,
+  resolveAlert as _resolveAlert,
 } from '@personal-dashboard/supabase-queries';
 
 // Re-export types consumed by web components
@@ -220,3 +222,10 @@ export async function getMaxPushSubscriptionId(): Promise<any> {
   const id = await _getMaxPushSubscriptionId(supabase);
   return { data: { pushSubscriptions: id != null ? [{ id }] : [] } };
 }
+
+// ─── System Alerts ────────────────────────────────────────────────────────────
+
+export type { SystemAlert } from '@personal-dashboard/supabase-queries';
+
+export const fetchUnresolvedAlerts = () => _fetchUnresolvedAlerts(supabase);
+export const resolveAlert = (id: number) => _resolveAlert(supabase, id);

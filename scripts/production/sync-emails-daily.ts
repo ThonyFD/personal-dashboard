@@ -522,6 +522,50 @@ class DailyEmailSync {
   /**
    * Rate limiting delay
    */
+  private async checkAndAlertDuplicateMerchants(): Promise<void> {
+    try {
+      const { data, error } = await this.supabase.rpc('count_duplicate_merchants');
+      if (error) throw error;
+
+      const { duplicate_groups, duplicate_records } = (data?.[0] ?? {}) as {
+        duplicate_groups: number;
+        duplicate_records: number;
+      };
+
+      if (!duplicate_groups || duplicate_groups === 0) {
+        console.log('✓ No duplicate merchants detected\n');
+        return;
+      }
+
+      console.log(`⚠️  Duplicate merchants detected: ${duplicate_groups} groups, ${duplicate_records} extra records\n`);
+
+      // Only create a new alert if there is no unresolved one of the same type
+      const { data: existing } = await this.supabase
+        .from('system_alerts')
+        .select('id')
+        .eq('type', 'duplicate_merchants')
+        .eq('resolved', false)
+        .maybeSingle();
+
+      if (existing) {
+        console.log('   Alert already exists — skipping duplicate alert creation\n');
+        return;
+      }
+
+      await this.supabase.from('system_alerts').insert({
+        type:     'duplicate_merchants',
+        severity: 'warning',
+        title:    `${duplicate_groups} grupo(s) de merchants duplicados detectados`,
+        details:  { duplicate_groups, duplicate_records },
+      });
+
+      console.log('   Alert created in system_alerts\n');
+    } catch (err) {
+      // Non-fatal: don't fail the sync over an alert check
+      console.error('   Failed to check duplicate merchants:', err);
+    }
+  }
+
   private async delay(ms: number): Promise<void> {
     return new Promise(resolve => setTimeout(resolve, ms));
   }
@@ -595,6 +639,9 @@ class DailyEmailSync {
 
       // Print statistics
       this.printStats();
+
+      // Check for duplicate merchants and alert user if found
+      await this.checkAndAlertDuplicateMerchants();
 
       console.log('✅ Sync complete!\n');
 

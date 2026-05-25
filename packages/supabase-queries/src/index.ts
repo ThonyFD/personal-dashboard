@@ -45,6 +45,9 @@ export {
   getMaxPushSubscriptionId,
 } from './notifications.js';
 
+export type { SystemAlert } from './alerts.js';
+export { fetchUnresolvedAlerts, resolveAlert } from './alerts.js';
+
 export {
   fetchMonthlyIncomes,
   fetchMonthlyIncomesInRange,
