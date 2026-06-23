@@ -14,11 +14,34 @@ export class YappyParser extends BaseParser {
     super(YAPPY_CONFIG);
   }
 
-  // Yappy payment *requests* ("Te pidieron un Yappy") are not confirmed
-  // transactions — just someone asking for money. They must never be recorded
-  // (and must not fall through to the LLM fallback).
+  // The email subject is the only reliable direction signal: Yappy emails are
+  // HTML-only and the sync pipeline only extracts text/plain parts, so parsers
+  // receive just the Gmail snippet as the body. We therefore classify off the
+  // subject first, falling back to body cues only when the subject is unknown.
+
+  // Outgoing (money leaves the account) — debit / transfer.
+  // "Enviaste un Yappy", "Pagaste por Yappy".
+  private static readonly OUTGOING_SUBJECT = /enviaste\s+un\s+yappy|pagaste\s+por\s+yappy|yappy\s+enviado/i;
+
+  // Incoming (money received) — credit / income.
+  // "Recibiste un Yappy", "Te enviaron por Yappy".
+  private static readonly INCOMING_SUBJECT = /recibiste\s+un\s+yappy|te\s+enviaron\s+por\s+yappy|yappy\s+recibido/i;
+
+  // Non-transaction notifications that must never be recorded: payment requests
+  // ("Te pidieron un Yappy"), login alerts, account-linking, etc.
+  private static readonly IGNORE_SUBJECT = /te\s+pidieron\s+un\s+yappy|pidieron\s+un\s+yappy|inicio\s+de\s+sesi[oó]n|agregaste\s+tu\s+cuenta/i;
+
+  // Drop everything that isn't a recognized money-movement email so it never
+  // falls through to the LLM fallback (which could misclassify it as income).
   override shouldIgnore(emailBody: string, message: GmailMessage, subject: string): boolean {
-    return this.isPaymentRequest(emailBody, subject || this.getSubject(message));
+    const s = subject || this.getSubject(message);
+
+    if (YappyParser.IGNORE_SUBJECT.test(s)) return true;
+    if (YappyParser.OUTGOING_SUBJECT.test(s) || YappyParser.INCOMING_SUBJECT.test(s)) return false;
+
+    // Unknown subject: keep only if the body clearly shows a send/receive;
+    // otherwise treat as a non-transaction notification and drop it.
+    return !this.isOutgoingTransaction(emailBody, s) && !this.isIncomingTransaction(emailBody, s);
   }
 
   parse(emailBody: string, message: GmailMessage): ParsedTransaction | null {
@@ -28,19 +51,23 @@ export class YappyParser extends BaseParser {
     // Extract subject from message headers
     const subject = this.getSubject(message);
 
-    // Defensive: skip requests even if parse() is called directly.
-    if (this.isPaymentRequest(emailBody, subject)) return null;
+    // Defensive: skip non-transaction notifications even if parse() is called
+    // directly (the registry normally drops these via shouldIgnore first).
+    if (YappyParser.IGNORE_SUBJECT.test(subject)) return null;
 
-    // Determine transaction direction (send = debit, receive = credit)
-    const isSend = this.isOutgoingTransaction(emailBody, subject);
-    const isReceive = this.isIncomingTransaction(emailBody, subject);
+    // Direction is subject-driven (see field comments above). Body cues are a
+    // last resort for unrecognized subjects, defaulting to income.
+    let isReceive: boolean;
+    if (YappyParser.OUTGOING_SUBJECT.test(subject)) isReceive = false;
+    else if (YappyParser.INCOMING_SUBJECT.test(subject)) isReceive = true;
+    else isReceive = !this.isOutgoingTransaction(emailBody, subject);
+    const isSend = !isReceive;
 
     // Extract merchant/recipient based on direction
     const merchant = this.extractMerchantFromBody(emailBody, isSend);
     const date = this.extractDate(emailBody) || new Date(parseInt(message.internalDate));
     const referenceNumber = this.extractReference(emailBody);
 
-    // Set transaction type based on direction
     // Send = transfer (debit), Receive = income (credit - money received)
     const type = isSend ? 'transfer' : 'income';
 
@@ -53,7 +80,7 @@ export class YappyParser extends BaseParser {
       date: this.normalizeToTimeZone(date),
       timestamp: this.normalizeToTimeZone(date),
       referenceNumber: referenceNumber || undefined,
-      description: isSend ? 'Yappy Send (Debit)' : isReceive ? 'Yappy Receive (Credit)' : 'Yappy Payment',
+      description: isSend ? 'Yappy Send (Debit)' : 'Yappy Receive (Credit)',
     };
   }
 
@@ -64,37 +91,14 @@ export class YappyParser extends BaseParser {
     return subjectHeader?.value || '';
   }
 
-  private isPaymentRequest(emailBody: string, subject: string): boolean {
-    // Subject: "¡Te pidieron un Yappy! 🙏"
-    const subjectIndicators = /te\s+pidieron\s+un\s+yappy|pidieron\s+un\s+yappy/i;
-
-    // Body cues unique to a request (not a completed payment):
-    // - "Entra al app para aceptar o rechazar este pedido"
-    // - Message row labeled "Pedido"
-    const bodyIndicators = /aceptar\s+o\s+rechazar\s+este\s+pedido|para\s+aceptar\s+o\s+rechazar/i;
-
-    return subjectIndicators.test(subject) || bodyIndicators.test(emailBody);
-  }
-
   private isOutgoingTransaction(emailBody: string, subject: string): boolean {
-    // Check subject line for "Enviaste" (You sent)
-    const subjectIndicators = /enviaste\s+un\s+yappy|yappy\s+enviado/i;
-
-    // Check body for send indicators
-    const bodyIndicators = /enviaste|pagaste\s+a|transferiste\s+a/i;
-
-    return subjectIndicators.test(subject) || bodyIndicators.test(emailBody);
+    const bodyIndicators = /enviaste|pagaste\s+(?:a|por)|transferiste\s+a/i;
+    return YappyParser.OUTGOING_SUBJECT.test(subject) || bodyIndicators.test(emailBody);
   }
 
   private isIncomingTransaction(emailBody: string, subject: string): boolean {
-    // Check subject line for "Recibiste" (You received)
-    const subjectIndicators = /recibiste\s+un\s+yappy|yappy\s+recibido|te\s+enviaron\s+por\s+yappy/i;
-
-    // Check body for receive indicators
-    // "Te enviaron por Yappy" = money received (credit)
-    const bodyIndicators = /recibiste|te\s+pagaron|te\s+enviaron|te\s+enviaron\s+por\s+yappy/i;
-
-    return subjectIndicators.test(subject) || bodyIndicators.test(emailBody);
+    const bodyIndicators = /recibiste|te\s+pagaron|te\s+enviaron/i;
+    return YappyParser.INCOMING_SUBJECT.test(subject) || bodyIndicators.test(emailBody);
   }
 
   private extractMerchantFromBody(text: string, isSend: boolean): string | null {
