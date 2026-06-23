@@ -35,6 +35,14 @@ export abstract class BaseParser {
 
   abstract parse(emailBody: string, message: GmailMessage): ParsedTransaction | null;
 
+  // Some emails come from a known provider but must NOT be recorded as
+  // transactions (e.g. Yappy payment requests, promotions). Parsers override
+  // this so the registry drops the email entirely instead of falling through
+  // to the LLM fallback, which could misclassify it.
+  shouldIgnore(_emailBody: string, _message: GmailMessage, _subject: string): boolean {
+    return false;
+  }
+
   protected extractAmount(text: string): number | null {
     const patterns = [
       /\$\s*(\d{1,3}(?:,\d{3})*(?:\.\d{1,2})?)/,

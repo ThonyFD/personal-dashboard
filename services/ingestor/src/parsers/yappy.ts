@@ -14,12 +14,22 @@ export class YappyParser extends BaseParser {
     super(YAPPY_CONFIG);
   }
 
+  // Yappy payment *requests* ("Te pidieron un Yappy") are not confirmed
+  // transactions — just someone asking for money. They must never be recorded
+  // (and must not fall through to the LLM fallback).
+  override shouldIgnore(emailBody: string, message: GmailMessage, subject: string): boolean {
+    return this.isPaymentRequest(emailBody, subject || this.getSubject(message));
+  }
+
   parse(emailBody: string, message: GmailMessage): ParsedTransaction | null {
     const amount = this.extractAmount(emailBody);
     if (!amount) return null;
 
     // Extract subject from message headers
     const subject = this.getSubject(message);
+
+    // Defensive: skip requests even if parse() is called directly.
+    if (this.isPaymentRequest(emailBody, subject)) return null;
 
     // Determine transaction direction (send = debit, receive = credit)
     const isSend = this.isOutgoingTransaction(emailBody, subject);
@@ -52,6 +62,18 @@ export class YappyParser extends BaseParser {
       (h) => h.name.toLowerCase() === 'subject'
     );
     return subjectHeader?.value || '';
+  }
+
+  private isPaymentRequest(emailBody: string, subject: string): boolean {
+    // Subject: "¡Te pidieron un Yappy! 🙏"
+    const subjectIndicators = /te\s+pidieron\s+un\s+yappy|pidieron\s+un\s+yappy/i;
+
+    // Body cues unique to a request (not a completed payment):
+    // - "Entra al app para aceptar o rechazar este pedido"
+    // - Message row labeled "Pedido"
+    const bodyIndicators = /aceptar\s+o\s+rechazar\s+este\s+pedido|para\s+aceptar\s+o\s+rechazar/i;
+
+    return subjectIndicators.test(subject) || bodyIndicators.test(emailBody);
   }
 
   private isOutgoingTransaction(emailBody: string, subject: string): boolean {

@@ -34,6 +34,56 @@ export class ParserRegistry {
     return undefined;
   }
 
+  // Run the matching regex parser. Returns the parsed result, or 'ignored'
+  // when a parser claims the email but flags it as a non-transaction (so the
+  // caller skips the LLM fallback), or null when no parser produced a result.
+  private tryRegexParsers(
+    emailBody: string,
+    message: GmailMessage,
+    senderEmail: string,
+    subject: string
+  ): { provider: string; transaction: ParsedTransaction } | 'ignored' | null {
+    for (const parser of this.parsers) {
+      if (!parser.canParse(message, senderEmail, subject)) continue;
+
+      const provider = (parser as any).config.name;
+
+      // Provider matched but the email is explicitly not a transaction
+      // (e.g. a Yappy payment request). Drop it without LLM fallback.
+      if (parser.shouldIgnore(emailBody, message, subject)) {
+        Logger.info('Email ignored by parser', {
+          event: 'email_ignored',
+          provider,
+          senderEmail,
+          subject,
+        });
+        return 'ignored';
+      }
+
+      const timer = Logger.startTimer();
+      try {
+        const transaction = parser.parse(emailBody, message);
+        if (transaction) {
+          Logger.info('Transaction parsed successfully', {
+            event: 'transaction_parsed',
+            provider,
+            duration_ms: timer(),
+          });
+          return { provider, transaction };
+        }
+      } catch (error) {
+        Logger.error('Parser failed', {
+          event: 'parser_failed',
+          provider,
+          duration_ms: timer(),
+          error: error instanceof Error ? error.message : String(error),
+        });
+      }
+    }
+
+    return null;
+  }
+
   async parseEmail(
     emailBody: string,
     message: GmailMessage,
@@ -41,32 +91,9 @@ export class ParserRegistry {
     subject: string
   ): Promise<{ provider: string; transaction: ParsedTransaction } | null> {
     // Try regex-based parsers first
-    for (const parser of this.parsers) {
-      if (parser.canParse(message, senderEmail, subject)) {
-        const timer = Logger.startTimer();
-        try {
-          const transaction = parser.parse(emailBody, message);
-          if (transaction) {
-            Logger.info('Transaction parsed successfully', {
-              event: 'transaction_parsed',
-              provider: (parser as any).config.name,
-              duration_ms: timer(),
-            });
-            return {
-              provider: (parser as any).config.name,
-              transaction,
-            };
-          }
-        } catch (error) {
-          Logger.error('Parser failed', {
-            event: 'parser_failed',
-            provider: (parser as any).config.name,
-            duration_ms: timer(),
-            error: error instanceof Error ? error.message : String(error),
-          });
-        }
-      }
-    }
+    const regexResult = this.tryRegexParsers(emailBody, message, senderEmail, subject);
+    if (regexResult === 'ignored') return null;
+    if (regexResult) return regexResult;
 
     // Try LLM fallback if regex parsers didn't match
     Logger.info('Attempting LLM fallback', {
