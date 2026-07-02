@@ -39,6 +39,7 @@ import {
   normalizeMerchantName
 } from '../../services/ingestor/src/utils/hash';
 import { autoCategorizeMerchantId } from '../../services/ingestor/src/utils/category-mapping';
+import { withRetry } from '../../services/ingestor/src/utils/retry';
 import { EmailData, TransactionData, GmailMessage } from '../../services/ingestor/src/types';
 
 interface SyncStats {
@@ -94,7 +95,10 @@ class DailyEmailSync {
    */
   private async getSecret(secretName: string): Promise<string> {
     const name = `projects/${this.projectId}/secrets/${secretName}/versions/latest`;
-    const [version] = await this.secretClient.accessSecretVersion({ name });
+    const [version] = await withRetry(
+      () => this.secretClient.accessSecretVersion({ name }),
+      { label: `accessSecretVersion(${secretName})` }
+    );
     return version.payload?.data?.toString() || '';
   }
 

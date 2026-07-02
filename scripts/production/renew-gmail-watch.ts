@@ -12,14 +12,18 @@ import { OAuth2Client } from 'google-auth-library';
 import { SecretManagerServiceClient } from '@google-cloud/secret-manager';
 import { persistTokens } from 'oauth-token-store';
 import { fileURLToPath } from 'url';
+import { withRetry } from '../../services/ingestor/src/utils/retry';
 
 const secretClient = new SecretManagerServiceClient();
 const projectId = process.env.GOOGLE_CLOUD_PROJECT || 'mail-reader-433802';
 
 async function getSecret(name: string): Promise<string> {
-  const [version] = await secretClient.accessSecretVersion({
-    name: `projects/${projectId}/secrets/${name}/versions/latest`,
-  });
+  const [version] = await withRetry(
+    () => secretClient.accessSecretVersion({
+      name: `projects/${projectId}/secrets/${name}/versions/latest`,
+    }),
+    { label: `accessSecretVersion(${name})` }
+  );
   return version.payload?.data?.toString() ?? '';
 }
 
