@@ -279,9 +279,12 @@ class DailyEmailSync {
   }
 
   /**
-   * Extract email body from Gmail message
+   * Extract email body from Gmail message.
+   * Prefers the text/plain part. When `allowHtml` is set (parsers that opt in via
+   * `htmlBodyFallback`), an HTML-only email falls back to its text/html part
+   * instead of the truncated Gmail snippet.
    */
-  private extractEmailBody(message: GmailMessage): string {
+  private extractEmailBody(message: GmailMessage, allowHtml = false): string {
     function decodeBase64(data: string): string {
       return Buffer.from(
         data.replace(/-/g, '+').replace(/_/g, '/'),
@@ -289,18 +292,26 @@ class DailyEmailSync {
       ).toString('utf-8');
     }
 
-    function extractFromPart(part: any): string {
-      if (part.mimeType === 'text/plain' && part.body?.data) {
+    function extractFromPart(part: any, mimeType: string): string {
+      if (part.mimeType === mimeType && part.body?.data) {
         return decodeBase64(part.body.data);
       }
 
       if (part.parts) {
         for (const subPart of part.parts) {
-          const text = extractFromPart(subPart);
+          const text = extractFromPart(subPart, mimeType);
           if (text) return text;
         }
       }
 
+      return '';
+    }
+
+    function extractFromParts(mimeType: string): string {
+      for (const part of message.payload.parts ?? []) {
+        const text = extractFromPart(part, mimeType);
+        if (text) return text;
+      }
       return '';
     }
 
@@ -309,12 +320,8 @@ class DailyEmailSync {
       body = decodeBase64(message.payload.body.data);
     }
 
-    if (!body && message.payload.parts) {
-      for (const part of message.payload.parts) {
-        body = extractFromPart(part);
-        if (body) break;
-      }
-    }
+    if (!body) body = extractFromParts('text/plain');
+    if (!body && allowHtml) body = extractFromParts('text/html');
 
     return body || message.snippet || '';
   }
@@ -357,9 +364,9 @@ class DailyEmailSync {
       const senderName = this.extractName(senderEmail);
       const subject = this.getHeader(message, 'Subject') || '';
       const receivedAt = new Date(parseInt(message.internalDate));
-      const emailBody = this.extractEmailBody(message);
-      const bodyHash = generateEmailBodyHash(emailBody);
       const provider = this.parserRegistry.detectProvider(message, senderEmail, subject);
+      const emailBody = this.extractEmailBody(message, this.parserRegistry.wantsHtmlBody(provider));
+      const bodyHash = generateEmailBodyHash(emailBody);
 
       // Store email in database
       const emailData: EmailData = {

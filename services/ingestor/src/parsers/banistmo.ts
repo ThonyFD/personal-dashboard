@@ -7,11 +7,20 @@ const BANISTMO_CONFIG: ParserConfig = {
   senderPatterns: [/@banistmo\.com$/],
   subjectPatterns: [/notificaciones banistmo/i, /alertas.*banistmo/i],
   bodyPatterns: [/banistmo/i],
+  // Banistmo emails are HTML-only; the snippet stops before "Monto:".
+  htmlBodyFallback: true,
 };
 
 export class BanistmoParser extends BaseParser {
   constructor() {
     super(BANISTMO_CONFIG);
+  }
+
+  // Login alerts ("Reporte - Inicio de sesión") share the transaction subject
+  // but carry no amount. Drop them so they never reach the LLM fallback, and so
+  // an IP address in the body can't be mistaken for an amount.
+  override shouldIgnore(emailBody: string): boolean {
+    return /inicio\s+de\s+sesi(?:ó|o|&oacute;)n/i.test(emailBody);
   }
 
   parse(emailBody: string, message: GmailMessage): ParsedTransaction | null {
@@ -126,7 +135,14 @@ export class BanistmoParser extends BaseParser {
       }
     }
 
-    // Priority 2: Extract card number for credit card payments (from Banca en línea)
+    // Priority 2: Beneficiary of a transfer (ACH Express)
+    // "... al beneficiario Juan Perez ." or "... al beneficiario Juan Perez a la cuenta terminada en *1136"
+    const beneficiaryMatch = /al\s+beneficiario\s+(.+?)\s*(?:\.\s|\s+a\s+la\s+cuenta)/i.exec(text);
+    if (beneficiaryMatch?.[1]?.trim()) {
+      return beneficiaryMatch[1].trim();
+    }
+
+    // Priority 3: Extract card number for credit card payments (from Banca en línea)
     // Banistmo emails usually have "Producto a pagar: *XXXX"
     // After HTML cleaning, it becomes "Producto a pagar *XXXX" or "Producto a pagar: *XXXX"
     // Be specific to avoid catching phone numbers like (507) XXX-XXXX
