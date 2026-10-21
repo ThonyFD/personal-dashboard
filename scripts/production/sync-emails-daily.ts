@@ -440,6 +440,14 @@ class DailyEmailSync {
     provider: string
   ): Promise<boolean> {
     try {
+      // Every sync re-reads the lookback window. Skip emails that already have a
+      // transaction so a parser change (new reference/merchant, hence a new
+      // idempotency key) can't insert a second row for the same email.
+      if (await this.dbClient.hasTransactionForEmail(emailId)) {
+        console.log(`      ⊘ Transaction already recorded for this email (skipped)`);
+        return false;
+      }
+
       const result = await this.parserRegistry.parseEmail(
         emailBody,
         message,

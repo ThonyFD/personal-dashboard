@@ -90,7 +90,16 @@ describe('BanistmoParser', () => {
       amount: 23.69,
       merchant: 'KFC MARKET PLAZA',
       cardLast4: '2627',
+      referenceNumber: 'F92222',
     });
+  });
+
+  it('gives a re-sent purchase alert the same reference (authorization code), so it dedupes', () => {
+    const resent = CARD_PURCHASE_HTML.replace('6:51 pm', '6:54 pm');
+    const first = parser.parse(CARD_PURCHASE_HTML, message('1792108313000'));
+    const second = parser.parse(resent, message('1792108493000'));
+    expect(second?.referenceNumber).toBe('F92222');
+    expect(second?.referenceNumber).toBe(first?.referenceNumber);
   });
 
   it('parses an outgoing ACH transfer with the beneficiary as merchant', () => {
