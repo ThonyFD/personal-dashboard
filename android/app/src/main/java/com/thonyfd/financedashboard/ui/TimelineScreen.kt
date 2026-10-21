@@ -1,5 +1,15 @@
 package com.thonyfd.financedashboard.ui
 
+import com.thonyfd.financedashboard.ui.theme.AppColors
+import com.thonyfd.financedashboard.data.models.HabitIcons
+import com.thonyfd.financedashboard.ui.theme.MoneyStyle
+import androidx.compose.material3.TextButton
+import androidx.compose.material.icons.outlined.Refresh
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.draw.clip
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import kotlinx.coroutines.CancellationException
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -11,7 +21,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.weight
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -43,6 +52,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
@@ -51,30 +61,26 @@ import com.thonyfd.financedashboard.data.models.UserHabitRow
 import com.thonyfd.financedashboard.data.repository.HabitRepository
 import kotlinx.coroutines.launch
 import java.time.LocalDate
-
-private val TimelineBg = Color(0xFF0F0F1A)
-private val TimelineSurface = Color(0xFF16213E)
-private val TimelinePrimary = Color(0xFF00D9FF)
-private val TimelineGreen = Color(0xFF39FF14)
-private val TimelineText = Color(0xFFE8FFFF)
-private val TimelineMuted = Color(0xFF8A94A7)
+import android.widget.Toast
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TimelineScreen(padding: PaddingValues = PaddingValues()) {
     val repo = remember { HabitRepository() }
+    val context = LocalContext.current
     val scope = rememberCoroutineScope()
     val today = remember { LocalDate.now() }
     var habits by remember { mutableStateOf<List<UserHabitRow>>(emptyList()) }
     var logs by remember { mutableStateOf<List<HabitLogRow>>(emptyList()) }
     var streak by remember { mutableIntStateOf(0) }
     var isLoading by remember { mutableStateOf(true) }
+    var hasLoaded by remember { mutableStateOf(false) }
     var error by remember { mutableStateOf<String?>(null) }
     var focusHabit by remember { mutableStateOf<UserHabitRow?>(null) }
 
-    fun load() {
+    fun load(showResult: Boolean = false) {
         scope.launch {
-            isLoading = true
+            if (!hasLoaded) isLoading = true
             error = null
             try {
                 habits = repo.getHabitsForToday(today)
@@ -84,8 +90,13 @@ fun TimelineScreen(padding: PaddingValues = PaddingValues()) {
                     logs = repo.getLogsInRange(today.minusDays(365), today),
                     today = today
                 )
+                hasLoaded = true
+                if (showResult) Toast.makeText(context, "Timeline actualizado", Toast.LENGTH_SHORT).show()
+            } catch (e: CancellationException) {
+                throw e // tab cambiada o pantalla cerrada: no es un error
             } catch (e: Exception) {
                 error = e.message ?: "Error desconocido"
+                Toast.makeText(context, "No se pudo actualizar el timeline", Toast.LENGTH_SHORT).show()
             } finally {
                 isLoading = false
             }
@@ -104,100 +115,114 @@ fun TimelineScreen(padding: PaddingValues = PaddingValues()) {
             .padding(padding)
     ) {
         TopAppBar(
-            title = { Text("Timeline", color = TimelineText) },
-            actions = {
-                IconButton(onClick = { load() }) {
-                    Icon(Icons.Default.Refresh, contentDescription = "Actualizar", tint = TimelinePrimary)
+            title = {
+                Column {
+                    Text("Timeline", style = MaterialTheme.typography.titleLarge)
+                    Text("Tu día por bloques", color = TimelineMuted, style = MaterialTheme.typography.bodySmall)
                 }
             },
-            colors = TopAppBarDefaults.topAppBarColors(containerColor = Color(0xFF1A1A2E))
+            actions = {
+                IconButton(onClick = { load(showResult = true) }) {
+                    Icon(Icons.Outlined.Refresh, contentDescription = "Actualizar")
+                }
+            },
+            colors = appTopBarColors()
         )
 
         when {
             isLoading -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                CircularProgressIndicator(color = TimelinePrimary)
+                CircularProgressIndicator(color = TimelinePrimary, strokeWidth = 2.dp, modifier = Modifier.size(32.dp))
             }
-            error != null -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                Text(error ?: "Error", color = Color(0xFFFF6B6B))
+            error != null && !hasLoaded -> Box(Modifier.fillMaxSize().padding(32.dp), contentAlignment = Alignment.Center) {
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Text("No se pudo cargar el timeline", color = TimelineText, style = MaterialTheme.typography.titleMedium)
+                    Spacer(Modifier.height(6.dp))
+                    Text(error ?: "", color = TimelineMuted, style = MaterialTheme.typography.bodySmall)
+                    Spacer(Modifier.height(16.dp))
+                    OutlinedButton(onClick = { load(showResult = true) }) { Text("Reintentar", color = TimelinePrimary) }
+                }
             }
             else -> LazyColumn(
                 modifier = Modifier.fillMaxSize(),
-                contentPadding = PaddingValues(16.dp),
+                contentPadding = PaddingValues(start = 20.dp, end = 20.dp, top = 4.dp, bottom = 28.dp),
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 item {
-                    Card(
-                        colors = CardDefaults.cardColors(containerColor = TimelineSurface),
-                        shape = RoundedCornerShape(20.dp)
-                    ) {
-                        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                            Text("Racha viva", color = TimelinePrimary, fontSize = 12.sp)
-                            Text("$streak días", color = TimelineText, style = MaterialTheme.typography.headlineMedium)
-                            Text("$completedCount/${habits.size} completados hoy", color = TimelineMuted)
-                            LinearProgressIndicator(
-                                progress = { progress },
-                                modifier = Modifier.fillMaxWidth().height(8.dp),
-                                color = TimelineGreen,
-                                trackColor = Color(0xFF25324C)
-                            )
+                    Column(Modifier.padding(top = 8.dp, start = 2.dp, bottom = 4.dp)) {
+                        Text("Racha", color = TimelineMuted, style = MaterialTheme.typography.bodyMedium)
+                        Row(verticalAlignment = Alignment.Bottom) {
+                            Text("$streak", color = TimelineText, style = MoneyStyle, fontSize = 52.sp, fontWeight = FontWeight.SemiBold, letterSpacing = (-1.5).sp)
+                            Spacer(Modifier.width(8.dp))
+                            Text(if (streak == 1) "día" else "días", color = TimelineMuted, style = MaterialTheme.typography.titleMedium, modifier = Modifier.padding(bottom = 10.dp))
                         }
+                        Spacer(Modifier.height(10.dp))
+                        LinearProgressIndicator(
+                            progress = { progress },
+                            modifier = Modifier.fillMaxWidth().height(6.dp).clip(RoundedCornerShape(3.dp)),
+                            color = if (progress >= 1f) TimelineGreen else TimelinePrimary,
+                            trackColor = AppColors.Panel,
+                            gapSize = 0.dp,
+                            drawStopIndicator = {}
+                        )
+                        Spacer(Modifier.height(8.dp))
+                        Text("$completedCount de ${habits.size} completados hoy", color = TimelineMuted, style = MaterialTheme.typography.bodySmall)
                     }
                 }
 
                 listOf("MORNING", "AFTERNOON", "EVENING").forEach { block ->
                     val blockHabits = habits.filter { it.dayBlock == block }
+                    val blockDone = blockHabits.count { habit -> logs.any { it.userHabitId == habit.id && it.status == "COMPLETED" } }
                     item {
-                        Text(
-                            text = when (block) {
+                        SectionHeader(
+                            when (block) {
                                 "MORNING" -> "Mañana"
                                 "AFTERNOON" -> "Tarde"
                                 else -> "Noche"
                             },
-                            color = TimelinePrimary,
-                            fontSize = 13.sp
+                            trailing = if (blockHabits.isEmpty()) null else "$blockDone de ${blockHabits.size}"
                         )
                     }
-                    if (blockHabits.isEmpty()) {
-                        item {
-                            Card(colors = CardDefaults.cardColors(containerColor = TimelineSurface)) {
-                                Text(
-                                    "Sin hábitos en este bloque",
-                                    color = TimelineMuted,
-                                    modifier = Modifier.padding(14.dp)
-                                )
+                    item {
+                        GroupedPanel {
+                            if (blockHabits.isEmpty()) {
+                                EmptyRow("Sin hábitos en este bloque")
                             }
-                        }
-                    } else {
-                        items(blockHabits) { habit ->
-                            val completed = logs.any { it.userHabitId == habit.id && it.status == "COMPLETED" }
-                            Card(
-                                colors = CardDefaults.cardColors(containerColor = TimelineSurface),
-                                shape = RoundedCornerShape(18.dp)
-                            ) {
+                            blockHabits.forEachIndexed { index, habit ->
+                                val completed = logs.any { it.userHabitId == habit.id && it.status == "COMPLETED" }
+                                if (index > 0) PanelDivider(startIndent = 60.dp)
                                 Row(
-                                    Modifier
-                                        .fillMaxWidth()
-                                        .padding(14.dp),
+                                    Modifier.fillMaxWidth().padding(start = 16.dp, end = 8.dp, top = 12.dp, bottom = 12.dp),
                                     verticalAlignment = Alignment.CenterVertically
                                 ) {
-                                    Checkbox(
+                                    CheckCircle(
                                         checked = completed,
-                                        onCheckedChange = {
+                                        size = 28.dp,
+                                        onClick = {
                                             scope.launch {
-                                                if (completed) repo.removeHabitLog(habit.id, today)
-                                                else repo.toggleHabitLog(habit.id, today, "COMPLETED", habit.targetDurationMinutes)
-                                                load()
+                                                runCatching {
+                                                    if (completed) repo.removeHabitLog(habit.id, today)
+                                                    else repo.toggleHabitLog(habit.id, today, "COMPLETED", habit.targetDurationMinutes)
+                                                }.onSuccess {
+                                                    load()
+                                                }.onFailure { Toast.makeText(context, "No se pudo guardar el cambio", Toast.LENGTH_SHORT).show() }
                                             }
                                         }
                                     )
+                                    Spacer(Modifier.width(16.dp))
                                     Column(Modifier.weight(1f)) {
-                                        Text(habit.name, color = TimelineText)
-                                        Text("${habit.targetDurationMinutes} min", color = TimelineMuted, fontSize = 12.sp)
+                                        Text(
+                                            "${HabitIcons.resolve(habit.iconIdentifier)}  ${habit.name}",
+                                            color = if (completed) TimelineMuted else TimelineText,
+                                            style = MaterialTheme.typography.bodyMedium,
+                                            fontWeight = FontWeight.SemiBold,
+                                            maxLines = 1
+                                        )
+                                        Text("${habit.targetDurationMinutes} min", color = TimelineMuted, style = MaterialTheme.typography.bodySmall)
                                     }
-                                    OutlinedButton(onClick = { focusHabit = habit }) {
-                                        Icon(Icons.Default.PlayArrow, null)
-                                        Spacer(Modifier.padding(horizontal = 2.dp))
-                                        Text("Focus")
+                                    TextButton(onClick = { focusHabit = habit }) {
+                                        Icon(Icons.Default.PlayArrow, null, tint = TimelinePrimary, modifier = Modifier.size(18.dp))
+                                        Spacer(Modifier.width(4.dp))
+                                        Text("Enfoque", color = TimelinePrimary, style = MaterialTheme.typography.labelLarge)
                                     }
                                 }
                             }
@@ -214,9 +239,13 @@ fun TimelineScreen(padding: PaddingValues = PaddingValues()) {
             onDismiss = { focusHabit = null },
             onSave = { minutes ->
                 scope.launch {
-                    repo.toggleHabitLog(habit.id, today, "COMPLETED", minutes)
-                    focusHabit = null
-                    load()
+                    runCatching { repo.toggleHabitLog(habit.id, today, "COMPLETED", minutes) }
+                        .onSuccess {
+                            focusHabit = null
+                            Toast.makeText(context, "Sesión guardada", Toast.LENGTH_SHORT).show()
+                            load()
+                        }
+                        .onFailure { Toast.makeText(context, "No se pudo guardar la sesión", Toast.LENGTH_SHORT).show() }
                 }
             }
         )
@@ -239,7 +268,7 @@ private fun FocusTimerDialog(
     }
 
     Dialog(onDismissRequest = onDismiss) {
-        Card(colors = CardDefaults.cardColors(containerColor = TimelineSurface), shape = RoundedCornerShape(22.dp)) {
+        Card(colors = CardDefaults.cardColors(containerColor = AppColors.Panel), shape = RoundedCornerShape(28.dp)) {
             Column(
                 Modifier.padding(20.dp),
                 horizontalAlignment = Alignment.CenterHorizontally,
@@ -248,8 +277,10 @@ private fun FocusTimerDialog(
                 Text(habit.name, color = TimelineText, style = MaterialTheme.typography.headlineSmall)
                 Text(
                     text = "%02d:%02d".format(remaining / 60, remaining % 60),
-                    color = TimelinePrimary,
-                    style = MaterialTheme.typography.displaySmall
+                    color = TimelineText,
+                    style = MoneyStyle,
+                    fontSize = 56.sp,
+                    fontWeight = FontWeight.Medium
                 )
                 Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                     OutlinedButton(onClick = { running = !running }) {

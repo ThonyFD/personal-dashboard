@@ -1,5 +1,7 @@
 package com.thonyfd.financedashboard.ui
 
+import com.thonyfd.financedashboard.ui.theme.AppColors
+import kotlinx.coroutines.CancellationException
 import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
@@ -13,6 +15,13 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
+import androidx.compose.material.icons.outlined.Widgets
+import androidx.compose.material.icons.outlined.Refresh
+import androidx.compose.foundation.border
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.graphics.vector.ImageVector
+import com.thonyfd.financedashboard.ui.theme.MoneyStyle
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -22,6 +31,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.platform.LocalContext
+import android.widget.Toast
 import com.thonyfd.financedashboard.data.models.CategorySpend
 import com.thonyfd.financedashboard.data.models.Transaction
 import com.thonyfd.financedashboard.data.models.UpcomingPayment
@@ -29,8 +40,11 @@ import com.thonyfd.financedashboard.data.models.WidgetData
 import com.thonyfd.financedashboard.data.repository.FinanceRepository
 import com.thonyfd.financedashboard.ui.theme.FinanceDashboardTheme
 import com.thonyfd.financedashboard.widget.FinanceWidgetWorker
+import com.thonyfd.financedashboard.widget.WidgetAppearancePreferences
+import com.thonyfd.financedashboard.widget.WidgetKind
 import kotlinx.coroutines.launch
 import java.time.LocalDate
+import kotlin.math.roundToInt
 
 data class CategoryNavState(
     val name: String,
@@ -42,17 +56,21 @@ data class CategoryNavState(
 class MainActivity : ComponentActivity() {
 
     private var categoryNav by mutableStateOf<CategoryNavState?>(null)
+    private var externalTab by mutableStateOf<Int?>(null)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         FinanceWidgetWorker.schedule(this)
         categoryNav = parseCategoryFromIntent(intent)
+        externalTab = parseTabFromIntent(intent)
         setContent {
             FinanceDashboardTheme {
                 AppRoot(
                     externalNav = categoryNav,
-                    onExternalConsumed = { categoryNav = null }
+                    onExternalConsumed = { categoryNav = null },
+                    externalTab = externalTab,
+                    onExternalTabConsumed = { externalTab = null }
                 )
             }
         }
@@ -62,6 +80,7 @@ class MainActivity : ComponentActivity() {
         super.onNewIntent(intent)
         setIntent(intent)
         categoryNav = parseCategoryFromIntent(intent)
+        externalTab = parseTabFromIntent(intent)
     }
 
     private fun parseCategoryFromIntent(intent: Intent?): CategoryNavState? {
@@ -74,6 +93,15 @@ class MainActivity : ComponentActivity() {
             month = intent.getIntExtra("MONTH", now.monthValue)
         )
     }
+
+    private fun parseTabFromIntent(intent: Intent?): Int? =
+        intent?.takeIf { it.hasExtra(EXTRA_OPEN_TAB) }?.getIntExtra(EXTRA_OPEN_TAB, TAB_DASHBOARD)
+
+    companion object {
+        const val EXTRA_OPEN_TAB = "OPEN_TAB"
+        const val TAB_DASHBOARD = 0
+        const val TAB_HABITS = 3
+    }
 }
 
 // ---------------------------------------------------------------------------
@@ -82,7 +110,9 @@ class MainActivity : ComponentActivity() {
 @Composable
 fun AppRoot(
     externalNav: CategoryNavState? = null,
-    onExternalConsumed: () -> Unit = {}
+    onExternalConsumed: () -> Unit = {},
+    externalTab: Int? = null,
+    onExternalTabConsumed: () -> Unit = {}
 ) {
     var selectedTab by remember { mutableIntStateOf(0) }
     var categoryDetail by remember { mutableStateOf<CategoryNavState?>(null) }
@@ -92,6 +122,15 @@ fun AppRoot(
             selectedTab = 0
             categoryDetail = externalNav
             onExternalConsumed()
+        }
+    }
+
+
+    LaunchedEffect(externalTab) {
+        externalTab?.let {
+            selectedTab = it.coerceIn(0, 4)
+            categoryDetail = null
+            onExternalTabConsumed()
         }
     }
 
@@ -108,79 +147,8 @@ fun AppRoot(
     }
 
     Scaffold(
-        containerColor = Color(0xFF0F0F1A),
-        bottomBar = {
-            NavigationBar(
-                containerColor = Color(0xFF16213E),
-                tonalElevation = 0.dp
-            ) {
-                NavigationBarItem(
-                    selected = selectedTab == 0,
-                    onClick = { selectedTab = 0 },
-                    icon = { Icon(Icons.Default.Home, "Dashboard") },
-                    label = { Text("Dashboard") },
-                    colors = NavigationBarItemDefaults.colors(
-                        selectedIconColor = Color(0xFF00D4AA),
-                        selectedTextColor = Color(0xFF00D4AA),
-                        unselectedIconColor = Color(0xFF666666),
-                        unselectedTextColor = Color(0xFF666666),
-                        indicatorColor = Color(0xFF1A1A2E)
-                    )
-                )
-                NavigationBarItem(
-                    selected = selectedTab == 1,
-                    onClick = { selectedTab = 1 },
-                    icon = { Icon(Icons.Default.DateRange, "Control Mensual") },
-                    label = { Text("Control") },
-                    colors = NavigationBarItemDefaults.colors(
-                        selectedIconColor = Color(0xFF00D4AA),
-                        selectedTextColor = Color(0xFF00D4AA),
-                        unselectedIconColor = Color(0xFF666666),
-                        unselectedTextColor = Color(0xFF666666),
-                        indicatorColor = Color(0xFF1A1A2E)
-                    )
-                )
-                NavigationBarItem(
-                    selected = selectedTab == 2,
-                    onClick = { selectedTab = 2 },
-                    icon = { Icon(Icons.Default.Timeline, "Timeline") },
-                    label = { Text("Timeline") },
-                    colors = NavigationBarItemDefaults.colors(
-                        selectedIconColor = Color(0xFF00D4AA),
-                        selectedTextColor = Color(0xFF00D4AA),
-                        unselectedIconColor = Color(0xFF666666),
-                        unselectedTextColor = Color(0xFF666666),
-                        indicatorColor = Color(0xFF1A1A2E)
-                    )
-                )
-                NavigationBarItem(
-                    selected = selectedTab == 3,
-                    onClick = { selectedTab = 3 },
-                    icon = { Icon(Icons.Default.AutoAwesome, "Hábitos") },
-                    label = { Text("Hábitos") },
-                    colors = NavigationBarItemDefaults.colors(
-                        selectedIconColor = Color(0xFF00D4AA),
-                        selectedTextColor = Color(0xFF00D4AA),
-                        unselectedIconColor = Color(0xFF666666),
-                        unselectedTextColor = Color(0xFF666666),
-                        indicatorColor = Color(0xFF1A1A2E)
-                    )
-                )
-                NavigationBarItem(
-                    selected = selectedTab == 4,
-                    onClick = { selectedTab = 4 },
-                    icon = { Icon(Icons.Default.Favorite, "Mood") },
-                    label = { Text("Mood") },
-                    colors = NavigationBarItemDefaults.colors(
-                        selectedIconColor = Color(0xFF00D4AA),
-                        selectedTextColor = Color(0xFF00D4AA),
-                        unselectedIconColor = Color(0xFF666666),
-                        unselectedTextColor = Color(0xFF666666),
-                        indicatorColor = Color(0xFF1A1A2E)
-                    )
-                )
-            }
-        }
+        containerColor = AppColors.Night,
+        bottomBar = { AppNavigationBar(selectedTab) { selectedTab = it } }
     ) { innerPadding ->
         when (selectedTab) {
             0 -> DashboardTab(
@@ -205,19 +173,25 @@ fun AppRoot(
 @Composable
 fun DashboardTab(padding: PaddingValues, onCategoryClick: (CategorySpend) -> Unit = {}) {
     val repo = remember { FinanceRepository() }
+    val context = LocalContext.current
     val scope = rememberCoroutineScope()
     var data by remember { mutableStateOf<WidgetData?>(null) }
     var isLoading by remember { mutableStateOf(true) }
     var error by remember { mutableStateOf<String?>(null) }
+    var showWidgetAppearance by remember { mutableStateOf(false) }
 
-    fun load() {
+    fun load(showResult: Boolean = false) {
         scope.launch {
-            isLoading = true
+            if (data == null) isLoading = true
             error = null
             try {
                 data = repo.getWidgetData()
+                if (showResult) Toast.makeText(context, "Dashboard actualizado", Toast.LENGTH_SHORT).show()
+            } catch (e: CancellationException) {
+                throw e // tab cambiada o pantalla cerrada: no es un error
             } catch (e: Exception) {
                 error = e.message ?: "Error desconocido"
+                Toast.makeText(context, "No se pudo actualizar el dashboard", Toast.LENGTH_SHORT).show()
             } finally {
                 isLoading = false
             }
@@ -228,32 +202,128 @@ fun DashboardTab(padding: PaddingValues, onCategoryClick: (CategorySpend) -> Uni
 
     Column(modifier = Modifier.fillMaxSize().padding(padding)) {
         TopAppBar(
-            title = { Text("💰 Finance Dashboard", fontWeight = FontWeight.Bold) },
+            title = {
+                Column {
+                    Text("Finanzas", style = MaterialTheme.typography.titleLarge, color = AppColors.Ice)
+                    Text(
+                        data?.let { "Actualizado ${it.lastUpdated}" } ?: "Cargando",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = AppColors.Mist
+                    )
+                }
+            },
             actions = {
-                IconButton(onClick = { load() }) {
-                    Icon(Icons.Default.Refresh, contentDescription = "Actualizar")
+                IconButton(onClick = { showWidgetAppearance = true }) {
+                    Icon(Icons.Outlined.Widgets, contentDescription = "Apariencia de widgets")
+                }
+                IconButton(onClick = { load(showResult = true) }) {
+                    Icon(Icons.Outlined.Refresh, contentDescription = "Actualizar")
                 }
             },
             colors = TopAppBarDefaults.topAppBarColors(
-                containerColor = Color(0xFF1A1A2E),
-                titleContentColor = Color.White,
-                actionIconContentColor = Color(0xFF00D4AA)
+                containerColor = AppColors.Night,
+                titleContentColor = AppColors.Ice,
+                actionIconContentColor = AppColors.Mist
             )
         )
 
         when {
             isLoading -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                CircularProgressIndicator(color = Color(0xFF00D4AA))
+                CircularProgressIndicator(color = AppColors.Cyan, strokeWidth = 2.dp, modifier = Modifier.size(32.dp))
             }
-            error != null -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+            error != null && data == null -> Box(Modifier.fillMaxSize().padding(32.dp), contentAlignment = Alignment.Center) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Text("⚠️ Error", color = Color(0xFFFF6B6B), fontSize = 18.sp, fontWeight = FontWeight.Bold)
-                    Spacer(Modifier.height(8.dp))
-                    Text(error!!, color = Color(0xFF888888), fontSize = 13.sp)
+                    Text("No se pudo cargar el dashboard", color = AppColors.Ice, style = MaterialTheme.typography.titleMedium)
+                    Spacer(Modifier.height(6.dp))
+                    Text(error!!, color = AppColors.Mist, style = MaterialTheme.typography.bodySmall, textAlign = TextAlign.Center)
+                    Spacer(Modifier.height(16.dp))
+                    OutlinedButton(onClick = { load(showResult = true) }) { Text("Reintentar", color = AppColors.Cyan) }
                 }
             }
             data != null -> DashboardContent(data!!, onCategoryClick)
         }
+    }
+
+    if (showWidgetAppearance) {
+        WidgetAppearanceDialog(
+            onDismiss = { showWidgetAppearance = false },
+            onSaved = {
+                showWidgetAppearance = false
+                Toast.makeText(context, "Apariencia de widgets actualizada", Toast.LENGTH_SHORT).show()
+            }
+        )
+    }
+}
+
+@Composable
+private fun WidgetAppearanceDialog(
+    onDismiss: () -> Unit,
+    onSaved: () -> Unit
+) {
+    val context = LocalContext.current
+    val scope = rememberCoroutineScope()
+    var financeOpacity by remember {
+        mutableFloatStateOf(WidgetAppearancePreferences.getOpacity(context, WidgetKind.FINANCE))
+    }
+    var paymentsOpacity by remember {
+        mutableFloatStateOf(WidgetAppearancePreferences.getOpacity(context, WidgetKind.PAYMENTS))
+    }
+    var habitsOpacity by remember {
+        mutableFloatStateOf(WidgetAppearancePreferences.getOpacity(context, WidgetKind.HABITS))
+    }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        containerColor = AppColors.Panel,
+        titleContentColor = AppColors.Ice,
+        textContentColor = AppColors.Mist,
+        icon = { Icon(Icons.Default.Widgets, null, tint = AppColors.Cyan) },
+        title = { Text("Apariencia de widgets", fontWeight = FontWeight.Bold) },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(14.dp)) {
+                Text("Ajusta la transparencia de cada widget. El contenido permanece visible mientras cambia el fondo.")
+                WidgetOpacitySlider("Dashboard financiero", financeOpacity) { financeOpacity = it }
+                WidgetOpacitySlider("Pagos próximos", paymentsOpacity) { paymentsOpacity = it }
+                WidgetOpacitySlider("Hábitos de hoy", habitsOpacity) { habitsOpacity = it }
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = {
+                WidgetAppearancePreferences.setOpacity(context, WidgetKind.FINANCE, financeOpacity)
+                WidgetAppearancePreferences.setOpacity(context, WidgetKind.PAYMENTS, paymentsOpacity)
+                WidgetAppearancePreferences.setOpacity(context, WidgetKind.HABITS, habitsOpacity)
+                scope.launch {
+                    WidgetAppearancePreferences.refreshAll(context)
+                    onSaved()
+                }
+            }) {
+                Text("Aplicar", color = AppColors.Lime, fontWeight = FontWeight.Bold)
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) { Text("Cancelar", color = AppColors.Mist) }
+        }
+    )
+}
+
+@Composable
+private fun WidgetOpacitySlider(label: String, value: Float, onValueChange: (Float) -> Unit) {
+    Column {
+        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+            Text(label, color = AppColors.Ice, fontWeight = FontWeight.Medium)
+            Text("${(value * 100).roundToInt()}%", color = AppColors.Cyan, fontWeight = FontWeight.Bold)
+        }
+        Slider(
+            value = value,
+            onValueChange = onValueChange,
+            valueRange = WidgetAppearancePreferences.MIN_OPACITY..1f,
+            steps = 7,
+            colors = SliderDefaults.colors(
+                thumbColor = AppColors.Cyan,
+                activeTrackColor = AppColors.Violet,
+                inactiveTrackColor = AppColors.Hairline
+            )
+        )
     }
 }
 
@@ -261,83 +331,46 @@ fun DashboardTab(padding: PaddingValues, onCategoryClick: (CategorySpend) -> Uni
 private fun DashboardContent(data: WidgetData, onCategoryClick: (CategorySpend) -> Unit) {
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
-        contentPadding = PaddingValues(16.dp),
+        contentPadding = PaddingValues(start = 20.dp, end = 20.dp, top = 4.dp, bottom = 28.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        item { MonthlySpendSection(data) }
+        item { SpendHero(data) }
 
-        item { SectionHeader("📅 Pagos pendientes") }
-        if (data.upcomingPayments.isEmpty()) {
-            item { EmptyState(if (data.isCurrentMonth) "Todo al día ✓" else "Sin pendientes") }
-        } else {
-            items(data.upcomingPayments) { UpcomingPaymentCard(it) }
-        }
-
-        item { SectionHeader("💳 Últimas transacciones") }
-        if (data.recentTransactions.isEmpty()) {
-            item { EmptyState("Sin transacciones recientes") }
-        } else {
-            items(data.recentTransactions) { TransactionCard(it) }
+        item { SectionHeader("Pagos pendientes", trailing = data.upcomingPayments.size.takeIf { it > 0 }?.toString()) }
+        item {
+            GroupedPanel {
+                if (data.upcomingPayments.isEmpty()) {
+                    EmptyRow(if (data.isCurrentMonth) "Todo al día este mes" else "Sin pagos pendientes")
+                } else {
+                    data.upcomingPayments.forEachIndexed { index, payment ->
+                        if (index > 0) PanelDivider(startIndent = 38.dp)
+                        UpcomingPaymentRow(payment)
+                    }
+                }
+            }
         }
 
         if (data.topCategories.isNotEmpty()) {
-            item { SectionHeader("📊 Top categorías del mes") }
-            item { CategoriesRow(data.topCategories, onCategoryClick) }
-        }
-
-        item { Spacer(modifier = Modifier.height(16.dp)) }
-    }
-}
-
-// ---------------------------------------------------------------------------
-// Monthly Spend + Month info
-// ---------------------------------------------------------------------------
-@Composable
-private fun MonthlySpendSection(data: WidgetData) {
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.spacedBy(12.dp)
-    ) {
-        Card(
-            modifier = Modifier.weight(1f),
-            colors = CardDefaults.cardColors(containerColor = Color(0xFF16213E)),
-            shape = RoundedCornerShape(16.dp)
-        ) {
-            Column(modifier = Modifier.padding(16.dp)) {
-                Text("Gasto total del mes", color = Color(0xFF888888), fontSize = 12.sp)
-                Spacer(modifier = Modifier.height(4.dp))
-                Text(
-                    "$${String.format("%,.2f", data.monthlySpend)}",
-                    color = Color.White, fontSize = 28.sp, fontWeight = FontWeight.Bold
-                )
+            item { SectionHeader("En qué se va el dinero") }
+            item {
+                GroupedPanel {
+                    data.topCategories.take(5).forEachIndexed { index, cat ->
+                        if (index > 0) PanelDivider(startIndent = 50.dp)
+                        CategoryRow(cat, categoryColor(index)) { onCategoryClick(cat) }
+                    }
+                }
             }
         }
-        Card(
-            modifier = Modifier.weight(1f),
-            colors = CardDefaults.cardColors(containerColor = Color(0xFF16213E)),
-            shape = RoundedCornerShape(16.dp)
-        ) {
-            Column(modifier = Modifier.padding(16.dp)) {
-                Text(
-                    data.monthLabel,
-                    color = Color(0xFF00D4AA), fontSize = 13.sp, fontWeight = FontWeight.Bold
-                )
-                Spacer(modifier = Modifier.height(6.dp))
-                Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                    Column {
-                        Text(
-                            "${data.txnCount}",
-                            color = Color.White, fontSize = 18.sp, fontWeight = FontWeight.Bold
-                        )
-                        Text("txns", color = Color(0xFF888888), fontSize = 11.sp)
-                    }
-                    Column {
-                        Text(
-                            "${data.pendingCount}",
-                            color = if (data.pendingCount > 0) Color(0xFFFFB347) else Color(0xFF00D4AA),
-                            fontSize = 18.sp, fontWeight = FontWeight.Bold
-                        )
-                        Text("pendientes", color = Color(0xFF888888), fontSize = 11.sp)
+
+        item { SectionHeader("Últimos movimientos") }
+        item {
+            GroupedPanel {
+                if (data.recentTransactions.isEmpty()) {
+                    EmptyRow("Aún no hay movimientos este mes")
+                } else {
+                    data.recentTransactions.forEachIndexed { index, txn ->
+                        if (index > 0) PanelDivider()
+                        TransactionRow(txn)
                     }
                 }
             }
@@ -346,144 +379,216 @@ private fun MonthlySpendSection(data: WidgetData) {
 }
 
 // ---------------------------------------------------------------------------
-// Upcoming Payment Card
+// Hero: gasto del mes
 // ---------------------------------------------------------------------------
 @Composable
-private fun UpcomingPaymentCard(payment: UpcomingPayment) {
-    val urgencyColor = when {
-        payment.daysUntil < 0  -> Color(0xFFFF6B6B)
-        payment.daysUntil <= 3 -> Color(0xFFFF6B6B)
-        payment.daysUntil <= 7 -> Color(0xFFFFB347)
-        else                   -> Color(0xFF00D4AA)
-    }
-    val daysLabel = when {
-        payment.daysUntil < 0  -> "Vencido (día ${payment.day ?: "?"})"
-        payment.daysUntil == 0 -> "Hoy"
-        payment.daysUntil == 1 -> "Mañana"
-        payment.day != null    -> "día ${payment.day}"
-        else                   -> "En ${payment.daysUntil} días"
-    }
-    val typeColor = when (payment.transactionType) {
-        "Inversión" -> Color(0xFF4CAF50)
-        "Deuda"     -> Color(0xFFFF6B6B)
-        "Ahorro"    -> Color(0xFF00D4AA)
-        else        -> Color(0xFF888888)
-    }
+private fun SpendHero(data: WidgetData) {
+    val formatted = String.format("%,.2f", data.monthlySpend)
+    val whole = formatted.substringBeforeLast('.')
+    val cents = formatted.substringAfterLast('.', "00")
 
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(containerColor = Color(0xFF16213E)),
-        shape = RoundedCornerShape(12.dp)
-    ) {
-        Row(
-            modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 12.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Column(modifier = Modifier.weight(1f)) {
-                Text(payment.description, color = Color.White, fontWeight = FontWeight.SemiBold, fontSize = 15.sp)
-                Spacer(modifier = Modifier.height(4.dp))
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Text(
-                        payment.transactionType ?: "Gasto",
-                        color = typeColor, fontSize = 11.sp, fontWeight = FontWeight.Medium
-                    )
-                    if (payment.paymentMethod != null) {
-                        Text("· ${payment.paymentMethod}", color = Color(0xFF666666), fontSize = 11.sp)
-                    }
-                }
-            }
-            Column(horizontalAlignment = Alignment.End) {
-                Text(
-                    "$${String.format("%,.2f", payment.amount)}",
-                    color = Color.White, fontWeight = FontWeight.Bold, fontSize = 16.sp
-                )
-                Spacer(modifier = Modifier.height(2.dp))
-                Text(daysLabel, color = urgencyColor, fontSize = 12.sp, fontWeight = FontWeight.Medium)
-            }
+    Column(Modifier.fillMaxWidth().padding(top = 8.dp, bottom = 8.dp)) {
+        Text("Gastado en ${data.monthLabel.lowercase()}", color = AppColors.Mist, style = MaterialTheme.typography.bodyMedium)
+        Spacer(Modifier.height(4.dp))
+        Row(verticalAlignment = Alignment.Bottom) {
+            Text("$", color = AppColors.Mist, style = MoneyStyle, fontSize = 28.sp, modifier = Modifier.padding(bottom = 8.dp, end = 2.dp))
+            Text(whole, color = AppColors.Ice, style = MoneyStyle, fontSize = 52.sp, fontWeight = FontWeight.SemiBold, letterSpacing = (-1.5).sp)
+            Text(".$cents", color = AppColors.Mist, style = MoneyStyle, fontSize = 24.sp, modifier = Modifier.padding(bottom = 9.dp))
         }
-    }
-}
 
-// ---------------------------------------------------------------------------
-// Transaction Card
-// ---------------------------------------------------------------------------
-@Composable
-private fun TransactionCard(txn: Transaction) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(containerColor = Color(0xFF16213E)),
-        shape = RoundedCornerShape(12.dp)
-    ) {
-        Row(
-            modifier = Modifier.fillMaxWidth().padding(16.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    txn.merchantName ?: txn.provider,
-                    color = Color.White, fontWeight = FontWeight.Medium, fontSize = 15.sp
-                )
-                Text(txn.txnDate, color = Color(0xFF888888), fontSize = 12.sp)
-            }
-            Text(
-                "-$${String.format("%,.2f", txn.amount)}",
-                color = Color(0xFFFF6B6B), fontWeight = FontWeight.Bold, fontSize = 16.sp
+        if (data.topCategories.isNotEmpty()) {
+            Spacer(Modifier.height(14.dp))
+            CategoryBar(data.topCategories.take(5))
+        }
+
+        Spacer(Modifier.height(14.dp))
+        Row(horizontalArrangement = Arrangement.spacedBy(20.dp), verticalAlignment = Alignment.CenterVertically) {
+            HeroStat("${data.txnCount}", "movimientos", AppColors.Ice)
+            HeroStat(
+                "${data.pendingCount}",
+                if (data.pendingCount == 1) "pendiente" else "pendientes",
+                if (data.pendingCount > 0) AppColors.Amber else AppColors.Ice
             )
         }
     }
 }
 
-// ---------------------------------------------------------------------------
-// Categories Row (tappable)
-// ---------------------------------------------------------------------------
 @Composable
-private fun CategoriesRow(categories: List<CategorySpend>, onCategoryClick: (CategorySpend) -> Unit) {
+private fun HeroStat(value: String, label: String, valueColor: Color) {
+    Row(verticalAlignment = Alignment.Bottom) {
+        Text(value, color = valueColor, style = MoneyStyle, fontSize = 17.sp, fontWeight = FontWeight.SemiBold)
+        Spacer(Modifier.width(5.dp))
+        Text(label, color = AppColors.Mist, style = MaterialTheme.typography.bodySmall, modifier = Modifier.padding(bottom = 2.dp))
+    }
+}
+
+/** Barra apilada con el peso de cada categoría: resume el mes de un vistazo. */
+@Composable
+private fun CategoryBar(categories: List<CategorySpend>) {
+    val total = categories.sumOf { it.percentage }.coerceAtLeast(1)
     Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.spacedBy(8.dp)
+        Modifier.fillMaxWidth().height(6.dp).clip(RoundedCornerShape(3.dp)).background(AppColors.Panel),
+        horizontalArrangement = Arrangement.spacedBy(2.dp)
     ) {
-        categories.take(4).forEach { cat ->
-            Card(
-                modifier = Modifier
-                    .weight(1f)
-                    .clickable { onCategoryClick(cat) },
-                colors = CardDefaults.cardColors(containerColor = Color(0xFF16213E)),
-                shape = RoundedCornerShape(12.dp)
-            ) {
-                Column(
-                    modifier = Modifier.padding(10.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
-                    Text(cat.emoji, fontSize = 20.sp)
-                    Spacer(modifier = Modifier.height(4.dp))
-                    Text("${cat.percentage}%", color = Color(0xFF00D4AA), fontWeight = FontWeight.Bold, fontSize = 13.sp)
-                    Text(cat.name, color = Color(0xFF888888), fontSize = 9.sp)
-                }
+        categories.forEachIndexed { index, cat ->
+            if (cat.percentage > 0) {
+                Box(Modifier.weight(cat.percentage.toFloat() / total).fillMaxHeight().background(categoryColor(index)))
             }
         }
     }
 }
 
+private fun categoryColor(index: Int): Color = when (index) {
+    0 -> AppColors.Cyan
+    1 -> AppColors.Violet
+    2 -> AppColors.Amber
+    3 -> Color(0xFF4FD1C5)
+    else -> AppColors.Mist
+}
+
 // ---------------------------------------------------------------------------
-// Helpers
+// Filas
 // ---------------------------------------------------------------------------
 @Composable
-private fun SectionHeader(title: String) {
-    Text(
-        title, color = Color.White, fontSize = 18.sp, fontWeight = FontWeight.Bold,
-        modifier = Modifier.padding(vertical = 4.dp)
+private fun UpcomingPaymentRow(payment: UpcomingPayment) {
+    val urgencyColor = when {
+        payment.daysUntil <= 3 -> AppColors.Coral
+        payment.daysUntil <= 7 -> AppColors.Amber
+        else                   -> AppColors.Mist
+    }
+    val daysLabel = when {
+        payment.daysUntil < 0  -> "Vencido · día ${payment.day ?: "?"}"
+        payment.daysUntil == 0 -> "Hoy"
+        payment.daysUntil == 1 -> "Mañana"
+        payment.day != null    -> "Día ${payment.day}"
+        else                   -> "En ${payment.daysUntil} días"
+    }
+    val subtitle = listOfNotNull(payment.transactionType ?: "Gasto", payment.paymentMethod).joinToString(" · ")
+
+    PanelRow(
+        leading = { Box(Modifier.size(8.dp).clip(RoundedCornerShape(4.dp)).background(urgencyColor)) },
+        title = payment.description,
+        subtitle = subtitle,
+        amount = "$${String.format("%,.2f", payment.amount)}",
+        detail = daysLabel,
+        detailColor = urgencyColor
     )
 }
 
 @Composable
-private fun EmptyState(message: String) {
-    Box(
-        modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp))
-            .background(Color(0xFF16213E)).padding(20.dp),
-        contentAlignment = Alignment.Center
+private fun TransactionRow(txn: Transaction) {
+    val name = txn.merchantName ?: txn.provider
+    PanelRow(
+        leading = {
+            Box(
+                Modifier.size(36.dp).clip(RoundedCornerShape(12.dp)).background(AppColors.PanelHigh),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    name.firstOrNull { it.isLetterOrDigit() }?.uppercase() ?: "·",
+                    color = AppColors.Cyan,
+                    style = MaterialTheme.typography.titleSmall
+                )
+            }
+        },
+        title = name,
+        subtitle = shortDate(txn.txnDate),
+        amount = "−$${String.format("%,.2f", txn.amount)}",
+        detail = null,
+        detailColor = AppColors.Mist
+    )
+}
+
+@Composable
+private fun CategoryRow(cat: CategorySpend, color: Color, onClick: () -> Unit) {
+    Row(
+        Modifier.fillMaxWidth().clickable(onClick = onClick).padding(horizontal = 16.dp, vertical = 13.dp),
+        verticalAlignment = Alignment.CenterVertically
     ) {
-        Text(message, color = Color(0xFF555555), fontSize = 13.sp)
+        Text(cat.emoji, fontSize = 20.sp)
+        Spacer(Modifier.width(14.dp))
+        Column(Modifier.weight(1f)) {
+            Text(cat.name, color = AppColors.Ice, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            Spacer(Modifier.height(7.dp))
+            Box(Modifier.fillMaxWidth().height(4.dp).clip(RoundedCornerShape(2.dp)).background(AppColors.PanelHigh)) {
+                Box(Modifier.fillMaxWidth(cat.percentage.coerceIn(0, 100) / 100f).fillMaxHeight().background(color))
+            }
+        }
+        Spacer(Modifier.width(16.dp))
+        Text("${cat.percentage}%", color = AppColors.Ice, style = MoneyStyle, fontSize = 15.sp, fontWeight = FontWeight.Medium)
+    }
+}
+
+@Composable
+private fun PanelRow(
+    leading: @Composable () -> Unit,
+    title: String,
+    subtitle: String,
+    amount: String,
+    detail: String?,
+    detailColor: Color
+) {
+    Row(
+        Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 13.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        leading()
+        Spacer(Modifier.width(14.dp))
+        Column(Modifier.weight(1f)) {
+            Text(title, color = AppColors.Ice, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            Spacer(Modifier.height(2.dp))
+            Text(subtitle, color = AppColors.Mist, style = MaterialTheme.typography.bodySmall, maxLines = 1, overflow = TextOverflow.Ellipsis)
+        }
+        Spacer(Modifier.width(12.dp))
+        Column(horizontalAlignment = Alignment.End) {
+            Text(amount, color = AppColors.Ice, style = MoneyStyle, fontSize = 15.sp, fontWeight = FontWeight.Medium)
+            if (detail != null) {
+                Spacer(Modifier.height(2.dp))
+                Text(detail, color = detailColor, style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.Medium)
+            }
+        }
+    }
+}
+
+private fun shortDate(raw: String): String = runCatching {
+    val date = LocalDate.parse(raw.take(10))
+    val month = date.month.getDisplayName(java.time.format.TextStyle.SHORT, java.util.Locale("es")).trimEnd('.')
+    if (date == LocalDate.now()) "Hoy" else "${date.dayOfMonth} $month"
+}.getOrDefault(raw)
+
+// ---------------------------------------------------------------------------
+// Navegación inferior
+// ---------------------------------------------------------------------------
+private data class NavDestination(val label: String, val icon: ImageVector)
+
+private val navDestinations = listOf(
+    NavDestination("Inicio", Icons.Default.Home),
+    NavDestination("Control", Icons.Default.DateRange),
+    NavDestination("Timeline", Icons.Default.Timeline),
+    NavDestination("Hábitos", Icons.Default.AutoAwesome),
+    NavDestination("Mood", Icons.Default.Favorite)
+)
+
+@Composable
+private fun AppNavigationBar(selectedTab: Int, onSelect: (Int) -> Unit) {
+    Column {
+        HorizontalDivider(thickness = 1.dp, color = AppColors.Hairline)
+        NavigationBar(containerColor = AppColors.Deep, tonalElevation = 0.dp) {
+            navDestinations.forEachIndexed { index, destination ->
+                NavigationBarItem(
+                    selected = selectedTab == index,
+                    onClick = { onSelect(index) },
+                    icon = { Icon(destination.icon, destination.label) },
+                    label = { Text(destination.label, style = MaterialTheme.typography.labelSmall) },
+                    colors = NavigationBarItemDefaults.colors(
+                        selectedIconColor = AppColors.Cyan,
+                        selectedTextColor = AppColors.Ice,
+                        unselectedIconColor = AppColors.Dim,
+                        unselectedTextColor = AppColors.Dim,
+                        indicatorColor = AppColors.Cyan.copy(alpha = 0.12f)
+                    )
+                )
+            }
+        }
     }
 }

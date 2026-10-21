@@ -1,5 +1,9 @@
 package com.thonyfd.financedashboard.ui
 
+import com.thonyfd.financedashboard.ui.theme.AppColors
+import com.thonyfd.financedashboard.ui.theme.MoneyStyle
+import androidx.compose.foundation.lazy.itemsIndexed
+import kotlinx.coroutines.CancellationException
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -13,6 +17,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -22,6 +27,7 @@ import kotlinx.coroutines.launch
 import java.time.YearMonth
 import java.time.format.DateTimeFormatter
 import java.util.Locale
+import android.widget.Toast
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -35,24 +41,32 @@ fun CategoryDetailScreen(
     BackHandler { onBack() }
 
     val repo = remember { FinanceRepository() }
+    val context = LocalContext.current
     val scope = rememberCoroutineScope()
     val nowYearMonth = remember { YearMonth.now() }
 
     var yearMonth by remember { mutableStateOf(YearMonth.of(initialYear, initialMonth)) }
     var transactions by remember { mutableStateOf<List<Transaction>>(emptyList()) }
     var isLoading by remember { mutableStateOf(true) }
+    var hasLoaded by remember { mutableStateOf(false) }
     var error by remember { mutableStateOf<String?>(null) }
 
     fun load() {
         scope.launch {
-            isLoading = true
+            val silentRefresh = hasLoaded
+            if (!hasLoaded) isLoading = true
             error = null
             try {
                 transactions = repo.getTransactionsByCategory(
                     categoryName, yearMonth.year, yearMonth.monthValue
                 )
+                hasLoaded = true
+                if (silentRefresh) Toast.makeText(context, "Mes actualizado", Toast.LENGTH_SHORT).show()
+            } catch (e: CancellationException) {
+                throw e // tab cambiada o pantalla cerrada: no es un error
             } catch (e: Exception) {
                 error = e.message ?: "Error desconocido"
+                Toast.makeText(context, "No se pudieron actualizar las transacciones", Toast.LENGTH_SHORT).show()
             } finally {
                 isLoading = false
             }
@@ -67,16 +81,16 @@ fun CategoryDetailScreen(
     val total = transactions.sumOf { it.amount }
 
     Scaffold(
-        containerColor = Color(0xFF0F0F1A),
+        containerColor = AppColors.Night,
         topBar = {
             TopAppBar(
                 title = {
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        horizontalArrangement = Arrangement.spacedBy(10.dp)
                     ) {
                         Text(categoryEmoji, fontSize = 20.sp)
-                        Text(categoryName, fontWeight = FontWeight.Bold)
+                        Text(categoryName, style = MaterialTheme.typography.titleLarge)
                     }
                 },
                 navigationIcon = {
@@ -84,79 +98,71 @@ fun CategoryDetailScreen(
                         Icon(Icons.Default.ArrowBack, contentDescription = "Volver")
                     }
                 },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = Color(0xFF1A1A2E),
-                    titleContentColor = Color.White,
-                    navigationIconContentColor = Color(0xFF00D4AA)
-                )
+                colors = appTopBarColors()
             )
         }
     ) { innerPadding ->
         Column(modifier = Modifier.fillMaxSize().padding(innerPadding)) {
-            // Month navigation bar
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .background(Color(0xFF16213E))
-                    .padding(horizontal = 8.dp, vertical = 4.dp),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                IconButton(onClick = { yearMonth = yearMonth.minusMonths(1) }) {
-                    Icon(
-                        Icons.Default.KeyboardArrowLeft,
-                        contentDescription = "Mes anterior",
-                        tint = Color(0xFF00D4AA)
-                    )
-                }
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Text(monthLabel, color = Color.White, fontWeight = FontWeight.Bold, fontSize = 16.sp)
-                    if (!isLoading) {
-                        Text(
-                            "$${String.format("%,.2f", total)} · ${transactions.size} txns",
-                            color = Color(0xFF00D4AA),
-                            fontSize = 12.sp
+            val canGoNext = yearMonth.isBefore(nowYearMonth)
+            // Hero: total de la categoría con navegación de mes
+            Column(Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 8.dp)) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(monthLabel, color = AppColors.Mist, style = MaterialTheme.typography.bodyMedium, modifier = Modifier.weight(1f))
+                    IconButton(onClick = { yearMonth = yearMonth.minusMonths(1) }, modifier = Modifier.size(36.dp)) {
+                        Icon(Icons.Default.KeyboardArrowLeft, contentDescription = "Mes anterior", tint = AppColors.Ice)
+                    }
+                    IconButton(
+                        onClick = { if (canGoNext) yearMonth = yearMonth.plusMonths(1) },
+                        enabled = canGoNext,
+                        modifier = Modifier.size(36.dp)
+                    ) {
+                        Icon(
+                            Icons.Default.KeyboardArrowRight,
+                            contentDescription = "Mes siguiente",
+                            tint = if (canGoNext) AppColors.Ice else AppColors.Hairline
                         )
                     }
                 }
-                val canGoNext = yearMonth.isBefore(nowYearMonth)
-                IconButton(
-                    onClick = { if (canGoNext) yearMonth = yearMonth.plusMonths(1) },
-                    enabled = canGoNext
-                ) {
-                    Icon(
-                        Icons.Default.KeyboardArrowRight,
-                        contentDescription = "Mes siguiente",
-                        tint = if (canGoNext) Color(0xFF00D4AA) else Color(0xFF333333)
+                Text(
+                    if (isLoading) "—" else money(total),
+                    color = AppColors.Ice,
+                    style = MoneyStyle,
+                    fontSize = 40.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    letterSpacing = (-1).sp
+                )
+                if (!isLoading) {
+                    Text(
+                        "${transactions.size} ${if (transactions.size == 1) "movimiento" else "movimientos"}",
+                        color = AppColors.Mist,
+                        style = MaterialTheme.typography.bodySmall
                     )
                 }
             }
 
             when {
                 isLoading -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    CircularProgressIndicator(color = Color(0xFF00D4AA))
+                    CircularProgressIndicator(color = AppColors.Cyan, strokeWidth = 2.dp, modifier = Modifier.size(32.dp))
                 }
-                error != null -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                error != null && !hasLoaded -> Box(Modifier.fillMaxSize().padding(32.dp), contentAlignment = Alignment.Center) {
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        Text("⚠️ Error", color = Color(0xFFFF6B6B), fontSize = 18.sp, fontWeight = FontWeight.Bold)
-                        Spacer(Modifier.height(8.dp))
-                        Text(error!!, color = Color(0xFF888888), fontSize = 13.sp)
+                        Text("No se pudieron cargar los movimientos", color = AppColors.Ice, style = MaterialTheme.typography.titleMedium)
+                        Spacer(Modifier.height(6.dp))
+                        Text(error!!, color = AppColors.Mist, style = MaterialTheme.typography.bodySmall)
                     }
-                }
-                transactions.isEmpty() -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    Text(
-                        "Sin transacciones en $monthLabel",
-                        color = Color(0xFF555555),
-                        fontSize = 14.sp
-                    )
                 }
                 else -> LazyColumn(
                     modifier = Modifier.fillMaxSize(),
-                    contentPadding = PaddingValues(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                    contentPadding = PaddingValues(start = 20.dp, end = 20.dp, top = 12.dp, bottom = 28.dp)
                 ) {
-                    items(transactions, key = { it.id }) { txn ->
-                        CategoryTransactionCard(txn)
+                    if (transactions.isEmpty()) {
+                        item { GroupedPanel { EmptyRow("Sin movimientos en $monthLabel") } }
+                    }
+                    itemsIndexed(transactions, key = { _, it -> it.id }) { index, txn ->
+                        Column(Modifier.panelSegment(index, transactions.size)) {
+                            if (index > 0) PanelDivider(startIndent = 16.dp)
+                            CategoryTransactionCard(txn)
+                        }
                     }
                 }
             }
@@ -166,47 +172,28 @@ fun CategoryDetailScreen(
 
 @Composable
 private fun CategoryTransactionCard(txn: Transaction) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(containerColor = Color(0xFF16213E)),
-        shape = RoundedCornerShape(12.dp)
+    Row(
+        modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 13.dp),
+        verticalAlignment = Alignment.CenterVertically
     ) {
-        Row(
-            modifier = Modifier.fillMaxWidth().padding(16.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    txn.merchantName ?: txn.provider,
-                    color = Color.White,
-                    fontWeight = FontWeight.Medium,
-                    fontSize = 15.sp
-                )
-                Spacer(Modifier.height(2.dp))
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Text(txn.txnDate, color = Color(0xFF888888), fontSize = 12.sp)
-                    if (txn.cardLast4 != null) {
-                        Text("· •••${txn.cardLast4}", color = Color(0xFF555555), fontSize = 12.sp)
-                    }
-                }
-                if (!txn.description.isNullOrBlank()) {
-                    Spacer(Modifier.height(2.dp))
-                    Text(
-                        txn.description,
-                        color = Color(0xFF666666),
-                        fontSize = 11.sp,
-                        maxLines = 1
-                    )
-                }
-            }
-            Spacer(Modifier.width(12.dp))
+        Column(modifier = Modifier.weight(1f)) {
             Text(
-                "-$${String.format("%,.2f", txn.amount)}",
-                color = Color(0xFFFF6B6B),
-                fontWeight = FontWeight.Bold,
-                fontSize = 16.sp
+                txn.merchantName ?: txn.provider,
+                color = AppColors.Ice,
+                style = MaterialTheme.typography.bodyMedium,
+                fontWeight = FontWeight.SemiBold,
+                maxLines = 1
+            )
+            Spacer(Modifier.height(2.dp))
+            Text(
+                listOfNotNull(txn.txnDate.take(10), txn.cardLast4?.let { "•••$it" }, txn.description?.takeIf { it.isNotBlank() })
+                    .joinToString(" · "),
+                color = AppColors.Mist,
+                style = MaterialTheme.typography.bodySmall,
+                maxLines = 1
             )
         }
+        Spacer(Modifier.width(12.dp))
+        MoneyText(txn.amount, prefix = "−", fontSize = 15)
     }
 }
