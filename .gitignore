@@ -195,3 +195,10 @@ android/**/build/
 
 # App design tool lock files
 *.af~lock~
+
+# Supabase CLI local state
+supabase/.branches
+supabase/.temp
+
+# Restore dump with real financial data (do not publish)
+supabase/migrations/20260407000001_initial_restore.sql

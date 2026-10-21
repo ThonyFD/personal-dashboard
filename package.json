@@ -11,10 +11,11 @@
     "scripts/production"
   ],
   "scripts": {
+    "android:install": "./scripts/android-build-install.sh",
     "build:dashboard": "npm run build --workspace finance-agent-dashboard",
     "import:monthly-incomes": "tsx scripts/maintenance/import-monthly-incomes.ts",
     "deploy": "npm run deploy:dashboard",
-    "deploy:dashboard": "npm run build:dashboard && SKIP_BUILD=1 ./deploy.sh dashboard",
+    "deploy:dashboard": "npm run build:dashboard && SKIP_BUILD=1 ./scripts/deploy.sh dashboard",
     "test:all": "vitest run",
     "lint:all": "eslint . --ext .ts,.tsx",
     "format:all": "prettier --write ."
