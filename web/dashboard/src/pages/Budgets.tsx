@@ -45,6 +45,12 @@ export default function Budgets() {
   const [showCreateForm, setShowCreateForm] = useState(false)
   const [selectedPeriod, setSelectedPeriod] = useState<'monthly' | 'yearly'>('monthly')
   const [selectedMonth, setSelectedMonth] = useState(new Date())
+  const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null)
+
+  const showToast = (message: string, type: 'success' | 'error') => {
+    setToast({ message, type })
+    setTimeout(() => setToast(null), 3000)
+  }
 
   const queryClient = useQueryClient()
 
@@ -189,6 +195,10 @@ export default function Budgets() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['budgets'] })
       setShowCreateForm(false)
+      showToast('Budget created successfully', 'success')
+    },
+    onError: () => {
+      showToast('Failed to create budget. Please try again.', 'error')
     }
   })
 
@@ -245,6 +255,28 @@ export default function Budgets() {
 
   return (
     <div>
+      {/* Toast notification */}
+      {toast && (
+        <div style={{
+          position: 'fixed',
+          bottom: '1.5rem',
+          right: '1.5rem',
+          zIndex: 2000,
+          padding: '0.75rem 1.25rem',
+          borderRadius: '6px',
+          backgroundColor: toast.type === 'success' ? '#4CAF50' : '#f44336',
+          color: 'white',
+          fontWeight: '500',
+          boxShadow: '0 4px 12px rgba(0,0,0,0.2)',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '0.5rem',
+          animation: 'fadeIn 0.2s ease'
+        }}>
+          <span>{toast.type === 'success' ? '✓' : '✕'}</span>
+          {toast.message}
+        </div>
+      )}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
         <h1>Budget Tracking & Forecasting</h1>
         <button
@@ -539,16 +571,24 @@ export default function Budgets() {
                 />
               </div>
 
+              {saveBudgetMutation.isError && (
+                <p style={{ color: '#f44336', fontSize: '0.85rem', marginBottom: '0.75rem' }}>
+                  Failed to create budget. Please try again.
+                </p>
+              )}
+
               <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end' }}>
                 <button
                   type="button"
                   onClick={() => setShowCreateForm(false)}
+                  disabled={saveBudgetMutation.isPending}
                   style={{
                     padding: '0.5rem 1rem',
                     border: '1px solid #ddd',
                     backgroundColor: 'white',
                     borderRadius: '4px',
-                    cursor: 'pointer'
+                    cursor: saveBudgetMutation.isPending ? 'not-allowed' : 'pointer',
+                    opacity: saveBudgetMutation.isPending ? 0.5 : 1
                   }}
                 >
                   Cancel
@@ -562,9 +602,24 @@ export default function Budgets() {
                     color: 'white',
                     border: 'none',
                     borderRadius: '4px',
-                    cursor: 'pointer'
+                    cursor: saveBudgetMutation.isPending ? 'not-allowed' : 'pointer',
+                    opacity: saveBudgetMutation.isPending ? 0.7 : 1,
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.5rem'
                   }}
                 >
+                  {saveBudgetMutation.isPending && (
+                    <span style={{
+                      width: '14px',
+                      height: '14px',
+                      border: '2px solid rgba(255,255,255,0.4)',
+                      borderTopColor: 'white',
+                      borderRadius: '50%',
+                      display: 'inline-block',
+                      animation: 'spin 0.7s linear infinite'
+                    }} />
+                  )}
                   {saveBudgetMutation.isPending ? 'Creating...' : 'Create Budget'}
                 </button>
               </div>

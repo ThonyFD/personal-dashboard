@@ -13,24 +13,25 @@
   border-radius: 8px;
   font-size: 0.875rem;
   line-height: 1.4;
+  font-family: var(--f-body);
 }
 
 .alert-banner--warning {
-  background: #fff8e1;
-  border: 1px solid #f59e0b;
-  color: #78350f;
+  background: #140e00;
+  border: 1px solid rgba(245, 158, 11, 0.4);
+  color: #fbbf24;
 }
 
 .alert-banner--error {
-  background: #fef2f2;
-  border: 1px solid #ef4444;
-  color: #7f1d1d;
+  background: #140404;
+  border: 1px solid rgba(239, 68, 68, 0.4);
+  color: #f87171;
 }
 
 .alert-banner--info {
-  background: #eff6ff;
-  border: 1px solid #3b82f6;
-  color: #1e3a8a;
+  background: #001a1f;
+  border: 1px solid rgba(0, 217, 255, 0.3);
+  color: #00D9FF;
 }
 
 .alert-banner__icon {

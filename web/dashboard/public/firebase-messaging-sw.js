@@ -21,7 +21,7 @@ messaging.onBackgroundMessage((payload) => {
   const notificationTitle = payload.notification?.title || 'Recordatorio de Pagos';
   const notificationOptions = {
     body: payload.notification?.body || 'Tienes pagos pendientes',
-    icon: '/icon-192.png',
+    icon: '/logo.svg',
     badge: '/badge-72.png',
     tag: 'payment-reminder',
     requireInteraction: true,

@@ -1,8 +1,11 @@
 import { supabase } from '../lib/supabase';
 import {
+  ALL_DAYS_MASK,
+  WEEKDAYS_MASK,
   fetchTransactions as _fetchTransactions,
   fetchTransactionsPaginated as _fetchTransactionsPaginated,
   fetchTransactionSummary as _fetchTransactionSummary,
+  fetchTransactionDetail as _fetchTransactionDetail,
   fetchTransactionFilterOptions as _fetchTransactionFilterOptions,
   exportTransactionsCSV as _exportTransactionsCSV,
   fetchMerchants as _fetchMerchants,
@@ -24,6 +27,29 @@ import {
   getMaxPushSubscriptionId as _getMaxPushSubscriptionId,
   fetchUnresolvedAlerts as _fetchUnresolvedAlerts,
   resolveAlert as _resolveAlert,
+  fetchHabitTemplates as _fetchHabitTemplates,
+  fetchUserHabits as _fetchUserHabits,
+  createUserHabit as _createUserHabit,
+  updateUserHabit as _updateUserHabit,
+  deleteUserHabit as _deleteUserHabit,
+  fetchHabitLogsByDate as _fetchHabitLogsByDate,
+  fetchHabitLogsInRange as _fetchHabitLogsInRange,
+  upsertHabitLog as _upsertHabitLog,
+  deleteHabitLog as _deleteHabitLog,
+  fetchDailyCompletion as _fetchDailyCompletion,
+  fetchMoodTags as _fetchMoodTags,
+  fetchMoodLogByDate as _fetchMoodLogByDate,
+  fetchMoodLogsInRange as _fetchMoodLogsInRange,
+  upsertMoodLog as _upsertMoodLog,
+  deleteMoodLog as _deleteMoodLog,
+  computeTopMerchant,
+  computeBusiestMerchant,
+  computeStreak,
+  DEBIT_TYPES,
+  getHabitCompletionSummary,
+  getHabitCompletionLog,
+  isHabitDueOnDate,
+  isHabitCompletedOnDate,
 } from '@personal-dashboard/supabase-queries';
 
 // Re-export types consumed by web components
@@ -35,6 +61,15 @@ export type {
   Merchant,
   MonthlyIncome,
   ManualTransaction,
+  DayBlock,
+  FrequencyType,
+  HabitStatus,
+  HabitTemplate,
+  UserHabit,
+  HabitLog,
+  MoodTag,
+  MoodLog,
+  HabitDayCompletion,
 } from '@personal-dashboard/supabase-queries';
 
 // ─── Stats (web-only aggregation, not shared) ─────────────────────────────────
@@ -46,10 +81,15 @@ export interface Stats {
   payment_count: number;
   purchase_amount: number;
   purchase_count: number;
+  total_spent_amount: number;
+  total_spent_count: number;
   this_month_amount: number;
   this_month_transactions: number;
   top_merchant: string | null;
   top_merchant_amount: number;
+  busiest_merchant: string | null;
+  busiest_merchant_count: number;
+  busiest_merchant_amount: number;
   providers: { provider: string; count: number }[];
   transactions: import('@personal-dashboard/supabase-queries').Transaction[];
 }
@@ -72,6 +112,9 @@ export const fetchTransactionSummary = (
   startDate?: string,
   endDate?: string,
 ) => _fetchTransactionSummary(supabase, filters, startDate, endDate);
+
+export const fetchTransactionDetail = (id: number) =>
+  _fetchTransactionDetail(supabase, id);
 
 export const fetchTransactionFilterOptions = (startDate?: string, endDate?: string) =>
   _fetchTransactionFilterOptions(supabase, startDate, endDate);
@@ -104,6 +147,7 @@ export async function fetchStats(startDate?: string, endDate?: string): Promise<
   const total_transactions = allTransactions.length;
   let payment_amount = 0, payment_count = 0;
   let purchase_amount = 0, purchase_count = 0;
+  let total_spent_amount = 0, total_spent_count = 0;
 
   for (const txn of allTransactions) {
     if (txn.txn_type === 'PAYMENT') {
@@ -113,9 +157,13 @@ export async function fetchStats(startDate?: string, endDate?: string): Promise<
       purchase_amount += txn.amount;
       purchase_count += 1;
     }
+    if (DEBIT_TYPES.has(txn.txn_type)) {
+      total_spent_amount += txn.amount;
+      total_spent_count += 1;
+    }
   }
 
-  const total_amount = payment_amount + purchase_amount;
+  const total_amount = total_spent_amount;
   let this_month_amount = 0;
   let this_month_transactions = 0;
 
@@ -125,34 +173,25 @@ export async function fetchStats(startDate?: string, endDate?: string): Promise<
     const monthTxns = allTransactions.filter(txn => new Date(txn.txn_date) >= firstDayOfMonth);
     this_month_transactions = monthTxns.length;
     this_month_amount = monthTxns.reduce((sum, txn) =>
-      txn.txn_type === 'PURCHASE' || txn.txn_type === 'PAYMENT' ? sum + txn.amount : sum, 0);
+      DEBIT_TYPES.has(txn.txn_type) ? sum + txn.amount : sum, 0);
   } else {
     this_month_amount = total_amount;
     this_month_transactions = total_transactions;
   }
 
   const providerMap = new Map<string, number>();
-  const merchantMap = new Map<string, { count: number; amount: number }>();
-
   for (const txn of allTransactions) {
     providerMap.set(txn.provider, (providerMap.get(txn.provider) ?? 0) + 1);
-    const name = txn.merchant_name ?? 'Unknown';
-    const entry = merchantMap.get(name) ?? { count: 0, amount: 0 };
-    entry.count += 1;
-    if (txn.txn_type === 'PURCHASE' || txn.txn_type === 'PAYMENT') entry.amount += txn.amount;
-    merchantMap.set(name, entry);
   }
 
-  let top_merchant: string | null = null;
-  let top_merchant_amount = 0;
-  let maxCount = 0;
-  for (const [name, stats] of merchantMap) {
-    if (stats.count > maxCount) {
-      maxCount = stats.count;
-      top_merchant = name;
-      top_merchant_amount = stats.amount;
-    }
-  }
+  const { topMerchant: top_merchant, topMerchantAmount: top_merchant_amount } =
+    computeTopMerchant(allTransactions);
+
+  const {
+    busiestMerchant: busiest_merchant,
+    busiestMerchantCount: busiest_merchant_count,
+    busiestMerchantAmount: busiest_merchant_amount,
+  } = computeBusiestMerchant(allTransactions);
 
   const providers = Array.from(providerMap.entries()).map(([provider, count]) => ({ provider, count }));
 
@@ -160,8 +199,10 @@ export async function fetchStats(startDate?: string, endDate?: string): Promise<
     total_transactions, total_amount,
     payment_amount, payment_count,
     purchase_amount, purchase_count,
+    total_spent_amount, total_spent_count,
     this_month_amount, this_month_transactions,
     top_merchant, top_merchant_amount,
+    busiest_merchant, busiest_merchant_count, busiest_merchant_amount,
     providers, transactions: allTransactions,
   };
 }
@@ -229,3 +270,67 @@ export type { SystemAlert } from '@personal-dashboard/supabase-queries';
 
 export const fetchUnresolvedAlerts = () => _fetchUnresolvedAlerts(supabase);
 export const resolveAlert = (id: number) => _resolveAlert(supabase, id);
+
+// ─── Azton Habits & Mood ─────────────────────────────────────────────────────
+
+export {
+  ALL_DAYS_MASK,
+  WEEKDAYS_MASK,
+  computeStreak,
+  getHabitCompletionSummary,
+  getHabitCompletionLog,
+  isHabitDueOnDate,
+  isHabitCompletedOnDate,
+};
+
+export const fetchHabitTemplates = () => _fetchHabitTemplates(supabase);
+
+export const fetchUserHabits = (opts?: { activeOnly?: boolean }) =>
+  _fetchUserHabits(supabase, opts);
+
+export const createUserHabit = (
+  habit: Omit<import('@personal-dashboard/supabase-queries').UserHabit, 'id'>,
+) => _createUserHabit(supabase, habit);
+
+export const updateUserHabit = (
+  id: number,
+  updates: Partial<import('@personal-dashboard/supabase-queries').UserHabit>,
+) => _updateUserHabit(supabase, id, updates);
+
+export const deleteUserHabit = (id: number) => _deleteUserHabit(supabase, id);
+
+export const fetchHabitLogsByDate = (logDate: string) =>
+  _fetchHabitLogsByDate(supabase, logDate);
+
+export const fetchHabitLogsInRange = (startDate: string, endDate: string) =>
+  _fetchHabitLogsInRange(supabase, startDate, endDate);
+
+export const upsertHabitLog = (params: {
+  userHabitId: number;
+  logDate: string;
+  status: import('@personal-dashboard/supabase-queries').HabitStatus;
+  actualDurationMinutes?: number;
+}) => _upsertHabitLog(supabase, params);
+
+export const deleteHabitLog = (userHabitId: number, logDate: string) =>
+  _deleteHabitLog(supabase, userHabitId, logDate);
+
+export const fetchDailyCompletion = (startDate: string, endDate: string) =>
+  _fetchDailyCompletion(supabase, startDate, endDate);
+
+export const fetchMoodTags = () => _fetchMoodTags(supabase);
+
+export const fetchMoodLogByDate = (logDate: string) =>
+  _fetchMoodLogByDate(supabase, logDate);
+
+export const fetchMoodLogsInRange = (startDate: string, endDate: string) =>
+  _fetchMoodLogsInRange(supabase, startDate, endDate);
+
+export const upsertMoodLog = (params: {
+  logDate: string;
+  moodScore: number;
+  journalText?: string | null;
+  tagIds: number[];
+}) => _upsertMoodLog(supabase, params);
+
+export const deleteMoodLog = (id: number) => _deleteMoodLog(supabase, id);

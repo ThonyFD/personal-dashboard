@@ -1,0 +1,291 @@
+.habits-page {
+  max-width: 1320px;
+  margin: 0 auto;
+  padding: 1rem;
+}
+
+.habits-shell {
+  display: grid;
+  gap: 1.2rem;
+}
+
+.habits-header,
+.habits-form-card,
+.habits-list-card {
+  border-radius: 22px;
+  border: 1px solid var(--c-border-violet);
+  background:
+    radial-gradient(circle at top right, rgba(122, 92, 255, 0.08), transparent 42%),
+    radial-gradient(circle at bottom left, rgba(0, 217, 255, 0.08), transparent 42%),
+    linear-gradient(180deg, rgba(17, 26, 46, 0.96), rgba(8, 16, 34, 0.96));
+  box-shadow: 0 22px 60px rgba(0, 0, 0, 0.26);
+}
+
+.habits-header {
+  padding: 1.5rem;
+}
+
+.habits-eyebrow,
+.habits-section-label {
+  margin: 0;
+  text-transform: uppercase;
+  letter-spacing: 0.16em;
+  font-size: 0.72rem;
+  color: var(--c-primary);
+}
+
+.habits-header h1,
+.habits-form-card h2,
+.habits-list-card h2,
+.habits-list-card h3 {
+  margin: 0.45rem 0 0.75rem;
+  color: var(--c-text);
+  letter-spacing: -0.03em;
+}
+
+.habits-header p:last-child {
+  color: var(--c-text-2);
+  max-width: 760px;
+  line-height: 1.7;
+}
+
+.habits-grid {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: minmax(320px, 420px) minmax(0, 1fr);
+}
+
+.habits-form-card,
+.habits-list-card {
+  padding: 1.35rem;
+}
+
+.habits-form-grid {
+  display: grid;
+  gap: 0.85rem;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  margin-top: 1rem;
+  align-items: start;
+}
+
+.habits-field {
+  display: grid;
+  gap: 0.45rem;
+  margin-top: 0.9rem;
+  min-width: 0;
+}
+
+.habits-field span,
+.habits-inline-toggle span,
+.habit-item-copy span {
+  color: var(--c-text-2);
+  font-size: 0.85rem;
+}
+
+.habits-field input,
+.habits-field select {
+  width: 100%;
+  max-width: 100%;
+  min-height: 44px;
+  padding: 0.7rem 0.85rem;
+  box-sizing: border-box;
+}
+
+.habits-field input[type='color'] {
+  padding: 0.4rem;
+}
+
+.habits-frequency-guide {
+  margin-top: 1rem;
+  width: 100%;
+  min-height: 208px;
+  height: 208px;
+  box-sizing: border-box;
+  display: grid;
+  grid-template-rows: auto auto 1fr;
+  align-content: start;
+  padding: 1rem;
+  border-radius: 18px;
+  border: 1px solid rgba(0, 217, 255, 0.18);
+  background:
+    radial-gradient(circle at top right, rgba(57, 255, 20, 0.08), transparent 38%),
+    linear-gradient(180deg, rgba(8, 16, 34, 0.9), rgba(17, 26, 46, 0.9));
+  box-shadow: inset 0 0 0 1px rgba(122, 92, 255, 0.08);
+}
+
+.habits-frequency-guide-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 0.7rem;
+  flex-wrap: nowrap;
+}
+
+.habits-frequency-pill {
+  display: inline-flex;
+  align-items: center;
+  flex-shrink: 0;
+  min-height: 30px;
+  padding: 0.45rem 0.8rem;
+  border-radius: 999px;
+  background: linear-gradient(135deg, rgba(0, 217, 255, 0.16), rgba(122, 92, 255, 0.18));
+  border: 1px solid rgba(0, 217, 255, 0.24);
+  color: var(--c-glow);
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.habits-frequency-guide strong {
+  display: block;
+  color: var(--c-text);
+  font-size: 0.96rem;
+  line-height: 1.35;
+  letter-spacing: -0.01em;
+}
+
+.habits-frequency-guide p:last-child {
+  margin: 0.45rem 0 0;
+  color: var(--c-text-2);
+  line-height: 1.5;
+  font-size: 0.92rem;
+}
+
+.habits-days-picker {
+  margin-top: 1rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.habits-days-picker button,
+.habit-item-actions button,
+.habits-primary-btn,
+.habits-secondary-btn {
+  border-radius: 999px;
+  font-family: var(--f-body);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.habits-days-picker button {
+  width: 42px;
+  height: 42px;
+  border: 1px solid rgba(0, 217, 255, 0.18);
+  background: rgba(8, 16, 34, 0.7);
+  color: var(--c-text-2);
+}
+
+.habits-days-picker button.is-selected {
+  background: rgba(0, 217, 255, 0.18);
+  color: var(--c-primary);
+  border-color: rgba(0, 217, 255, 0.42);
+}
+
+.habits-inline-toggle {
+  margin-top: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.habits-actions {
+  display: flex;
+  gap: 0.75rem;
+  margin-top: 1.2rem;
+  flex-wrap: wrap;
+}
+
+.habits-primary-btn,
+.habits-secondary-btn {
+  min-height: 46px;
+  padding: 0.8rem 1.15rem;
+  border: 1px solid transparent;
+  font-weight: 700;
+}
+
+.habits-primary-btn {
+  background: linear-gradient(135deg, rgba(0, 217, 255, 0.18), rgba(57, 255, 20, 0.18));
+  border-color: rgba(0, 217, 255, 0.35);
+  color: var(--c-glow);
+}
+
+.habits-secondary-btn {
+  background: rgba(255, 255, 255, 0.04);
+  border-color: var(--c-border);
+  color: var(--c-text-2);
+}
+
+.habits-stack {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.habit-item {
+  display: grid;
+  grid-template-columns: 4px 1fr auto;
+  gap: 0.9rem;
+  align-items: center;
+  padding: 0.95rem 1rem;
+  border-radius: 16px;
+  border: 1px solid rgba(0, 217, 255, 0.12);
+  background: rgba(8, 16, 34, 0.72);
+}
+
+.habit-item-accent {
+  width: 4px;
+  height: 100%;
+  border-radius: 999px;
+}
+
+.habit-item-copy strong {
+  display: block;
+  color: var(--c-text);
+}
+
+.habit-item-actions {
+  display: flex;
+  gap: 0.45rem;
+  flex-wrap: wrap;
+  justify-content: end;
+}
+
+.habit-item-actions button {
+  min-height: 36px;
+  padding: 0.55rem 0.8rem;
+  border: 1px solid rgba(0, 217, 255, 0.16);
+  background: transparent;
+  color: var(--c-primary);
+}
+
+.habits-archived-header {
+  margin-top: 1.1rem;
+}
+
+@media (max-width: 920px) {
+  .habits-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 640px) {
+  .habits-frequency-guide {
+    min-height: auto;
+    height: auto;
+  }
+
+  .habits-frequency-guide-header {
+    flex-wrap: wrap;
+  }
+
+  .habits-form-grid,
+  .habit-item {
+    grid-template-columns: 1fr;
+  }
+
+  .habit-item-actions {
+    justify-content: start;
+  }
+}

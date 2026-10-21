@@ -9,7 +9,8 @@ import {
   fetchTransactionSummary,
   fetchTransactionsPaginated,
 } from '../api/supabase-data-client'
-import { formatCurrency } from '../utils/format'
+import { formatCurrency, formatSignedAmount, amountColor } from '../utils/format'
+import { TransactionDetailModal } from '../components/TransactionDetailModal'
 
 const DEFAULT_INCOME_PERIOD = format(new Date(), 'yyyy-MM')
 const DEFAULT_START_DATE = format(startOfMonth(new Date()), 'yyyy-MM-dd')
@@ -44,6 +45,7 @@ export default function Transactions() {
   const [incomeForm, setIncomeForm] = useState<IncomeFormState>(INITIAL_INCOME_FORM)
   const [incomeFeedback, setIncomeFeedback] = useState<string | null>(null)
   const [incomeError, setIncomeError] = useState<string | null>(null)
+  const [selectedTxnId, setSelectedTxnId] = useState<number | null>(null)
 
   const deferredSearchTerm = useDeferredValue(searchTerm)
 
@@ -602,7 +604,12 @@ export default function Transactions() {
               </tr>
             ) : (
               transactions.map((txn) => (
-                <tr key={txn.id}>
+                <tr
+                  key={txn.id}
+                  onClick={() => setSelectedTxnId(txn.id)}
+                  style={{ cursor: 'pointer' }}
+                  title="Ver detalle completo"
+                >
                   <td>{format(parse(txn.txn_date, 'yyyy-MM-dd', new Date()), 'MMM dd, yyyy')}</td>
                   <td>{txn.merchant_name || 'Unknown'}</td>
                   <td>
@@ -618,8 +625,8 @@ export default function Transactions() {
                   </td>
                   <td style={{ textTransform: 'capitalize' }}>{txn.txn_type}</td>
                   <td style={{ textTransform: 'capitalize' }}>{txn.channel.replace(/_/g, ' ')}</td>
-                  <td style={{ fontWeight: 'bold' }}>
-                    $ {formatCurrency(txn.amount)}
+                  <td style={{ fontWeight: 'bold', color: amountColor(txn.txn_type) }}>
+                    {formatSignedAmount(txn.txn_type, txn.amount)}
                   </td>
                   <td>{txn.provider}</td>
                   <td>{txn.card_last4 ? `****${txn.card_last4}` : '-'}</td>
@@ -745,6 +752,11 @@ export default function Transactions() {
           )}
         </div>
       </div>
+
+      <TransactionDetailModal
+        transactionId={selectedTxnId}
+        onClose={() => setSelectedTxnId(null)}
+      />
     </div>
   )
 }

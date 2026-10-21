@@ -6,6 +6,85 @@ import type {
   TransactionSummary,
 } from './types.js';
 
+// Transaction types that represent money going out (spending). Shared across
+// every "top merchant" / "total spent" calculation so all channels rank consistently.
+export const DEBIT_TYPES = new Set(['PURCHASE', 'PAYMENT', 'TRANSFER', 'WITHDRAWAL', 'FEE']);
+
+interface TopMerchantRow {
+  merchant_name: string | null;
+  amount: number | string | null;
+  txn_type: string;
+}
+
+// Aggregates transactions by merchant: tx count + amount spent (debit only).
+function aggregateMerchants(rows: TopMerchantRow[]): Map<string, { count: number; amount: number }> {
+  const merchantMap = new Map<string, { count: number; amount: number }>();
+
+  for (const row of rows) {
+    const name = row.merchant_name ?? 'Unknown';
+    const entry = merchantMap.get(name) ?? { count: 0, amount: 0 };
+    entry.count += 1;
+    if (DEBIT_TYPES.has(row.txn_type)) entry.amount += Number(row.amount) || 0;
+    merchantMap.set(name, entry);
+  }
+
+  return merchantMap;
+}
+
+// Single source of truth for the "Top Merchant" stat: the merchant with the
+// highest amount spent (debit transactions only), with tx count as tie-break.
+export function computeTopMerchant(rows: TopMerchantRow[]): {
+  topMerchant: string | null;
+  topMerchantAmount: number;
+  topMerchantCount: number;
+} {
+  const merchantMap = aggregateMerchants(rows);
+
+  let topMerchant: string | null = null;
+  let topMerchantAmount = 0;
+  let topMerchantCount = 0;
+
+  for (const [name, stats] of merchantMap) {
+    if (
+      stats.amount > topMerchantAmount ||
+      (stats.amount === topMerchantAmount && stats.count > topMerchantCount)
+    ) {
+      topMerchant = name;
+      topMerchantAmount = stats.amount;
+      topMerchantCount = stats.count;
+    }
+  }
+
+  return { topMerchant, topMerchantAmount, topMerchantCount };
+}
+
+// "Busiest Merchant": the merchant with the most transactions in the period,
+// with amount spent as tie-break.
+export function computeBusiestMerchant(rows: TopMerchantRow[]): {
+  busiestMerchant: string | null;
+  busiestMerchantCount: number;
+  busiestMerchantAmount: number;
+} {
+  const merchantMap = aggregateMerchants(rows);
+
+  let busiestMerchant: string | null = null;
+  let busiestMerchantCount = 0;
+  let busiestMerchantAmount = 0;
+
+  for (const [name, stats] of merchantMap) {
+    if (
+      stats.count > busiestMerchantCount ||
+      (stats.count === busiestMerchantCount && stats.amount > busiestMerchantAmount)
+    ) {
+      busiestMerchant = name;
+      busiestMerchantCount = stats.count;
+      busiestMerchantAmount = stats.amount;
+    }
+  }
+
+  return { busiestMerchant, busiestMerchantCount, busiestMerchantAmount };
+}
+
 // Selects all columns exposed by the v_transactions view.
 const V_TXN_SELECT = [
   'id', 'txn_type', 'channel', 'amount', 'currency', 'merchant_name',
@@ -170,41 +249,35 @@ export async function fetchTransactionSummary(
 ): Promise<TransactionSummary> {
   const rows = await fetchRowsInBatches(
     client,
-    'merchant_name, amount',
+    'merchant_name, amount, txn_type',
     filters,
     startDate,
     endDate,
   );
 
-  const merchantMap = new Map<string, { count: number; amount: number }>();
   let totalAmount = 0;
-
   for (const row of rows) {
-    const amount = Number(row.amount) || 0;
-    totalAmount += amount;
-    const name = row.merchant_name ?? 'Unknown';
-    const entry = merchantMap.get(name) ?? { count: 0, amount: 0 };
-    entry.count += 1;
-    entry.amount += amount;
-    merchantMap.set(name, entry);
+    totalAmount += Number(row.amount) || 0;
   }
 
-  let topMerchant: string | null = null;
-  let topMerchantAmount = 0;
-  let topMerchantCount = 0;
-
-  for (const [name, stats] of merchantMap) {
-    if (
-      stats.count > topMerchantCount ||
-      (stats.count === topMerchantCount && stats.amount > topMerchantAmount)
-    ) {
-      topMerchant = name;
-      topMerchantAmount = stats.amount;
-      topMerchantCount = stats.count;
-    }
-  }
+  const { topMerchant, topMerchantAmount, topMerchantCount } = computeTopMerchant(rows);
 
   return { totalCount: rows.length, totalAmount, topMerchant, topMerchantAmount, topMerchantCount };
+}
+
+// Fetches the full raw transactions-table row (every column) for the detail view.
+// Reads the base table directly — not v_transactions — so all DB fields are returned.
+export async function fetchTransactionDetail(
+  client: SupabaseClient,
+  id: number,
+): Promise<Record<string, unknown> | null> {
+  const { data, error } = await client
+    .from('transactions')
+    .select('*')
+    .eq('id', id)
+    .maybeSingle();
+  if (error) throw error;
+  return data ?? null;
 }
 
 export async function fetchTransactionFilterOptions(

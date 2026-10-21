@@ -1,3 +1,31 @@
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Manrope:wght@400;500;600;700&display=swap');
+
+:root {
+  /* Brand palette */
+  --c-primary: #00D9FF;
+  --c-green: #39FF14;
+  --c-violet: #7A5CFF;
+  --c-glow: #E8FFFF;
+  --c-white: #FFFFFF;
+  --c-bg: #081022;
+  --c-surface: #111A2E;
+  --c-surface-2: #0d1524;
+  --c-muted: #5E677A;
+  --c-border: rgba(0, 217, 255, 0.12);
+  --c-border-violet: rgba(122, 92, 255, 0.2);
+  --c-text: #E8FFFF;
+  --c-text-2: rgba(232, 255, 255, 0.65);
+  --c-text-3: rgba(232, 255, 255, 0.38);
+  /* Typography */
+  --f-heading: 'Space Grotesk', -apple-system, sans-serif;
+  --f-body: 'Manrope', -apple-system, sans-serif;
+  /* Radius */
+  --r-sm: 6px;
+  --r-md: 10px;
+  --r-lg: 14px;
+  --r-xl: 18px;
+}
+
 * {
   margin: 0;
   padding: 0;
@@ -5,23 +33,46 @@
 }
 
 body {
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
-    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
-    sans-serif;
+  font-family: var(--f-body);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  background-color: #f5f5f5;
+  background-color: var(--c-bg);
+  color: var(--c-text);
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--f-heading);
 }
 
 code {
   font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New', monospace;
 }
 
+input, select, textarea {
+  background-color: var(--c-surface);
+  color: var(--c-text);
+  border: 1px solid rgba(0, 217, 255, 0.18);
+  border-radius: var(--r-sm);
+  font-family: var(--f-body);
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+input:focus, select:focus, textarea:focus {
+  outline: none;
+  border-color: var(--c-primary);
+  box-shadow: 0 0 0 2px rgba(0, 217, 255, 0.1);
+}
+
+input::placeholder, textarea::placeholder {
+  color: var(--c-muted);
+}
+
+select option {
+  background-color: var(--c-surface);
+  color: var(--c-text);
+}
+
 @keyframes spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
 }

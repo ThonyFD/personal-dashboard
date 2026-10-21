@@ -8,61 +8,99 @@ export default function HomePage() {
   return (
     <div className="marketing-shell">
       <section className="marketing-hero">
-        <img src="/logo.svg" alt="AI Finance Agent" className="hero-logo" />
-        <p className="marketing-eyebrow">Google OAuth Verification</p>
-        <h1>AI Finance Agent</h1>
+        <img src="/logo.svg" alt="Personal Dashboard" className="hero-logo" />
+        <p className="marketing-eyebrow">Signal, Control, Growth</p>
+        <h1>Elige tu workspace</h1>
         <p className="marketing-lead">
-          AI Finance Agent is a personal finance dashboard that reads Gmail
-          messages you label as financial, extracts transaction details, and
-          organizes them into reports, cash-flow views, budgets, and recurring
-          payment tracking.
+          Personal Dashboard ahora separa dos sistemas: un workspace de
+          Finanzas para control operativo y un workspace Azton para hábitos,
+          mood y consistencia diaria. Entra directo al sistema que quieres usar.
         </p>
 
-        <div className="marketing-actions">
-          <Link to={user ? '/app' : '/login'} className="marketing-primary">
-            {user ? 'Open dashboard' : 'Sign in with Google'}
+        {!user && (
+          <div className="marketing-actions">
+            <Link to="/login" className="marketing-primary">
+              Sign in with Google
+            </Link>
+            <Link to="/privacy" className="marketing-secondary">
+              Privacy Policy
+            </Link>
+          </div>
+        )}
+      </section>
+
+      <section className="marketing-selector-grid">
+        <article className="marketing-selector-card finance">
+          <p className="marketing-selector-tag">Finance Workspace</p>
+          <h2>Finanzas</h2>
+          <p>
+            Transacciones, cash flow, control mensual, merchants, categorías y
+            salud operativa del sistema financiero.
+          </p>
+          <ul className="marketing-feature-list">
+            <li>Overview y reportes</li>
+            <li>Control mensual y recurring</li>
+            <li>Merchants, categorías y alertas</li>
+          </ul>
+          <Link to={user ? '/finance/overview' : '/login'} className="marketing-primary marketing-selector-cta">
+            {user ? 'Entrar a Finanzas' : 'Login para Finanzas'}
           </Link>
-          <Link to="/privacy" className="marketing-secondary">
-            Privacy Policy
+        </article>
+
+        <article className="marketing-selector-card azton">
+          <p className="marketing-selector-tag">Azton Workspace</p>
+          <h2>Azton</h2>
+          <p>
+            Timeline de hábitos, focus sessions, mood tracking y visualización
+            de consistencia en una capa separada del dashboard financiero.
+          </p>
+          <ul className="marketing-feature-list">
+            <li>Timeline diario por bloques</li>
+            <li>CRUD de hábitos y focus timer</li>
+            <li>Mood tracker + heatmap</li>
+          </ul>
+          <Link to={user ? '/azton/timeline' : '/login'} className="marketing-secondary marketing-selector-cta">
+            {user ? 'Entrar a Azton' : 'Login para Azton'}
           </Link>
-        </div>
+        </article>
       </section>
 
       <section className="marketing-card-grid">
         <article className="marketing-card">
-          <h2>What it does</h2>
+          <h2>Arquitectura separada</h2>
           <p>
-            Imports transaction notifications from Gmail, normalizes merchants,
-            and makes the data available inside your dashboard.
+            Finanzas y Azton comparten identidad visual y autenticación, pero ya
+            no comparten el mismo menú operativo.
           </p>
         </article>
 
         <article className="marketing-card">
-          <h2>Google data used</h2>
+          <h2>Entrada clara</h2>
           <p>
-            Uses Google Sign-In for authentication and Gmail read-only access to
-            fetch only the emails needed to process your financial activity.
+            Desde el home eliges a qué sistema entrar sin mezclar navegación
+            financiera con hábitos y bienestar.
           </p>
         </article>
 
         <article className="marketing-card">
-          <h2>Transparency</h2>
+          <h2>Identidad consistente</h2>
           <p>
-            The app stores extracted transaction data so you can review trends,
-            categories, reports, and historical activity in one place.
+            Se mantiene la dirección dark, tecnológica y de alto contraste del
+            Brand Book en ambas superficies.
           </p>
         </article>
       </section>
 
       <footer className="marketing-footer">
         <div>
-          <strong>AI Finance Agent</strong>
+          <strong>Personal Dashboard</strong>
           <p>Contact: thonyfd@gmail.com</p>
         </div>
         <div className="marketing-footer-links">
           <Link to="/privacy">Privacy Policy</Link>
           <Link to="/terms">Terms of Service</Link>
-          <Link to={user ? '/app' : '/login'}>{user ? 'Dashboard' : 'Login'}</Link>
+          <Link to={user ? '/finance/overview' : '/login'}>{user ? 'Finanzas' : 'Login'}</Link>
+          <Link to={user ? '/azton/timeline' : '/login'}>{user ? 'Azton' : 'Login'}</Link>
         </div>
       </footer>
     </div>

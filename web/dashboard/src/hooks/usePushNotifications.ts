@@ -107,7 +107,7 @@ export const usePushNotifications = () => {
         if (Notification.permission === 'granted') {
           new Notification(payload.notification?.title || 'Recordatorio', {
             body: payload.notification?.body,
-            icon: '/icon-192.png',
+            icon: '/logo.svg',
           });
         }
       });

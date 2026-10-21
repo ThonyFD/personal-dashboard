@@ -109,3 +109,59 @@ export interface PushSubscription {
   keys: Record<string, string>;
   is_active: boolean;
 }
+
+export type DayBlock = 'MORNING' | 'AFTERNOON' | 'EVENING';
+export type FrequencyType = 'DAILY' | 'WEEKDAYS' | 'WEEKLY' | 'MONTHLY' | 'CUSTOM';
+export type HabitStatus = 'COMPLETED' | 'SKIPPED' | 'PARTIAL';
+
+export interface HabitTemplate {
+  id: number;
+  name: string;
+  category: string;
+  defaultDurationMinutes: number;
+  iconIdentifier: string | null;
+  colorHex: string | null;
+}
+
+export interface UserHabit {
+  id: number;
+  templateId: number | null;
+  name: string;
+  iconIdentifier: string | null;
+  colorHex: string | null;
+  dayBlock: DayBlock;
+  frequencyType: FrequencyType;
+  customDaysMask: number;
+  targetCompletionsPerPeriod: number;
+  targetDurationMinutes: number;
+  sortOrder: number;
+  isActive: boolean;
+}
+
+export interface HabitLog {
+  id: number;
+  userHabitId: number;
+  logDate: string;
+  status: HabitStatus;
+  actualDurationMinutes: number;
+}
+
+export interface MoodTag {
+  id: number;
+  name: string;
+  category: string | null;
+}
+
+export interface MoodLog {
+  id: number;
+  logDate: string;
+  moodScore: number;
+  journalText: string | null;
+  tagIds: number[];
+}
+
+export interface HabitDayCompletion {
+  logDate: string;
+  completedCount: number;
+  loggedCount: number;
+}

@@ -1,7 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { fetchTransactions } from '../api/supabase-data-client'
 import { useState, useMemo } from 'react'
-import { formatCurrency } from '../utils/format'
+import { formatCurrency, formatSignedAmount, amountColor } from '../utils/format'
 import {
   BarChart,
   Bar,
@@ -598,7 +598,7 @@ export default function Recurring() {
                       return (
                         <tr key={index}>
                           <td>{format(parseISO(txn.txn_date), 'MMM dd, yyyy')}</td>
-                          <td>${formatCurrency(txn.amount)}</td>
+                          <td style={{ color: amountColor(txn.txn_type) }}>{formatSignedAmount(txn.txn_type, txn.amount)}</td>
                           <td style={{
                             color: Math.abs(deviation) > 10 ? '#e53e3e' : Math.abs(deviation) > 5 ? '#d69e2e' : '#38a169',
                             fontWeight: Math.abs(deviation) > 5 ? 'bold' : 'normal'

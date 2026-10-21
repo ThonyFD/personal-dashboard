@@ -51,6 +51,7 @@ export default function MonthlyControl() {
   const [isCopying, setIsCopying] = useState(false)
 
   // Filter states
+  const [isIncomesCollapsed, setIsIncomesCollapsed] = useState(true)
   const [filterType, setFilterType] = useState<string>('all')
   const [filterPaymentMethod, setFilterPaymentMethod] = useState<string>('all')
   const [filterPaidStatus, setFilterPaidStatus] = useState<string>('all')
@@ -481,8 +482,14 @@ export default function MonthlyControl() {
 
       {/* Incomes Panel */}
       <div className="incomes-panel card">
-        <h3>INGRESOS DEL MES</h3>
-        <div className="incomes-list">
+        <button
+          onClick={() => setIsIncomesCollapsed(c => !c)}
+          style={{ all: 'unset', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%', font: 'inherit', fontSize: '1rem', fontWeight: 700, letterSpacing: '0.05em', color: 'inherit' }}
+        >
+          INGRESOS DEL MES
+          <span style={{ fontSize: '0.8rem', opacity: 0.6 }}>{isIncomesCollapsed ? '▶' : '▼'}</span>
+        </button>
+        {!isIncomesCollapsed && <><div className="incomes-list">
           {incomes.map(income => {
             const isEditing = editingIncomeId === income.id
 
@@ -559,6 +566,7 @@ export default function MonthlyControl() {
             <span className="amount">${totals.duplicatedTotal.toFixed(2)}</span>
           </div>
         </div>
+        </>}
       </div>
 
       {/* Summary Cards */}

@@ -1,9 +1,10 @@
 import { useQuery } from '@tanstack/react-query'
 import { fetchStats } from '../api/supabase-data-client'
 import { format, parse } from 'date-fns'
-import { formatCurrency } from '../utils/format'
+import { formatCurrency, formatSignedAmount, amountColor } from '../utils/format'
 import { useState, useMemo } from 'react'
 import { getDateRange, type PeriodType } from '../utils/dateRange'
+import { TransactionDetailModal } from '../components/TransactionDetailModal'
 
 const GITHUB_OWNER = 'ThonyFD'
 const GITHUB_REPO = 'personal-dashboard'
@@ -35,11 +36,11 @@ async function triggerEmailSync(lookbackDays?: number): Promise<void> {
   }
 }
 
-const SYNC_BUTTON_COLORS: Record<string, string> = {
-  success: '#38a169',
-  error: '#e53e3e',
-  idle: '#2b6cb0',
-  loading: '#2b6cb0',
+const SYNC_BUTTON_STYLES: Record<string, { background: string; color: string; border: string }> = {
+  success: { background: '#041a00', color: '#39FF14', border: '1px solid rgba(57, 255, 20, 0.4)' },
+  error: { background: '#150707', color: '#ff6b6b', border: '1px solid rgba(229, 62, 62, 0.4)' },
+  idle: { background: '#001720', color: '#00D9FF', border: '1px solid rgba(0, 217, 255, 0.35)' },
+  loading: { background: '#001720', color: 'rgba(0, 217, 255, 0.5)', border: '1px solid rgba(0, 217, 255, 0.15)' },
 }
 
 const SYNC_BUTTON_LABELS: Record<string, string> = {
@@ -50,21 +51,23 @@ const SYNC_BUTTON_LABELS: Record<string, string> = {
 }
 
 function SyncButton({ syncState, onClick }: Readonly<{ syncState: string; onClick: () => void }>) {
+  const btnStyle = SYNC_BUTTON_STYLES[syncState] ?? SYNC_BUTTON_STYLES.idle
   return (
     <button
       onClick={onClick}
       disabled={syncState === 'loading'}
       style={{
         padding: '0.4rem 0.9rem',
-        border: 'none',
-        borderRadius: '4px',
-        backgroundColor: SYNC_BUTTON_COLORS[syncState] ?? '#2b6cb0',
-        color: 'white',
+        border: btnStyle.border,
+        borderRadius: '6px',
+        backgroundColor: btnStyle.background,
+        color: btnStyle.color,
         cursor: syncState === 'loading' ? 'not-allowed' : 'pointer',
         fontSize: '0.85rem',
-        fontWeight: '500',
+        fontWeight: '600',
         opacity: syncState === 'loading' ? 0.7 : 1,
         whiteSpace: 'nowrap',
+        transition: 'all 0.2s ease',
       }}
     >
       {SYNC_BUTTON_LABELS[syncState] ?? 'Sync Emails'}
@@ -80,6 +83,7 @@ export default function Overview() {
   const [syncDays, setSyncDays] = useState<string>('')
   const [syncState, setSyncState] = useState<'idle' | 'loading' | 'success' | 'error'>('idle')
   const [syncError, setSyncError] = useState<string>('')
+  const [selectedTxnId, setSelectedTxnId] = useState<number | null>(null)
 
   async function handleSync() {
     setSyncState('loading')
@@ -123,7 +127,7 @@ export default function Overview() {
   return (
     <div>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '0.75rem', marginBottom: '1rem' }}>
-        <h1 style={{ margin: 0 }}>Dashboard Overview</h1>
+        <h1 style={{ margin: 0, color: '#E8FFFF', letterSpacing: '-0.03em' }}>Dashboard Overview</h1>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
           <input
@@ -135,15 +139,13 @@ export default function Overview() {
             disabled={syncState === 'loading'}
             style={{
               padding: '0.4rem 0.6rem',
-              border: '1px solid #ddd',
-              borderRadius: '4px',
               fontSize: '0.85rem',
               width: '130px',
             }}
           />
           <SyncButton syncState={syncState} onClick={handleSync} />
           {syncState === 'error' && (
-            <span style={{ fontSize: '0.78rem', color: '#e53e3e', maxWidth: '200px' }}>{syncError}</span>
+            <span style={{ fontSize: '0.78rem', color: '#ff6b6b', maxWidth: '200px' }}>{syncError}</span>
           )}
         </div>
       </div>
@@ -152,14 +154,15 @@ export default function Overview() {
       <div style={{
         marginBottom: '1.5rem',
         padding: '0.75rem',
-        backgroundColor: '#f8f9fa',
-        borderRadius: '8px',
+        backgroundColor: '#111A2E',
+        borderRadius: '10px',
+        border: '1px solid rgba(0, 217, 255, 0.1)',
         display: 'flex',
         flexDirection: 'column',
         gap: '0.75rem'
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
-          <label style={{ fontWeight: '500', color: '#333', fontSize: '0.9rem' }}>Period:</label>
+          <label style={{ fontWeight: '600', color: '#E8FFFF', fontSize: '0.85rem' }}>Period:</label>
           <select
             value={periodType}
             onChange={(e) => {
@@ -169,11 +172,8 @@ export default function Overview() {
             }}
             style={{
               padding: '0.4rem 0.75rem',
-              border: '1px solid #ddd',
-              borderRadius: '4px',
               fontSize: '0.9rem',
               cursor: 'pointer',
-              backgroundColor: 'white'
             }}
           >
             <option value="week">Week</option>
@@ -189,13 +189,14 @@ export default function Overview() {
               }}
               style={{
                 padding: '0.4rem 0.6rem',
-                border: '1px solid #ddd',
-                borderRadius: '4px',
-                backgroundColor: 'white',
+                border: '1px solid rgba(0, 217, 255, 0.18)',
+                borderRadius: '6px',
+                backgroundColor: '#111A2E',
+                color: '#E8FFFF',
                 cursor: 'pointer',
                 fontSize: '1.1rem',
                 lineHeight: 1,
-                flexShrink: 0
+                flexShrink: 0,
               }}
               title="Previous period"
             >
@@ -205,7 +206,7 @@ export default function Overview() {
             <span style={{
               padding: '0.4rem 0.5rem',
               fontWeight: '600',
-              color: '#333',
+              color: '#E8FFFF',
               textAlign: 'center',
               fontSize: '0.85rem',
               whiteSpace: 'nowrap',
@@ -225,14 +226,15 @@ export default function Overview() {
               disabled={periodOffset === 0}
               style={{
                 padding: '0.4rem 0.6rem',
-                border: '1px solid #ddd',
-                borderRadius: '4px',
-                backgroundColor: periodOffset === 0 ? '#f5f5f5' : 'white',
+                border: '1px solid rgba(0, 217, 255, 0.18)',
+                borderRadius: '6px',
+                backgroundColor: '#111A2E',
+                color: '#E8FFFF',
                 cursor: periodOffset === 0 ? 'not-allowed' : 'pointer',
-                opacity: periodOffset === 0 ? 0.5 : 1,
+                opacity: periodOffset === 0 ? 0.4 : 1,
                 fontSize: '1.1rem',
                 lineHeight: 1,
-                flexShrink: 0
+                flexShrink: 0,
               }}
               title="Next period"
             >
@@ -247,15 +249,15 @@ export default function Overview() {
                 }}
                 style={{
                   padding: '0.4rem 0.75rem',
-                  border: '1px solid #007bff',
-                  borderRadius: '4px',
-                  backgroundColor: '#007bff',
-                  color: 'white',
+                  border: '1px solid rgba(0, 217, 255, 0.4)',
+                  borderRadius: '6px',
+                  backgroundColor: 'rgba(0, 217, 255, 0.1)',
+                  color: '#00D9FF',
                   cursor: 'pointer',
                   fontSize: '0.85rem',
-                  fontWeight: '500',
+                  fontWeight: '600',
                   whiteSpace: 'nowrap',
-                  flexShrink: 0
+                  flexShrink: 0,
                 }}
               >
                 Today
@@ -266,7 +268,7 @@ export default function Overview() {
 
         <div style={{
           fontSize: '0.75rem',
-          color: '#666',
+          color: '#5E677A',
           textAlign: 'center'
         }}>
           {dateRange.startDate} to {dateRange.endDate}
@@ -277,38 +279,45 @@ export default function Overview() {
         <div className="stat-card">
           <h3>Total Transactions</h3>
           <div className="value">{stats?.total_transactions || 0}</div>
-          <div style={{ fontSize: '0.85rem', color: '#666', marginTop: '0.5rem' }}>
+          <div style={{ fontSize: '0.82rem', color: '#5E677A', marginTop: '0.5rem' }}>
             {dateRange.label}
           </div>
         </div>
 
-        <div className="stat-card" style={{ backgroundColor: '#fff5f5', borderLeft: '4px solid #e53e3e' }}>
-          <h3 style={{ color: '#c53030' }}>Payments</h3>
-          <div className="value" style={{ color: '#e53e3e' }}>
-            ${formatCurrency(stats?.payment_amount || 0)}
+        <div className="stat-card" style={{ borderLeft: '3px solid #ff6b6b' }}>
+          <h3 style={{ color: '#ff8a8a' }}>Total Spent</h3>
+          <div className="value" style={{ color: '#ff6b6b' }}>
+            ${formatCurrency(stats?.total_spent_amount || 0)}
           </div>
-          <div style={{ fontSize: '0.85rem', color: '#666', marginTop: '0.5rem' }}>
-            {stats?.payment_count || 0} transactions · {dateRange.label}
+          <div style={{ fontSize: '0.82rem', color: '#5E677A', marginTop: '0.5rem' }}>
+            {stats?.total_spent_count || 0} transactions · {dateRange.label}
           </div>
-        </div>
-
-        <div className="stat-card" style={{ backgroundColor: '#f0fff4', borderLeft: '4px solid #38a169' }}>
-          <h3 style={{ color: '#2f855a' }}>Purchases</h3>
-          <div className="value" style={{ color: '#38a169' }}>
-            ${formatCurrency(stats?.purchase_amount || 0)}
-          </div>
-          <div style={{ fontSize: '0.85rem', color: '#666', marginTop: '0.5rem' }}>
-            {stats?.purchase_count || 0} transactions · {dateRange.label}
-          </div>
+          {stats && (stats.purchase_count > 0 || stats.payment_count > 0) && (
+            <div style={{ fontSize: '0.75rem', color: '#5E677A', marginTop: '0.25rem' }}>
+              {stats.purchase_count > 0 && `${stats.purchase_count} purchases`}
+              {stats.purchase_count > 0 && stats.payment_count > 0 && ' · '}
+              {stats.payment_count > 0 && `${stats.payment_count} payments`}
+            </div>
+          )}
         </div>
 
         <div className="stat-card">
           <h3>Top Merchant</h3>
-          <div className="value" style={{ fontSize: '1.2rem' }}>
+          <div className="value" style={{ fontSize: '1.2rem', color: '#00D9FF' }}>
             {stats?.top_merchant || 'N/A'}
           </div>
-          <div style={{ fontSize: '0.85rem', color: '#666', marginTop: '0.5rem' }}>
+          <div style={{ fontSize: '0.82rem', color: '#5E677A', marginTop: '0.5rem' }}>
             {stats?.top_merchant_amount ? `$${formatCurrency(stats.top_merchant_amount)} · ` : ''}{dateRange.label}
+          </div>
+        </div>
+
+        <div className="stat-card">
+          <h3>Most Frequent</h3>
+          <div className="value" style={{ fontSize: '1.2rem', color: '#00D9FF' }}>
+            {stats?.busiest_merchant || 'N/A'}
+          </div>
+          <div style={{ fontSize: '0.82rem', color: '#5E677A', marginTop: '0.5rem' }}>
+            {stats?.busiest_merchant ? `${stats.busiest_merchant_count} transactions · ` : ''}{dateRange.label}
           </div>
         </div>
       </div>
@@ -328,23 +337,30 @@ export default function Overview() {
           </thead>
           <tbody>
             {paginatedTransactions.map((txn) => (
-              <tr key={txn.id}>
+              <tr
+                key={txn.id}
+                onClick={() => setSelectedTxnId(txn.id)}
+                style={{ cursor: 'pointer' }}
+                title="Ver detalle completo"
+              >
                 <td>{format(parse(txn.txn_date, 'yyyy-MM-dd', new Date()), 'MMM dd, yyyy')}</td>
                 <td>{txn.merchant_name}</td>
                 <td>
                   <span style={{
-                    padding: '0.25rem 0.5rem',
+                    padding: '0.2rem 0.5rem',
                     borderRadius: '4px',
-                    fontSize: '0.85rem',
-                    backgroundColor: '#e8f5e9',
-                    color: '#2e7d32'
+                    fontSize: '0.82rem',
+                    backgroundColor: 'rgba(57, 255, 20, 0.08)',
+                    color: '#39FF14',
+                    border: '1px solid rgba(57, 255, 20, 0.18)',
+                    fontWeight: '500',
                   }}>
                     {txn.merchant?.categoryRef?.name || 'Uncategorized'}
                   </span>
                 </td>
-                <td style={{ textTransform: 'capitalize' }}>{txn.txn_type}</td>
-                <td style={{ fontWeight: 'bold' }}>
-                  ${formatCurrency(txn.amount)}
+                <td style={{ textTransform: 'capitalize', color: 'rgba(232, 255, 255, 0.65)' }}>{txn.txn_type}</td>
+                <td style={{ fontWeight: '700', color: amountColor(txn.txn_type) ?? '#E8FFFF' }}>
+                  {formatSignedAmount(txn.txn_type, txn.amount)}
                 </td>
                 <td>{txn.provider}</td>
               </tr>
@@ -356,13 +372,13 @@ export default function Overview() {
         <div style={{
           marginTop: '0.75rem',
           padding: '0.75rem',
-          borderTop: '1px solid #e0e0e0',
+          borderTop: '1px solid rgba(0, 217, 255, 0.1)',
           display: 'flex',
           flexDirection: 'column',
           gap: '0.75rem'
         }}>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', alignItems: 'center' }}>
-            <div style={{ color: '#666', fontSize: '0.8rem', textAlign: 'center' }}>
+            <div style={{ color: '#5E677A', fontSize: '0.8rem', textAlign: 'center' }}>
               {allTransactions && allTransactions.length > 0 ? (
                 <>
                   Showing {((currentPage - 1) * itemsPerPage) + 1} to {Math.min(currentPage * itemsPerPage, allTransactions.length)} of {allTransactions.length}
@@ -372,7 +388,7 @@ export default function Overview() {
               )}
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-              <label style={{ fontSize: '0.8rem', color: '#666' }}>Per page:</label>
+              <span style={{ fontSize: '0.8rem', color: '#5E677A' }}>Per page:</span>
               <select
                 value={itemsPerPage}
                 onChange={(e) => {
@@ -381,9 +397,7 @@ export default function Overview() {
                 }}
                 style={{
                   padding: '0.25rem 0.5rem',
-                  border: '1px solid #ddd',
-                  borderRadius: '4px',
-                  fontSize: '0.8rem'
+                  fontSize: '0.8rem',
                 }}
               >
                 <option value={10}>10</option>
@@ -401,73 +415,64 @@ export default function Overview() {
               gap: '0.25rem',
               flexWrap: 'wrap'
             }}>
-              <button
-                onClick={() => setCurrentPage(1)}
-                disabled={currentPage === 1}
-                style={{
-                  padding: '0.4rem 0.6rem',
-                  cursor: currentPage === 1 ? 'not-allowed' : 'pointer',
-                  opacity: currentPage === 1 ? 0.5 : 1,
-                  border: '1px solid #ddd',
-                  borderRadius: '4px',
-                  backgroundColor: currentPage === 1 ? '#f5f5f5' : 'white',
-                  fontSize: '0.8rem'
-                }}
-              >
-                First
-              </button>
-              <button
-                onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
-                disabled={currentPage === 1}
-                style={{
-                  padding: '0.4rem 0.6rem',
-                  cursor: currentPage === 1 ? 'not-allowed' : 'pointer',
-                  opacity: currentPage === 1 ? 0.5 : 1,
-                  border: '1px solid #ddd',
-                  borderRadius: '4px',
-                  backgroundColor: currentPage === 1 ? '#f5f5f5' : 'white',
-                  fontSize: '0.8rem'
-                }}
-              >
-                Prev
-              </button>
-              <span style={{ padding: '0 0.5rem', fontWeight: '500', fontSize: '0.8rem' }}>
+              {(['First', 'Prev'] as const).map((label) => {
+                const isFirst = label === 'First'
+                const disabled = currentPage === 1
+                return (
+                  <button
+                    key={label}
+                    onClick={() => setCurrentPage(isFirst ? 1 : p => Math.max(1, p - 1))}
+                    disabled={disabled}
+                    style={{
+                      padding: '0.4rem 0.6rem',
+                      cursor: disabled ? 'not-allowed' : 'pointer',
+                      opacity: disabled ? 0.4 : 1,
+                      border: '1px solid rgba(0, 217, 255, 0.18)',
+                      borderRadius: '6px',
+                      backgroundColor: '#111A2E',
+                      color: '#E8FFFF',
+                      fontSize: '0.8rem',
+                    }}
+                  >
+                    {label}
+                  </button>
+                )
+              })}
+              <span style={{ padding: '0 0.5rem', fontWeight: '600', fontSize: '0.8rem', color: '#E8FFFF' }}>
                 {currentPage} / {totalPages}
               </span>
-              <button
-                onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
-                disabled={currentPage === totalPages}
-                style={{
-                  padding: '0.4rem 0.6rem',
-                  cursor: currentPage === totalPages ? 'not-allowed' : 'pointer',
-                  opacity: currentPage === totalPages ? 0.5 : 1,
-                  border: '1px solid #ddd',
-                  borderRadius: '4px',
-                  backgroundColor: currentPage === totalPages ? '#f5f5f5' : 'white',
-                  fontSize: '0.8rem'
-                }}
-              >
-                Next
-              </button>
-              <button
-                onClick={() => setCurrentPage(totalPages)}
-                disabled={currentPage === totalPages}
-                style={{
-                  padding: '0.4rem 0.6rem',
-                  cursor: currentPage === totalPages ? 'not-allowed' : 'pointer',
-                  opacity: currentPage === totalPages ? 0.5 : 1,
-                  border: '1px solid #ddd',
-                  borderRadius: '4px',
-                  backgroundColor: currentPage === totalPages ? '#f5f5f5' : 'white',
-                  fontSize: '0.8rem'
-                }}
-              >
-                Last
-              </button>
+              {(['Next', 'Last'] as const).map((label) => {
+                const isLast = label === 'Last'
+                const disabled = currentPage === totalPages
+                return (
+                  <button
+                    key={label}
+                    onClick={() => setCurrentPage(isLast ? totalPages : p => Math.min(totalPages, p + 1))}
+                    disabled={disabled}
+                    style={{
+                      padding: '0.4rem 0.6rem',
+                      cursor: disabled ? 'not-allowed' : 'pointer',
+                      opacity: disabled ? 0.4 : 1,
+                      border: '1px solid rgba(0, 217, 255, 0.18)',
+                      borderRadius: '6px',
+                      backgroundColor: '#111A2E',
+                      color: '#E8FFFF',
+                      fontSize: '0.8rem',
+                    }}
+                  >
+                    {label}
+                  </button>
+                )
+              })}
             </div>
           )}
         </div>
       </div>
+
+      <TransactionDetailModal
+        transactionId={selectedTxnId}
+        onClose={() => setSelectedTxnId(null)}
+      />
     </div>
   )
 }
