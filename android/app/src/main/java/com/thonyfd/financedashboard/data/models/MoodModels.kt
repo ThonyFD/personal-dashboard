@@ -50,3 +50,19 @@ data class MoodLogWithTags(
     val journalText: String?,
     val tagIds: List<Long>
 )
+
+@Serializable
+data class MoodCheckinRow(
+    val id: Long,
+    @SerialName("checked_at") val checkedAt: String,
+    @SerialName("mood_score") val moodScore: Int,
+    val note: String? = null,
+    val source: String = "app"
+)
+
+@Serializable
+data class MoodCheckinInsert(
+    @SerialName("mood_score") val moodScore: Int,
+    val note: String? = null,
+    val source: String = "app"
+)

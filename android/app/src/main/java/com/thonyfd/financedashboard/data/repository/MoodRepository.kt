@@ -1,6 +1,8 @@
 package com.thonyfd.financedashboard.data.repository
 
 import com.thonyfd.financedashboard.data.SupabaseConfig
+import com.thonyfd.financedashboard.data.models.MoodCheckinInsert
+import com.thonyfd.financedashboard.data.models.MoodCheckinRow
 import com.thonyfd.financedashboard.data.models.MoodLogInsert
 import com.thonyfd.financedashboard.data.models.MoodLogRow
 import com.thonyfd.financedashboard.data.models.MoodLogTagInsert
@@ -11,6 +13,7 @@ import com.thonyfd.financedashboard.data.models.MoodTagRow
 import io.github.jan.supabase.postgrest.from
 import io.github.jan.supabase.postgrest.query.Order
 import java.time.LocalDate
+import java.time.ZoneId
 
 class MoodRepository {
 
@@ -104,6 +107,28 @@ class MoodRepository {
                 tagIds.map { tagId -> MoodLogTagInsert(moodLogId = moodLogId, tagId = tagId) }
             )
         }
+    }
+
+    suspend fun addCheckin(score: Int, source: String = "app", note: String? = null) {
+        supabase.from("mood_checkins").insert(
+            MoodCheckinInsert(moodScore = score.coerceIn(1, 5), note = note, source = source)
+        )
+    }
+
+    /** Registros entre dos fechas locales (inclusive), en orden cronológico. */
+    suspend fun getCheckins(start: LocalDate, end: LocalDate = start): List<MoodCheckinRow> {
+        val zone = ZoneId.systemDefault()
+        val from = start.atStartOfDay(zone).toOffsetDateTime().toString()
+        val to = end.plusDays(1).atStartOfDay(zone).toOffsetDateTime().toString()
+        return supabase.from("mood_checkins")
+            .select {
+                filter {
+                    gte("checked_at", from)
+                    lt("checked_at", to)
+                }
+                order("checked_at", Order.ASCENDING)
+            }
+            .decodeList<MoodCheckinRow>()
     }
 
     private suspend fun fetchTagIds(moodLogIds: List<Long>): Map<Long, List<Long>> {

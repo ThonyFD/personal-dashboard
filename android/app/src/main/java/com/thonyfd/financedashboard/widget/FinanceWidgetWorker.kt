@@ -7,7 +7,6 @@ import androidx.work.ExistingPeriodicWorkPolicy
 import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
 import androidx.work.WorkerParameters
-import com.thonyfd.financedashboard.data.repository.HabitRepository
 import com.thonyfd.financedashboard.data.repository.FinanceRepository
 import java.time.LocalDate
 import java.util.concurrent.TimeUnit
@@ -18,34 +17,33 @@ class FinanceWidgetWorker(
 ) : CoroutineWorker(context, workerParams) {
 
     override suspend fun doWork(): Result {
-        return try {
-            val repo = FinanceRepository()
-            val today = LocalDate.now()
+        // Cada widget se refresca por separado: un fallo en finanzas no debe dejar hábitos sin actualizar
+        val financeOk = runCatching { refreshFinanceWidgets() }.isSuccess
+        val habitsOk = HabitsWidgetRefresher.refresh(context)
+        HabitsWidget().updateAll(context)
 
-            // 1. Actualizar widget principal con el mes seleccionado
-            val (year, month) = FinanceWidgetStateStore.getSelectedYearMonth(context)
-            val mainData = repo.getWidgetData(year, month)
-            FinanceWidgetStateStore.saveWidgetData(context, mainData)
-            FinanceWidget().updateAll(context)
+        return if (financeOk && habitsOk) Result.success() else Result.retry()
+    }
 
-            // 2. Actualizar widget de pagos siempre con el mes actual
-            //    Reutiliza los datos si el mes seleccionado ya es el actual
-            val currentData = if (year == today.year && month == today.monthValue) {
-                mainData
-            } else {
-                repo.getWidgetData(today.year, today.monthValue)
-            }
-            PaymentsWidgetStateStore.saveWidgetData(context, currentData)
-            PaymentsWidget().updateAll(context)
+    private suspend fun refreshFinanceWidgets() {
+        val repo = FinanceRepository()
+        val today = LocalDate.now()
 
-            val habitsData = HabitRepository().buildWidgetData(today)
-            HabitsWidgetStateStore.saveWidgetData(context, habitsData)
-            HabitsWidget().updateAll(context)
+        // 1. Actualizar widget principal con el mes seleccionado
+        val (year, month) = FinanceWidgetStateStore.getSelectedYearMonth(context)
+        val mainData = repo.getWidgetData(year, month)
+        FinanceWidgetStateStore.saveWidgetData(context, mainData)
+        FinanceWidget().updateAll(context)
 
-            Result.success()
-        } catch (e: Exception) {
-            Result.retry()
+        // 2. Actualizar widget de pagos siempre con el mes actual
+        //    Reutiliza los datos si el mes seleccionado ya es el actual
+        val currentData = if (year == today.year && month == today.monthValue) {
+            mainData
+        } else {
+            repo.getWidgetData(today.year, today.monthValue)
         }
+        PaymentsWidgetStateStore.saveWidgetData(context, currentData)
+        PaymentsWidget().updateAll(context)
     }
 
     companion object {
