@@ -89,7 +89,7 @@ async function run(): Promise<void> {
         token: fcmToken,
         notification: { title, body },
         webpush: {
-          notification: { icon: '/icon-192.png', tag: 'payment-reminder', requireInteraction: true },
+          notification: { icon: '/logo.svg', tag: 'payment-reminder', requireInteraction: true },
           fcmOptions: { link: 'https://personal-finantial-dashboard.web.app/monthly-control' },
         },
       });

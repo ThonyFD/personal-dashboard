@@ -178,7 +178,7 @@ class BanistmoBackfill {
       const txnData: TransactionData = {
         ...transaction,
         emailId,
-        idempotencyKey: generateIdempotencyKey(emailData.gmailMessageId, transaction),
+        idempotencyKey: generateIdempotencyKey('banistmo', transaction.referenceNumber, emailId, transaction.date, transaction.amount, transaction.merchant),
       };
 
       // Save transaction (will skip if duplicate via idempotency key)

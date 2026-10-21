@@ -1,6 +1,7 @@
 // Google Secret Manager client
 import { SecretManagerServiceClient } from '@google-cloud/secret-manager';
 import { Logger } from './logger.js';
+import { withRetry } from './retry.js';
 
 const client = new SecretManagerServiceClient();
 
@@ -19,7 +20,10 @@ export async function getSecret(secretName: string): Promise<string> {
   const name = `projects/${projectId}/secrets/${secretName}/versions/latest`;
 
   try {
-    const [version] = await client.accessSecretVersion({ name });
+    const [version] = await withRetry(
+      () => client.accessSecretVersion({ name }),
+      { label: `accessSecretVersion(${secretName})` }
+    );
     const payload = version.payload?.data?.toString();
     if (!payload) {
       throw new Error(`Secret ${secretName} has no data`);

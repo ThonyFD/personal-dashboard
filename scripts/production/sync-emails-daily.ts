@@ -39,6 +39,7 @@ import {
   normalizeMerchantName
 } from '../../services/ingestor/src/utils/hash';
 import { autoCategorizeMerchantId } from '../../services/ingestor/src/utils/category-mapping';
+import { withRetry } from '../../services/ingestor/src/utils/retry';
 import { EmailData, TransactionData, GmailMessage } from '../../services/ingestor/src/types';
 
 interface SyncStats {
@@ -94,7 +95,10 @@ class DailyEmailSync {
    */
   private async getSecret(secretName: string): Promise<string> {
     const name = `projects/${this.projectId}/secrets/${secretName}/versions/latest`;
-    const [version] = await this.secretClient.accessSecretVersion({ name });
+    const [version] = await withRetry(
+      () => this.secretClient.accessSecretVersion({ name }),
+      { label: `accessSecretVersion(${secretName})` }
+    );
     return version.payload?.data?.toString() || '';
   }
 
@@ -475,6 +479,8 @@ class DailyEmailSync {
 
       // Generate idempotency key
       const idempotencyKey = generateIdempotencyKey(
+        provider,
+        transaction.referenceNumber,
         emailId,
         transaction.date,
         transaction.amount,
@@ -509,6 +515,10 @@ class DailyEmailSync {
         console.log(`      ✓ Transaction: ${transaction.merchant} - $${transaction.amount}`);
         return true;
       } else {
+        // Duplicate: the transaction already exists. Mark the email parsed so we
+        // don't re-attempt it on every daily run (the insert would keep hitting
+        // the unique index and returning -1 forever).
+        await this.dbClient.markEmailParsed(emailId);
         console.log(`      ⊘ Duplicate transaction (skipped)`);
         return false;
       }
