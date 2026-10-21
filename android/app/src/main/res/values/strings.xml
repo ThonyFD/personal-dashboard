@@ -1,5 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">Finance Dashboard</string>
+    <string name="finance_widget_name">Dashboard financiero</string>
+    <string name="payments_widget_name">Pagos próximos</string>
+    <string name="habits_widget_name">Hábitos de hoy</string>
     <string name="widget_description">Monitorea tus gastos, pagos próximos y transacciones recientes</string>
+    <string name="payments_widget_description">Pagos pendientes, próximos y vencidos del mes actual</string>
+    <string name="habits_widget_description">Hábitos de hoy, progreso diario y racha actual</string>
 </resources>

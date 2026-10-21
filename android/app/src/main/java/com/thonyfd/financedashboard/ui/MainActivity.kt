@@ -140,6 +140,45 @@ fun AppRoot(
                         indicatorColor = Color(0xFF1A1A2E)
                     )
                 )
+                NavigationBarItem(
+                    selected = selectedTab == 2,
+                    onClick = { selectedTab = 2 },
+                    icon = { Icon(Icons.Default.Timeline, "Timeline") },
+                    label = { Text("Timeline") },
+                    colors = NavigationBarItemDefaults.colors(
+                        selectedIconColor = Color(0xFF00D4AA),
+                        selectedTextColor = Color(0xFF00D4AA),
+                        unselectedIconColor = Color(0xFF666666),
+                        unselectedTextColor = Color(0xFF666666),
+                        indicatorColor = Color(0xFF1A1A2E)
+                    )
+                )
+                NavigationBarItem(
+                    selected = selectedTab == 3,
+                    onClick = { selectedTab = 3 },
+                    icon = { Icon(Icons.Default.AutoAwesome, "Hábitos") },
+                    label = { Text("Hábitos") },
+                    colors = NavigationBarItemDefaults.colors(
+                        selectedIconColor = Color(0xFF00D4AA),
+                        selectedTextColor = Color(0xFF00D4AA),
+                        unselectedIconColor = Color(0xFF666666),
+                        unselectedTextColor = Color(0xFF666666),
+                        indicatorColor = Color(0xFF1A1A2E)
+                    )
+                )
+                NavigationBarItem(
+                    selected = selectedTab == 4,
+                    onClick = { selectedTab = 4 },
+                    icon = { Icon(Icons.Default.Favorite, "Mood") },
+                    label = { Text("Mood") },
+                    colors = NavigationBarItemDefaults.colors(
+                        selectedIconColor = Color(0xFF00D4AA),
+                        selectedTextColor = Color(0xFF00D4AA),
+                        unselectedIconColor = Color(0xFF666666),
+                        unselectedTextColor = Color(0xFF666666),
+                        indicatorColor = Color(0xFF1A1A2E)
+                    )
+                )
             }
         }
     ) { innerPadding ->
@@ -152,6 +191,9 @@ fun AppRoot(
                 }
             )
             1 -> MonthlyControlScreen(innerPadding)
+            2 -> TimelineScreen(innerPadding)
+            3 -> HabitsScreen(innerPadding)
+            4 -> MoodScreen(innerPadding)
         }
     }
 }

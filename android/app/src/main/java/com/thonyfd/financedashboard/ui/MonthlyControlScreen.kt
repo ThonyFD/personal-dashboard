@@ -67,6 +67,9 @@ fun MonthlyControlScreen(padding: PaddingValues = PaddingValues()) {
     var showIncomes by remember { mutableStateOf(true) }
     var showCopyConfirm by remember { mutableStateOf(false) }
     var showDeleteTxn by remember { mutableStateOf<FullManualTransactionRow?>(null) }
+    var searchQuery by remember { mutableStateOf("") }
+    // Tracks whether data has been loaded at least once for the current month
+    var hasLoaded by remember { mutableStateOf(false) }
 
     // Month label
     val monthLabel = remember(ym) {
@@ -75,9 +78,12 @@ fun MonthlyControlScreen(padding: PaddingValues = PaddingValues()) {
     }
     val isCurrentMonth = ym == YearMonth.now()
 
-    // Load data when month changes
+    // Load data when month changes.
+    // Shows full-screen loader only on first load per month (hasLoaded = false).
+    // When called after actions (add/edit), hasLoaded is already true so the
+    // LazyColumn stays alive and the scroll position is preserved.
     suspend fun load() {
-        state = state.copy(isLoading = true, error = null)
+        if (!hasLoaded) state = state.copy(isLoading = true, error = null)
         try {
             val txns = repo.fetchTransactions(ym.year, ym.monthValue)
             val incomes = repo.fetchIncomes(ym.year, ym.monthValue)
@@ -87,12 +93,17 @@ fun MonthlyControlScreen(padding: PaddingValues = PaddingValues()) {
                 previousBalance = prevBalance.toDoubleOrNull() ?: 0.0,
                 isLoading = false
             )
+            hasLoaded = true
         } catch (e: Exception) {
             state = state.copy(isLoading = false, error = e.message)
         }
     }
 
-    LaunchedEffect(ym) { load() }
+    // Reset hasLoaded when month changes so the loader shows again
+    LaunchedEffect(ym) {
+        hasLoaded = false
+        load()
+    }
 
     // Recompute previousBalance effect
     LaunchedEffect(prevBalance) {
@@ -168,6 +179,12 @@ fun MonthlyControlScreen(padding: PaddingValues = PaddingValues()) {
             return@Scaffold
         }
 
+        val displayedTransactions = remember(state.transactions, searchQuery) {
+            state.transactions
+                .filter { searchQuery.isBlank() || it.description.contains(searchQuery, ignoreCase = true) }
+                .sortedWith(compareBy { it.isPaid })
+        }
+
         LazyColumn(
             modifier = Modifier.fillMaxSize().padding(innerPadding),
             contentPadding = PaddingValues(horizontal = 16.dp, vertical = 12.dp),
@@ -183,9 +200,14 @@ fun MonthlyControlScreen(padding: PaddingValues = PaddingValues()) {
                     onToggle = { showIncomes = !showIncomes },
                     onAddIncome = { showAddIncome = true },
                     onDeleteIncome = { income ->
+                        // Optimistic removal — remove from list immediately
+                        state = state.copy(incomes = state.incomes.filter { it.id != income.id })
                         scope.launch {
-                            repo.deleteIncome(income.id)
-                            load()
+                            try {
+                                repo.deleteIncome(income.id)
+                            } catch (e: Exception) {
+                                load() // Revert by reloading on error
+                            }
                         }
                     }
                 )
@@ -202,7 +224,7 @@ fun MonthlyControlScreen(padding: PaddingValues = PaddingValues()) {
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
-                        "TRANSACCIONES (${state.transactions.size})",
+                        "TRANSACCIONES (${displayedTransactions.size})",
                         color = TEAL, fontSize = 11.sp, fontWeight = FontWeight.Bold
                     )
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -218,24 +240,69 @@ fun MonthlyControlScreen(padding: PaddingValues = PaddingValues()) {
                 }
             }
 
+            // Search filter
+            item {
+                OutlinedTextField(
+                    value = searchQuery,
+                    onValueChange = { searchQuery = it },
+                    modifier = Modifier.fillMaxWidth(),
+                    placeholder = { Text("Filtrar pagos...", color = MUTED, fontSize = 13.sp) },
+                    singleLine = true,
+                    leadingIcon = { Icon(Icons.Default.Search, null, tint = MUTED, modifier = Modifier.size(18.dp)) },
+                    trailingIcon = {
+                        if (searchQuery.isNotEmpty()) {
+                            IconButton(onClick = { searchQuery = "" }, modifier = Modifier.size(32.dp)) {
+                                Icon(Icons.Default.Close, null, tint = MUTED, modifier = Modifier.size(16.dp))
+                            }
+                        }
+                    },
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = TEAL,
+                        unfocusedBorderColor = Color(0xFF333355),
+                        cursorColor = TEAL,
+                        focusedTextColor = WHITE,
+                        unfocusedTextColor = WHITE
+                    ),
+                    shape = RoundedCornerShape(10.dp)
+                )
+            }
+
             // Transaction list
-            if (state.transactions.isEmpty()) {
+            if (displayedTransactions.isEmpty()) {
                 item {
                     Box(
                         Modifier.fillMaxWidth().padding(32.dp),
                         contentAlignment = Alignment.Center
                     ) {
-                        Text("Sin transacciones este mes", color = MUTED, fontSize = 13.sp)
+                        Text(
+                            if (searchQuery.isBlank()) "Sin transacciones este mes" else "Sin resultados para \"$searchQuery\"",
+                            color = MUTED, fontSize = 13.sp
+                        )
                     }
                 }
             } else {
-                items(state.transactions, key = { it.id }) { txn ->
+                items(displayedTransactions, key = { it.id }) { txn ->
                     TransactionItem(
                         txn = txn,
                         onTogglePaid = {
+                            val newPaid = !txn.isPaid
+                            // Optimistic update: flip the item in place — no reload, no scroll reset
+                            state = state.copy(
+                                transactions = state.transactions.map { t ->
+                                    if (t.id == txn.id) t.copy(isPaid = newPaid) else t
+                                }
+                            )
                             scope.launch {
-                                repo.togglePaid(txn.id, !txn.isPaid)
-                                load()
+                                try {
+                                    repo.togglePaid(txn.id, newPaid)
+                                } catch (e: Exception) {
+                                    // Revert optimistic change on error
+                                    state = state.copy(
+                                        transactions = state.transactions.map { t ->
+                                            if (t.id == txn.id) t.copy(isPaid = !newPaid) else t
+                                        }
+                                    )
+                                }
                             }
                         },
                         onEdit = { editingTxn = txn },
@@ -306,10 +373,15 @@ fun MonthlyControlScreen(padding: PaddingValues = PaddingValues()) {
             text = { Text("¿Eliminar \"${txn.description}\"?", color = MUTED) },
             confirmButton = {
                 TextButton(onClick = {
+                    // Optimistic removal — remove from list before API call
+                    state = state.copy(transactions = state.transactions.filter { it.id != txn.id })
+                    showDeleteTxn = null
                     scope.launch {
-                        repo.deleteTransaction(txn.id)
-                        showDeleteTxn = null
-                        load()
+                        try {
+                            repo.deleteTransaction(txn.id)
+                        } catch (e: Exception) {
+                            load() // Revert by reloading on error
+                        }
                     }
                 }) { Text("Eliminar", color = RED) }
             },

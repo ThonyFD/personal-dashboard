@@ -26,6 +26,7 @@
         <!-- Widget Receiver -->
         <receiver
             android:name=".widget.FinanceWidgetReceiver"
+            android:label="@string/finance_widget_name"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
@@ -34,6 +35,33 @@
             <meta-data
                 android:name="android.appwidget.provider"
                 android:resource="@xml/finance_widget_info" />
+        </receiver>
+
+        <!-- Payments Widget Receiver -->
+        <receiver
+            android:name=".widget.PaymentsWidgetReceiver"
+            android:label="@string/payments_widget_name"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/payments_widget_info" />
+        </receiver>
+
+        <receiver
+            android:name=".widget.HabitsWidgetReceiver"
+            android:label="@string/habits_widget_name"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/habits_widget_info" />
         </receiver>
 
         <!-- WorkManager initializer (auto-initializes) -->

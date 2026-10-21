@@ -60,6 +60,13 @@ object FinanceWidgetStateStore {
         }
     }
 
+    suspend fun invalidateCache(context: Context) {
+        context.widgetDataStore.edit { prefs ->
+            prefs[LAST_UPDATED] = "--:--"
+            prefs[MONTH_LABEL] = ""
+        }
+    }
+
     // ------------------------------------------------------------------
     // Save / Load widget data
     // ------------------------------------------------------------------

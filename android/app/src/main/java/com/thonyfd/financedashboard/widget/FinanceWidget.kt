@@ -63,7 +63,10 @@ class FinanceWidget : GlanceAppWidget() {
 
         provideContent {
             GlanceTheme {
-                FinanceWidgetContent(data = data)
+                FinanceWidgetContent(
+                    data = data,
+                    backgroundOpacity = WidgetAppearancePreferences.getOpacity(context, WidgetKind.FINANCE)
+                )
             }
         }
     }
@@ -73,11 +76,11 @@ class FinanceWidget : GlanceAppWidget() {
 // Root
 // ---------------------------------------------------------------------------
 @Composable
-private fun FinanceWidgetContent(data: WidgetData) {
+private fun FinanceWidgetContent(data: WidgetData, backgroundOpacity: Float) {
     Column(
         modifier = GlanceModifier
             .fillMaxSize()
-            .background(ColorProvider(Color(0xFF1A1A2E)))
+            .background(ColorProvider(Color(0xFF1A1A2E).copy(alpha = backgroundOpacity)))
             .padding(10.dp)
             .clickable(actionStartActivity<MainActivity>())
     ) {
@@ -131,24 +134,26 @@ private fun FinanceWidgetContent(data: WidgetData) {
 
         // Bottom: categories (up to 8 chips in 2 rows)
         if (data.topCategories.isNotEmpty()) {
-            SectionTitle("Top categorías")
-            val firstRow = data.topCategories.take(4)
-            Row(modifier = GlanceModifier.fillMaxWidth()) {
-                firstRow.forEachIndexed { i, cat ->
-                    CategoryChip(cat, modifier = GlanceModifier.defaultWeight())
-                    if (i < firstRow.size - 1) {
-                        Spacer(modifier = GlanceModifier.width(4.dp))
+            Column(modifier = GlanceModifier.fillMaxWidth()) {
+                SectionTitle("Top categorías")
+                val firstRow = data.topCategories.take(4)
+                Row(modifier = GlanceModifier.fillMaxWidth()) {
+                    firstRow.forEachIndexed { i, cat ->
+                        CategoryChip(cat, modifier = GlanceModifier.defaultWeight())
+                        if (i < firstRow.size - 1) {
+                            Spacer(modifier = GlanceModifier.width(4.dp))
+                        }
                     }
                 }
-            }
-            val secondRow = data.topCategories.drop(4).take(4)
-            if (secondRow.isNotEmpty()) {
-                Spacer(modifier = GlanceModifier.height(4.dp))
-                Row(modifier = GlanceModifier.fillMaxWidth()) {
-                    secondRow.forEachIndexed { i, cat ->
-                        CategoryChip(cat, modifier = GlanceModifier.defaultWeight())
-                        if (i < secondRow.size - 1) {
-                            Spacer(modifier = GlanceModifier.width(4.dp))
+                val secondRow = data.topCategories.drop(4).take(4)
+                if (secondRow.isNotEmpty()) {
+                    Spacer(modifier = GlanceModifier.height(4.dp))
+                    Row(modifier = GlanceModifier.fillMaxWidth()) {
+                        secondRow.forEachIndexed { i, cat ->
+                            CategoryChip(cat, modifier = GlanceModifier.defaultWeight())
+                            if (i < secondRow.size - 1) {
+                                Spacer(modifier = GlanceModifier.width(4.dp))
+                            }
                         }
                     }
                 }
@@ -176,13 +181,30 @@ private fun WidgetHeader(lastUpdated: String) {
         )
         Spacer(modifier = GlanceModifier.defaultWeight())
         Text(
-            text = "↻ $lastUpdated",
+            text = lastUpdated,
             style = TextStyle(
                 color = ColorProvider(Color(0xFF666666)),
                 fontSize = 9.sp
-            ),
-            modifier = GlanceModifier.clickable(actionRunCallback<RefreshAction>())
+            )
         )
+        Spacer(modifier = GlanceModifier.width(4.dp))
+        Box(
+            modifier = GlanceModifier
+                .background(ColorProvider(Color(0xFF16213E)))
+                .cornerRadius(6.dp)
+                .padding(horizontal = 10.dp, vertical = 5.dp)
+                .clickable(actionRunCallback<RefreshAction>()),
+            contentAlignment = Alignment.Center
+        ) {
+            Text(
+                text = "↻",
+                style = TextStyle(
+                    color = ColorProvider(Color(0xFF00D4AA)),
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.Bold
+                )
+            )
+        }
     }
 }
 
@@ -297,19 +319,26 @@ private fun MonthNavCard(
             modifier = GlanceModifier.fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Text(
-                text = "◀",
-                style = TextStyle(
-                    color = ColorProvider(Color(0xFF00D4AA)),
-                    fontSize = 12.sp,
-                    fontWeight = FontWeight.Bold
-                ),
-                modifier = GlanceModifier.clickable(actionRunCallback<PrevMonthAction>())
-            )
+            Box(
+                modifier = GlanceModifier
+                    .background(ColorProvider(Color(0xFF0D1826)))
+                    .cornerRadius(6.dp)
+                    .padding(horizontal = 12.dp, vertical = 6.dp)
+                    .clickable(actionRunCallback<PrevMonthAction>()),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = "◀",
+                    style = TextStyle(
+                        color = ColorProvider(Color(0xFF00D4AA)),
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+                )
+            }
             Spacer(modifier = GlanceModifier.defaultWeight())
             Text(
                 text = monthLabel.split(" ").let { parts ->
-                    // Shorten to "Mayo 26"
                     if (parts.size >= 2) "${parts[0]} ${parts[1].takeLast(2)}" else monthLabel
                 },
                 style = TextStyle(
@@ -319,19 +348,26 @@ private fun MonthNavCard(
                 )
             )
             Spacer(modifier = GlanceModifier.defaultWeight())
-            Text(
-                text = if (isCurrentMonth) "·" else "▶",
-                style = TextStyle(
-                    color = ColorProvider(
-                        if (isCurrentMonth) Color(0xFF333333) else Color(0xFF00D4AA)
-                    ),
-                    fontSize = 12.sp,
-                    fontWeight = FontWeight.Bold
-                ),
+            Box(
                 modifier = if (!isCurrentMonth)
-                    GlanceModifier.clickable(actionRunCallback<NextMonthAction>())
-                else GlanceModifier
-            )
+                    GlanceModifier
+                        .background(ColorProvider(Color(0xFF0D1826)))
+                        .cornerRadius(6.dp)
+                        .padding(horizontal = 12.dp, vertical = 6.dp)
+                        .clickable(actionRunCallback<NextMonthAction>())
+                else
+                    GlanceModifier.padding(horizontal = 12.dp, vertical = 6.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = if (isCurrentMonth) "" else "▶",
+                    style = TextStyle(
+                        color = ColorProvider(Color(0xFF00D4AA)),
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+                )
+            }
         }
 
         Spacer(modifier = GlanceModifier.height(4.dp))
@@ -560,7 +596,8 @@ class PrevMonthAction : ActionCallback {
         val (year, month) = FinanceWidgetStateStore.getSelectedYearMonth(context)
         val prev = java.time.YearMonth.of(year, month).minusMonths(1)
         FinanceWidgetStateStore.setSelectedYearMonth(context, prev.year, prev.monthValue)
-        refreshAndUpdate(context)
+        FinanceWidgetStateStore.invalidateCache(context)
+        FinanceWidget().updateAll(context)
     }
 }
 
@@ -571,7 +608,8 @@ class NextMonthAction : ActionCallback {
         val now = java.time.YearMonth.now()
         if (!next.isAfter(now)) {
             FinanceWidgetStateStore.setSelectedYearMonth(context, next.year, next.monthValue)
-            refreshAndUpdate(context)
+            FinanceWidgetStateStore.invalidateCache(context)
+            FinanceWidget().updateAll(context)
         }
     }
 }
