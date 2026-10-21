@@ -2,6 +2,7 @@ package com.thonyfd.financedashboard.data.repository
 
 import com.thonyfd.financedashboard.data.SupabaseConfig
 import com.thonyfd.financedashboard.data.models.HabitDailyCompletionRow
+import com.thonyfd.financedashboard.data.models.HabitIcons
 import com.thonyfd.financedashboard.data.models.HabitLogInsert
 import com.thonyfd.financedashboard.data.models.HabitLogRow
 import com.thonyfd.financedashboard.data.models.HabitLogUpdate
@@ -41,8 +42,24 @@ class HabitRepository {
         return rows.sortedWith(compareBy({ dayBlockOrder(it.dayBlock) }, { it.sortOrder }, { it.name }))
     }
 
-    suspend fun getHabitsForToday(date: LocalDate = LocalDate.now()): List<UserHabitRow> =
-        getAllHabits(activeOnly = true).filter { isHabitDueOnDate(it, date) }
+    suspend fun getHabitsForToday(date: LocalDate = LocalDate.now()): List<UserHabitRow> {
+        val habits = getAllHabits(activeOnly = true)
+        val periodHabits = habits.filter { it.frequencyType == "WEEKLY" || it.frequencyType == "MONTHLY" }
+        if (periodHabits.isEmpty()) return habits.filter { isHabitDueOnDate(it, date) }
+
+        val monthStart = date.withDayOfMonth(1)
+        val weekStart = date.minusDays((date.dayOfWeek.value - 1).toLong())
+        val logs = getLogsInRange(monthStart.coerceAtMost(weekStart), date)
+            .filter { it.status == "COMPLETED" }
+
+        return habits.filter { habit ->
+            when (habit.frequencyType) {
+                "WEEKLY" -> logs.count { it.userHabitId == habit.id && LocalDate.parse(it.logDate) >= weekStart } < habit.targetCompletionsPerPeriod
+                "MONTHLY" -> logs.count { it.userHabitId == habit.id && LocalDate.parse(it.logDate) >= monthStart } < habit.targetCompletionsPerPeriod
+                else -> isHabitDueOnDate(habit, date)
+            }
+        }
+    }
 
     suspend fun getLogsForDate(date: LocalDate): List<HabitLogRow> =
         supabase.from("habit_logs")
@@ -145,15 +162,16 @@ class HabitRepository {
         val streak = computeStreak(getAllHabits(activeOnly = true), getLogsInRange(today.minusDays(365), today), today)
 
         return HabitsWidgetDataBundle(
+            date = today.toString(),
             lastUpdated = java.time.LocalTime.now().withSecond(0).withNano(0).toString(),
             streak = streak,
             completedCount = habits.count { logsByHabit[it.id]?.status == "COMPLETED" },
             dueCount = habits.size,
-            items = habits.take(5).map { habit ->
+            items = habits.take(MAX_WIDGET_ITEMS).map { habit ->
                 HabitsWidgetItem(
                     id = habit.id,
                     name = habit.name,
-                    icon = resolveHabitIcon(habit.iconIdentifier),
+                    icon = HabitIcons.resolve(habit.iconIdentifier),
                     colorHex = habit.colorHex,
                     completed = logsByHabit[habit.id]?.status == "COMPLETED"
                 )
@@ -166,6 +184,7 @@ class HabitRepository {
         return when (habit.frequencyType) {
             "DAILY" -> true
             "WEEKDAYS" -> date.dayOfWeek.value <= 5
+            "WEEKLY", "MONTHLY" -> true
             else -> ((habit.customDaysMask shr (date.dayOfWeek.value - 1)) and 1) == 1
         }
     }
@@ -207,27 +226,20 @@ class HabitRepository {
         return streak
     }
 
+    private companion object {
+        const val MAX_WIDGET_ITEMS = 20
+    }
+
     private fun dayBlockOrder(dayBlock: String): Int = when (dayBlock) {
         "MORNING" -> 0
         "AFTERNOON" -> 1
         "EVENING" -> 2
         else -> 99
     }
-
-    private fun resolveHabitIcon(iconIdentifier: String?): String = when (iconIdentifier) {
-        "water" -> "💧"
-        "walk" -> "🚶"
-        "stretch" -> "🧘"
-        "meditate" -> "🧠"
-        "journal" -> "✍️"
-        "book" -> "📚"
-        "focus" -> "🎯"
-        "plan" -> "🗂️"
-        else -> "✦"
-    }
 }
 
 data class HabitsWidgetDataBundle(
+    val date: String,
     val lastUpdated: String,
     val streak: Int,
     val completedCount: Int,
