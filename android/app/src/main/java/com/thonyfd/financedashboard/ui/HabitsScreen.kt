@@ -68,17 +68,21 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
+import com.thonyfd.financedashboard.data.models.HabitDaySummary
 import com.thonyfd.financedashboard.data.models.HabitIcons
+import com.thonyfd.financedashboard.data.models.StreakLevel
 import com.thonyfd.financedashboard.data.models.HabitTemplateRow
 import com.thonyfd.financedashboard.data.models.UserHabitInsert
 import com.thonyfd.financedashboard.data.models.UserHabitRow
@@ -91,6 +95,7 @@ import java.time.LocalDate
 import java.time.format.TextStyle
 import java.util.Locale
 import android.widget.Toast
+import kotlin.math.ceil
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -106,13 +111,22 @@ fun HabitsScreen(padding: PaddingValues = PaddingValues()) {
     var selectedDate by remember { mutableStateOf(LocalDate.now()) }
     var editor by remember { mutableStateOf<UserHabitRow?>(null) }
     var showCreate by remember { mutableStateOf(false) }
+    var refreshing by remember { mutableStateOf(false) }
+    var saving by remember { mutableStateOf(false) }
+    var pendingIds by remember { mutableStateOf<Set<Long>>(emptySet()) }
+    var periodDone by remember { mutableStateOf<Map<Long, Int>>(emptyMap()) }
+    var daySummaries by remember { mutableStateOf<Map<LocalDate, HabitDaySummary>>(emptyMap()) }
 
     fun load(showResult: Boolean = false) {
         scope.launch {
             val firstLoad = habits.isEmpty() && templates.isEmpty()
             if (firstLoad) isLoading = true
+            if (showResult) refreshing = true
             try {
-                habits = repo.getHabitsForToday(selectedDate)
+                val dayHabits = repo.getDayHabits(selectedDate)
+                habits = dayHabits.habits
+                periodDone = dayHabits.periodDone
+                daySummaries = repo.getDaySummaries()
                 completedIds = repo.getLogsForDate(selectedDate)
                     .filter { it.status == "COMPLETED" }
                     .map { it.userHabitId }
@@ -129,6 +143,7 @@ fun HabitsScreen(padding: PaddingValues = PaddingValues()) {
                 Toast.makeText(context, "No se pudieron actualizar los hábitos", Toast.LENGTH_SHORT).show()
             } finally {
                 isLoading = false
+                if (showResult) refreshing = false
             }
         }
     }
@@ -156,12 +171,8 @@ fun HabitsScreen(padding: PaddingValues = PaddingValues()) {
                 }
             },
             actions = {
-                IconButton(onClick = { load(showResult = true) }) {
-                    Icon(Icons.Outlined.Refresh, "Actualizar")
-                }
-                IconButton(onClick = { showCreate = true }) {
-                    Icon(Icons.Default.Add, "Nuevo hábito", tint = TimelinePrimary)
-                }
+                AppIconButton(Icons.Outlined.Refresh, "Actualizar", onClick = { if (!refreshing) load(showResult = true) }, loading = refreshing)
+                AppIconButton(Icons.Default.Add, "Nuevo hábito", onClick = { showCreate = true }, tint = TimelinePrimary)
             },
             colors = appTopBarColors()
         )
@@ -217,11 +228,10 @@ fun HabitsScreen(padding: PaddingValues = PaddingValues()) {
                                     fontWeight = FontWeight.SemiBold
                                 )
                                 Spacer(Modifier.height(4.dp))
-                                Box(
-                                    Modifier.size(4.dp).background(
-                                        if (date == today && !selected) TimelinePrimary else Color.Transparent,
-                                        CircleShape
-                                    )
+                                DayLevelMarker(
+                                    summary = daySummaries[date],
+                                    isToday = date == today,
+                                    selected = selected
                                 )
                             }
                         }
@@ -264,6 +274,14 @@ fun HabitsScreen(padding: PaddingValues = PaddingValues()) {
                                 )
                                 Spacer(Modifier.height(2.dp))
                                 Text("$completed de ${habits.size} completados", color = TimelineMuted, style = MaterialTheme.typography.bodySmall)
+                                if (habits.isNotEmpty()) {
+                                    Spacer(Modifier.height(8.dp))
+                                    LevelLine(
+                                        completed = completed,
+                                        due = habits.size,
+                                        streak = repo.streakFrom(daySummaries, today).takeIf { selectedDate == today }
+                                    )
+                                }
                             }
                         }
                     }
@@ -324,20 +342,28 @@ fun HabitsScreen(padding: PaddingValues = PaddingValues()) {
                                     textDecoration = if (done) TextDecoration.LineThrough else null,
                                     maxLines = 1
                                 )
+                                val doneInPeriod = periodDone[habit.id]
                                 Text(
-                                    "${blockLabel(habit.dayBlock)} · ${habit.targetDurationMinutes} min · ${frequencyLabel(habit.frequencyType)}",
+                                    if (doneInPeriod != null) periodRemainingLabel(habit, doneInPeriod)
+                                    else "${blockLabel(habit.dayBlock)} · ${habit.targetDurationMinutes} min · ${frequencyLabel(habit.frequencyType)}",
                                     color = TimelineMuted,
                                     style = MaterialTheme.typography.bodySmall,
                                     maxLines = 1
                                 )
                             }
+                            periodDone[habit.id]?.let { doneInPeriod ->
+                                Spacer(Modifier.width(8.dp))
+                                PeriodCounter(doneInPeriod, habit.targetCompletionsPerPeriod, accent)
+                            }
                             Spacer(Modifier.width(10.dp))
                             CheckCircle(
                                 checked = done,
                                 accent = AppColors.Lime,
+                                loading = habit.id in pendingIds,
                                 onClick = {
                                     scope.launch {
                                         completedIds = if (done) completedIds - habit.id else completedIds + habit.id
+                                        pendingIds = pendingIds + habit.id
                                         runCatching {
                                             if (done) repo.removeHabitLog(habit.id, selectedDate)
                                             else repo.toggleHabitLog(habit.id, selectedDate)
@@ -347,6 +373,7 @@ fun HabitsScreen(padding: PaddingValues = PaddingValues()) {
                                             completedIds = if (done) completedIds + habit.id else completedIds - habit.id
                                             Toast.makeText(context, "No se pudo guardar el cambio", Toast.LENGTH_SHORT).show()
                                         }
+                                        pendingIds = pendingIds - habit.id
                                     }
                                 }
                             )
@@ -364,8 +391,10 @@ fun HabitsScreen(padding: PaddingValues = PaddingValues()) {
             title = "Nuevo hábito",
             templates = templates,
             onDismiss = { showCreate = false },
+            saving = saving,
             onSave = { draft ->
-                scope.launch {
+                if (!saving) scope.launch {
+                    saving = true
                     runCatching { repo.createHabit(draft) }
                         .onSuccess {
                             showCreate = false
@@ -373,6 +402,7 @@ fun HabitsScreen(padding: PaddingValues = PaddingValues()) {
                             load()
                         }
                         .onFailure { Toast.makeText(context, "No se pudo crear el hábito", Toast.LENGTH_SHORT).show() }
+                    saving = false
                 }
             }
         )
@@ -396,8 +426,10 @@ fun HabitsScreen(padding: PaddingValues = PaddingValues()) {
                 isActive = habit.isActive
             ),
             onDismiss = { editor = null },
+            saving = saving,
             onSave = { draft ->
-                scope.launch {
+                if (!saving) scope.launch {
+                    saving = true
                     runCatching { repo.updateHabit(habit.id, draft) }
                         .onSuccess {
                             editor = null
@@ -405,9 +437,83 @@ fun HabitsScreen(padding: PaddingValues = PaddingValues()) {
                             load()
                         }
                         .onFailure { Toast.makeText(context, "No se pudo actualizar el hábito", Toast.LENGTH_SHORT).show() }
+                    saving = false
                 }
             }
         )
+    }
+}
+
+private fun periodRemainingLabel(habit: UserHabitRow, done: Int): String {
+    val period = if (habit.frequencyType == "WEEKLY") "esta semana" else "este mes"
+    val remaining = habit.targetCompletionsPerPeriod - done
+    return if (remaining <= 0) "${frequencyLabel(habit.frequencyType)} · meta cumplida $period"
+    else "${frequencyLabel(habit.frequencyType)} · ${if (remaining == 1) "falta 1" else "faltan $remaining"} $period"
+}
+
+/** Contador "hechas/meta" de un hábito semanal o mensual. */
+@Composable
+private fun PeriodCounter(done: Int, target: Int, accent: Color) {
+    val reached = done >= target
+    Text(
+        "${done.coerceAtMost(target)}/$target",
+        Modifier
+            .background((if (reached) AppColors.Lime else accent).copy(alpha = 0.16f), RoundedCornerShape(50))
+            .padding(horizontal = 9.dp, vertical = 4.dp),
+        color = if (reached) AppColors.Lime else TimelineText,
+        style = MoneyStyle,
+        fontSize = 12.sp,
+        fontWeight = FontWeight.SemiBold
+    )
+}
+
+/** Marca bajo cada fecha del calendario: color del nivel logrado, anillo vacío si no hubo nivel. */
+@Composable
+private fun DayLevelMarker(summary: HabitDaySummary?, isToday: Boolean, selected: Boolean) {
+    val level = summary?.level
+    val modifier = Modifier.size(6.dp)
+    when {
+        level != null -> Box(
+            modifier
+                .background(Color(level.colorHex), CircleShape)
+                .then(if (selected) Modifier.border(1.dp, AppColors.Night, CircleShape) else Modifier)
+        )
+        isToday -> Box(modifier.background(if (selected) Color.Transparent else TimelinePrimary, CircleShape))
+        summary != null && summary.due > 0 -> Box(
+            modifier.border(1.dp, if (selected) AppColors.Night.copy(alpha = 0.5f) else AppColors.Dim, CircleShape)
+        )
+        else -> Spacer(modifier)
+    }
+}
+
+/** Nivel del día, cuánto falta para el siguiente y la racha actual. */
+@Composable
+private fun LevelLine(completed: Int, due: Int, streak: Int?) {
+    val level = StreakLevel.of(completed, due)
+    val next = when (level) {
+        null -> StreakLevel.BRONZE to ceil(due * StreakLevel.BRONZE_RATIO).toInt()
+        StreakLevel.BRONZE -> StreakLevel.SILVER to ceil(due * StreakLevel.SILVER_RATIO).toInt()
+        StreakLevel.SILVER -> StreakLevel.GOLD to due
+        StreakLevel.GOLD -> null
+    }
+    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+        Text(
+            level?.let { "${it.emoji} ${it.label}" } ?: "Sin nivel",
+            Modifier
+                .background((level?.let { Color(it.colorHex) } ?: AppColors.Dim).copy(alpha = 0.16f), RoundedCornerShape(50))
+                .padding(horizontal = 9.dp, vertical = 3.dp),
+            color = level?.let { Color(it.colorHex) } ?: TimelineMuted,
+            style = MaterialTheme.typography.labelMedium,
+            fontWeight = FontWeight.SemiBold
+        )
+        val hint = next?.let { (nextLevel, needed) ->
+            val missing = (needed - completed).coerceAtLeast(1)
+            "${if (missing == 1) "falta 1" else "faltan $missing"} para ${nextLevel.label}"
+        }
+        val parts = listOfNotNull(hint, streak?.let { "🔥 $it ${if (it == 1) "día" else "días"}" })
+        if (parts.isNotEmpty()) {
+            Text(parts.joinToString(" · "), color = TimelineMuted, style = MaterialTheme.typography.bodySmall, maxLines = 1, overflow = TextOverflow.Ellipsis)
+        }
     }
 }
 
@@ -431,6 +537,7 @@ private fun HabitEditorDialog(
         targetDurationMinutes = 10
     ),
     onDismiss: () -> Unit,
+    saving: Boolean = false,
     onSave: (UserHabitInsert) -> Unit
 ) {
     var selectedTemplate by remember { mutableStateOf<HabitTemplateRow?>(null) }
@@ -459,7 +566,12 @@ private fun HabitEditorDialog(
                     Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
                         IconButton(onClick = onDismiss) { Icon(Icons.Default.Close, "Cerrar", tint = TimelineText) }
                         Text(title, Modifier.weight(1f), color = TimelineText, fontWeight = FontWeight.Bold, textAlign = TextAlign.Center)
-                        TextButton(enabled = name.isNotBlank(), onClick = {
+                        AppButton(
+                            if (initial.name.isBlank()) "Crear" else "Guardar",
+                            style = AppButtonStyle.Text,
+                            loading = saving,
+                            enabled = name.isNotBlank(),
+                            onClick = {
                             onSave(
                                 initial.copy(
                                     templateId = selectedTemplate?.id ?: initial.templateId,
@@ -474,7 +586,7 @@ private fun HabitEditorDialog(
                                     isActive = isActive
                                 )
                             )
-                        }) { Text(if (initial.name.isBlank()) "Crear" else "Guardar", color = if (name.isBlank()) TimelineMuted else TimelinePrimary, fontWeight = FontWeight.Bold) }
+                        })
                     }
                 }
 
@@ -517,8 +629,8 @@ private fun HabitEditorDialog(
                             Modifier.weight(1f)
                         ) { frequency = it; if (it != "WEEKLY" && it != "MONTHLY") periodTarget = 1 }
                         if (frequency == "WEEKLY" || frequency == "MONTHLY") {
-                            HabitNumberField("Meta del periodo", periodTarget, Modifier.weight(1f)) {
-                                periodTarget = it.coerceIn(1, if (frequency == "WEEKLY") 7 else 31)
+                            HabitNumberField("Meta del periodo", periodTarget, 1..(if (frequency == "WEEKLY") 7 else 31), Modifier.weight(1f)) {
+                                periodTarget = it
                             }
                         } else Spacer(Modifier.weight(1f))
                     }
@@ -541,7 +653,7 @@ private fun HabitEditorDialog(
                 }
 
                 item {
-                    HabitNumberField("Duración objetivo (min)", minutes, Modifier.fillMaxWidth()) { minutes = it.coerceAtLeast(1) }
+                    HabitNumberField("Duración objetivo (min)", minutes, 1..1440, Modifier.fillMaxWidth()) { minutes = it }
                 }
 
                 item {
@@ -676,7 +788,8 @@ private fun HabitSelectField(
                 modifier = Modifier.menuAnchor().fillMaxWidth(),
                 trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded) },
                 singleLine = true,
-                shape = RoundedCornerShape(8.dp)
+                shape = RoundedCornerShape(8.dp),
+                colors = appFieldColors()
             )
             ExposedDropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
                 options.forEach { (key, text) ->
@@ -691,21 +804,32 @@ private fun HabitSelectField(
 private fun HabitTextField(label: String, value: String, modifier: Modifier = Modifier, onValueChange: (String) -> Unit) {
     Column(modifier) {
         Text(label, color = TimelineMuted, fontSize = 12.sp, modifier = Modifier.padding(bottom = 6.dp))
-        OutlinedTextField(value = value, onValueChange = onValueChange, modifier = Modifier.fillMaxWidth(), singleLine = true, shape = RoundedCornerShape(8.dp))
+        OutlinedTextField(value = value, onValueChange = onValueChange, modifier = Modifier.fillMaxWidth(), singleLine = true, shape = RoundedCornerShape(8.dp), colors = appFieldColors())
     }
 }
 
+// Keeps its own text so the user can clear or partially type a number; only valid values reach the caller.
 @Composable
-private fun HabitNumberField(label: String, value: Int, modifier: Modifier = Modifier, onValueChange: (Int) -> Unit) {
+private fun HabitNumberField(label: String, value: Int, range: IntRange, modifier: Modifier = Modifier, onValueChange: (Int) -> Unit) {
+    var text by remember { mutableStateOf(value.toString()) }
+    LaunchedEffect(value) { if (text.toIntOrNull() != value) text = value.toString() }
     Column(modifier) {
         Text(label, color = TimelineMuted, fontSize = 12.sp, modifier = Modifier.padding(bottom = 6.dp))
         OutlinedTextField(
-            value = value.toString(),
-            onValueChange = { raw -> raw.toIntOrNull()?.let(onValueChange) },
-            modifier = Modifier.fillMaxWidth(),
+            value = text,
+            onValueChange = { raw ->
+                val digits = raw.filter(Char::isDigit).take(4)
+                val parsed = digits.toIntOrNull()
+                text = if (parsed != null && parsed > range.last) range.last.toString() else digits
+                text.toIntOrNull()?.takeIf { it in range }?.let(onValueChange)
+            },
+            modifier = Modifier.fillMaxWidth().onFocusChanged { state ->
+                if (!state.isFocused && text.toIntOrNull()?.takeIf { it in range } == null) text = value.toString()
+            },
             singleLine = true,
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-            shape = RoundedCornerShape(8.dp)
+            shape = RoundedCornerShape(8.dp),
+            colors = appFieldColors()
         )
     }
 }

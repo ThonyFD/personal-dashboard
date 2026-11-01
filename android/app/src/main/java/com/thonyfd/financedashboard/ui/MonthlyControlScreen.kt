@@ -84,6 +84,18 @@ fun MonthlyControlScreen(padding: PaddingValues = PaddingValues()) {
     var searchQuery by remember { mutableStateOf("") }
     // Tracks whether data has been loaded at least once for the current month
     var hasLoaded by remember { mutableStateOf(false) }
+    var refreshing by remember { mutableStateOf(false) }
+    var saving by remember { mutableStateOf(false) }
+    var copying by remember { mutableStateOf(false) }
+    var pendingPaid by remember { mutableStateOf<Set<Long>>(emptySet()) }
+
+    // Ejecuta una acción marcando un flag de carga mientras dura
+    fun busy(setFlag: (Boolean) -> Unit, block: suspend () -> Unit) {
+        scope.launch {
+            setFlag(true)
+            try { block() } finally { setFlag(false) }
+        }
+    }
 
     // Month label
     val monthLabel = remember(ym) {
@@ -152,12 +164,8 @@ fun MonthlyControlScreen(padding: PaddingValues = PaddingValues()) {
                     }
                 },
                 actions = {
-                    IconButton(onClick = { scope.launch { load() } }) {
-                        Icon(Icons.Outlined.Refresh, "Actualizar")
-                    }
-                    IconButton(onClick = { showCopyConfirm = true }) {
-                        Icon(Icons.Outlined.ContentCopy, "Copiar mes anterior")
-                    }
+                    AppIconButton(Icons.Outlined.Refresh, "Actualizar", onClick = { if (!refreshing) busy({ refreshing = it }) { load() } }, loading = refreshing)
+                    AppIconButton(Icons.Outlined.ContentCopy, "Copiar mes anterior", onClick = { showCopyConfirm = true })
                 },
                 colors = appTopBarColors()
             )
@@ -192,7 +200,7 @@ fun MonthlyControlScreen(padding: PaddingValues = PaddingValues()) {
                     Spacer(Modifier.height(6.dp))
                     Text(state.error ?: "", color = MUTED, style = MaterialTheme.typography.bodySmall)
                     Spacer(Modifier.height(16.dp))
-                    OutlinedButton(onClick = { scope.launch { load() } }) { Text("Reintentar", color = TEAL) }
+                    AppButton("Reintentar", onClick = { busy({ refreshing = it }) { load() } }, style = AppButtonStyle.Secondary, loading = refreshing)
                 }
             }
             return@Scaffold
@@ -296,6 +304,7 @@ fun MonthlyControlScreen(padding: PaddingValues = PaddingValues()) {
                                 }
                             )
                             scope.launch {
+                                pendingPaid = pendingPaid + txn.id
                                 try {
                                     repo.togglePaid(txn.id, newPaid)
                                     Toast.makeText(context, if (newPaid) "Marcado como pagado" else "Marcado como pendiente", Toast.LENGTH_SHORT).show()
@@ -307,9 +316,12 @@ fun MonthlyControlScreen(padding: PaddingValues = PaddingValues()) {
                                         }
                                     )
                                     Toast.makeText(context, "No se pudo guardar el cambio", Toast.LENGTH_SHORT).show()
+                                } finally {
+                                    pendingPaid = pendingPaid - txn.id
                                 }
                             }
                         },
+                        saving = txn.id in pendingPaid,
                         onEdit = { editingTxn = txn },
                         onDelete = { showDeleteTxn = txn }
                     )
@@ -330,8 +342,9 @@ fun MonthlyControlScreen(padding: PaddingValues = PaddingValues()) {
             initial = null,
             year = ym.year, month = ym.monthValue,
             onDismiss = { showAddTxn = false },
+            saving = saving,
             onSave = { insert ->
-                scope.launch {
+                if (!saving) busy({ saving = it }) {
                     runCatching { repo.addTransaction(insert) }
                         .onSuccess { showAddTxn = false; Toast.makeText(context, "Transacción creada", Toast.LENGTH_SHORT).show(); load() }
                         .onFailure { Toast.makeText(context, "No se pudo crear la transacción", Toast.LENGTH_SHORT).show() }
@@ -347,8 +360,9 @@ fun MonthlyControlScreen(padding: PaddingValues = PaddingValues()) {
             initial = txn,
             year = ym.year, month = ym.monthValue,
             onDismiss = { editingTxn = null },
+            saving = saving,
             onSave = { insert ->
-                scope.launch {
+                if (!saving) busy({ saving = it }) {
                     runCatching { repo.updateTransaction(txn.id, insert) }
                         .onSuccess { editingTxn = null; Toast.makeText(context, "Transacción actualizada", Toast.LENGTH_SHORT).show(); load() }
                         .onFailure { Toast.makeText(context, "No se pudo actualizar", Toast.LENGTH_SHORT).show() }
@@ -362,8 +376,9 @@ fun MonthlyControlScreen(padding: PaddingValues = PaddingValues()) {
         IncomeDialog(
             year = ym.year, month = ym.monthValue,
             onDismiss = { showAddIncome = false },
+            saving = saving,
             onSave = { insert ->
-                scope.launch {
+                if (!saving) busy({ saving = it }) {
                     runCatching { repo.addIncome(insert) }
                         .onSuccess { showAddIncome = false; Toast.makeText(context, "Ingreso agregado", Toast.LENGTH_SHORT).show(); load() }
                         .onFailure { Toast.makeText(context, "No se pudo agregar el ingreso", Toast.LENGTH_SHORT).show() }
@@ -380,7 +395,7 @@ fun MonthlyControlScreen(padding: PaddingValues = PaddingValues()) {
             title = { Text("Eliminar", color = WHITE) },
             text = { Text("¿Eliminar \"${txn.description}\"?", color = MUTED) },
             confirmButton = {
-                TextButton(onClick = {
+                AppButton("Eliminar", style = AppButtonStyle.Danger, onClick = {
                     // Optimistic removal — remove from list before API call
                     state = state.copy(transactions = state.transactions.filter { it.id != txn.id })
                     showDeleteTxn = null
@@ -393,12 +408,10 @@ fun MonthlyControlScreen(padding: PaddingValues = PaddingValues()) {
                             Toast.makeText(context, "No se pudo eliminar", Toast.LENGTH_SHORT).show()
                         }
                     }
-                }) { Text("Eliminar", color = RED) }
+                })
             },
             dismissButton = {
-                TextButton(onClick = { showDeleteTxn = null }) {
-                    Text("Cancelar", color = MUTED)
-                }
+                AppButton("Cancelar", onClick = { showDeleteTxn = null }, style = AppButtonStyle.Text)
             }
         )
     }
@@ -419,18 +432,16 @@ fun MonthlyControlScreen(padding: PaddingValues = PaddingValues()) {
                 )
             },
             confirmButton = {
-                TextButton(onClick = {
-                    scope.launch {
+                AppButton("Copiar", style = AppButtonStyle.Text, loading = copying, onClick = {
+                    if (!copying) busy({ copying = it }) {
                         runCatching { repo.copyFromPreviousMonth(prevYm.year, prevYm.monthValue, ym.year, ym.monthValue) }
                             .onSuccess { showCopyConfirm = false; Toast.makeText(context, "Mes anterior copiado", Toast.LENGTH_SHORT).show(); load() }
                             .onFailure { Toast.makeText(context, "No se pudo copiar el mes", Toast.LENGTH_SHORT).show() }
                     }
-                }) { Text("Copiar", color = TEAL) }
+                })
             },
             dismissButton = {
-                TextButton(onClick = { showCopyConfirm = false }) {
-                    Text("Cancelar", color = MUTED)
-                }
+                AppButton("Cancelar", onClick = { showCopyConfirm = false }, style = AppButtonStyle.Text, enabled = !copying)
             }
         )
     }
@@ -603,6 +614,7 @@ private fun TransactionItem(
     txn: FullManualTransactionRow,
     modifier: Modifier = Modifier,
     showDivider: Boolean = false,
+    saving: Boolean = false,
     onTogglePaid: () -> Unit,
     onEdit: () -> Unit,
     onDelete: () -> Unit
@@ -647,7 +659,7 @@ private fun TransactionItem(
             Spacer(Modifier.width(10.dp))
             MoneyText(txn.amount, color = if (txn.isPaid) MUTED else WHITE, fontSize = 15)
             Spacer(Modifier.width(12.dp))
-            CheckCircle(checked = txn.isPaid, onClick = onTogglePaid, size = 28.dp)
+            CheckCircle(checked = txn.isPaid, onClick = onTogglePaid, size = 28.dp, loading = saving)
         }
     }
 }
@@ -663,6 +675,7 @@ private fun TransactionDialog(
     year: Int,
     month: Int,
     onDismiss: () -> Unit,
+    saving: Boolean = false,
     onSave: (ManualTransactionInsert) -> Unit
 ) {
     var day by remember { mutableStateOf(initial?.day?.toString() ?: "") }
@@ -826,13 +839,13 @@ private fun TransactionDialog(
                     horizontalArrangement = Arrangement.End,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    TextButton(onClick = onDismiss) {
-                        Text("Cancelar", color = MUTED)
-                    }
+                    AppButton("Cancelar", onClick = onDismiss, style = AppButtonStyle.Text, enabled = !saving)
                     Spacer(Modifier.width(8.dp))
-                    Button(
+                    AppButton(
+                        "Guardar",
+                        loading = saving,
+                        enabled = description.isNotBlank() && amount.isNotBlank(),
                         onClick = {
-                            if (description.isBlank() || amount.isBlank()) return@Button
                             onSave(
                                 ManualTransactionInsert(
                                     year = year, month = month,
@@ -845,11 +858,8 @@ private fun TransactionDialog(
                                     notes = notes.trim().ifEmpty { null }
                                 )
                             )
-                        },
-                        colors = ButtonDefaults.buttonColors(containerColor = TEAL)
-                    ) {
-                        Text("Guardar", color = Color.Black, fontWeight = FontWeight.Bold)
-                    }
+                        }
+                    )
                 }
             }
         }
@@ -864,6 +874,7 @@ private fun IncomeDialog(
     year: Int,
     month: Int,
     onDismiss: () -> Unit,
+    saving: Boolean = false,
     onSave: (MonthlyIncomeInsert) -> Unit
 ) {
     var source by remember { mutableStateOf("") }
@@ -910,11 +921,13 @@ private fun IncomeDialog(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.End
                 ) {
-                    TextButton(onClick = onDismiss) { Text("Cancelar", color = MUTED) }
+                    AppButton("Cancelar", onClick = onDismiss, style = AppButtonStyle.Text, enabled = !saving)
                     Spacer(Modifier.width(8.dp))
-                    Button(
+                    AppButton(
+                        "Guardar",
+                        loading = saving,
+                        enabled = source.isNotBlank() && amount.isNotBlank(),
                         onClick = {
-                            if (source.isBlank() || amount.isBlank()) return@Button
                             onSave(
                                 MonthlyIncomeInsert(
                                     year = year, month = month,
@@ -923,9 +936,8 @@ private fun IncomeDialog(
                                     notes = notes.trim().ifEmpty { null }
                                 )
                             )
-                        },
-                        colors = ButtonDefaults.buttonColors(containerColor = TEAL)
-                    ) { Text("Guardar", color = Color.Black, fontWeight = FontWeight.Bold) }
+                        }
+                    )
                 }
             }
         }

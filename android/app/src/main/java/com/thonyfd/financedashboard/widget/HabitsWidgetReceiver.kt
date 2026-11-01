@@ -14,6 +14,7 @@ class HabitsWidgetReceiver : GlanceAppWidgetReceiver() {
         super.onEnabled(context)
         FinanceWidgetWorker.scheduleImmediate(context)
         FinanceWidgetWorker.schedule(context)
+        HabitsDayRolloverReceiver.schedule(context)
     }
 
     override fun onUpdate(
@@ -23,6 +24,7 @@ class HabitsWidgetReceiver : GlanceAppWidgetReceiver() {
     ) {
         super.onUpdate(context, appWidgetManager, appWidgetIds)
         FinanceWidgetWorker.scheduleImmediate(context)
+        HabitsDayRolloverReceiver.schedule(context)
     }
 
     override fun onReceive(context: Context, intent: Intent) {

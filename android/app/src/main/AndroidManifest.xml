@@ -64,6 +64,18 @@
                 android:resource="@xml/habits_widget_info" />
         </receiver>
 
+        <!-- Refresco del widget de hábitos al cambiar de día -->
+        <receiver
+            android:name=".widget.HabitsDayRolloverReceiver"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+                <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
+                <action android:name="android.intent.action.TIME_SET" />
+                <action android:name="android.intent.action.TIMEZONE_CHANGED" />
+            </intent-filter>
+        </receiver>
+
         <!-- WorkManager initializer (auto-initializes) -->
 
     </application>

@@ -77,10 +77,14 @@ fun TimelineScreen(padding: PaddingValues = PaddingValues()) {
     var hasLoaded by remember { mutableStateOf(false) }
     var error by remember { mutableStateOf<String?>(null) }
     var focusHabit by remember { mutableStateOf<UserHabitRow?>(null) }
+    var refreshing by remember { mutableStateOf(false) }
+    var savingFocus by remember { mutableStateOf(false) }
+    var pendingIds by remember { mutableStateOf<Set<Long>>(emptySet()) }
 
     fun load(showResult: Boolean = false) {
         scope.launch {
             if (!hasLoaded) isLoading = true
+            refreshing = true
             error = null
             try {
                 habits = repo.getHabitsForToday(today)
@@ -99,6 +103,7 @@ fun TimelineScreen(padding: PaddingValues = PaddingValues()) {
                 Toast.makeText(context, "No se pudo actualizar el timeline", Toast.LENGTH_SHORT).show()
             } finally {
                 isLoading = false
+                refreshing = false
             }
         }
     }
@@ -122,9 +127,7 @@ fun TimelineScreen(padding: PaddingValues = PaddingValues()) {
                 }
             },
             actions = {
-                IconButton(onClick = { load(showResult = true) }) {
-                    Icon(Icons.Outlined.Refresh, contentDescription = "Actualizar")
-                }
+                AppIconButton(Icons.Outlined.Refresh, "Actualizar", onClick = { if (!refreshing) load(showResult = true) }, loading = refreshing && hasLoaded)
             },
             colors = appTopBarColors()
         )
@@ -139,7 +142,7 @@ fun TimelineScreen(padding: PaddingValues = PaddingValues()) {
                     Spacer(Modifier.height(6.dp))
                     Text(error ?: "", color = TimelineMuted, style = MaterialTheme.typography.bodySmall)
                     Spacer(Modifier.height(16.dp))
-                    OutlinedButton(onClick = { load(showResult = true) }) { Text("Reintentar", color = TimelinePrimary) }
+                    AppButton("Reintentar", onClick = { load(showResult = true) }, style = AppButtonStyle.Secondary, loading = refreshing)
                 }
             }
             else -> LazyColumn(
@@ -197,14 +200,17 @@ fun TimelineScreen(padding: PaddingValues = PaddingValues()) {
                                     CheckCircle(
                                         checked = completed,
                                         size = 28.dp,
+                                        loading = habit.id in pendingIds,
                                         onClick = {
                                             scope.launch {
+                                                pendingIds = pendingIds + habit.id
                                                 runCatching {
                                                     if (completed) repo.removeHabitLog(habit.id, today)
                                                     else repo.toggleHabitLog(habit.id, today, "COMPLETED", habit.targetDurationMinutes)
                                                 }.onSuccess {
                                                     load()
                                                 }.onFailure { Toast.makeText(context, "No se pudo guardar el cambio", Toast.LENGTH_SHORT).show() }
+                                                pendingIds = pendingIds - habit.id
                                             }
                                         }
                                     )
@@ -219,11 +225,7 @@ fun TimelineScreen(padding: PaddingValues = PaddingValues()) {
                                         )
                                         Text("${habit.targetDurationMinutes} min", color = TimelineMuted, style = MaterialTheme.typography.bodySmall)
                                     }
-                                    TextButton(onClick = { focusHabit = habit }) {
-                                        Icon(Icons.Default.PlayArrow, null, tint = TimelinePrimary, modifier = Modifier.size(18.dp))
-                                        Spacer(Modifier.width(4.dp))
-                                        Text("Enfoque", color = TimelinePrimary, style = MaterialTheme.typography.labelLarge)
-                                    }
+                                    AppButton("Enfoque", onClick = { focusHabit = habit }, style = AppButtonStyle.Text, leadingIcon = Icons.Default.PlayArrow)
                                 }
                             }
                         }
@@ -237,8 +239,10 @@ fun TimelineScreen(padding: PaddingValues = PaddingValues()) {
         FocusTimerDialog(
             habit = habit,
             onDismiss = { focusHabit = null },
+            saving = savingFocus,
             onSave = { minutes ->
-                scope.launch {
+                if (!savingFocus) scope.launch {
+                    savingFocus = true
                     runCatching { repo.toggleHabitLog(habit.id, today, "COMPLETED", minutes) }
                         .onSuccess {
                             focusHabit = null
@@ -246,6 +250,7 @@ fun TimelineScreen(padding: PaddingValues = PaddingValues()) {
                             load()
                         }
                         .onFailure { Toast.makeText(context, "No se pudo guardar la sesión", Toast.LENGTH_SHORT).show() }
+                    savingFocus = false
                 }
             }
         )
@@ -256,6 +261,7 @@ fun TimelineScreen(padding: PaddingValues = PaddingValues()) {
 private fun FocusTimerDialog(
     habit: UserHabitRow,
     onDismiss: () -> Unit,
+    saving: Boolean = false,
     onSave: (Int) -> Unit
 ) {
     var remaining by remember(habit.id) { mutableIntStateOf(habit.targetDurationMinutes * 60) }
@@ -283,12 +289,8 @@ private fun FocusTimerDialog(
                     fontWeight = FontWeight.Medium
                 )
                 Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                    OutlinedButton(onClick = { running = !running }) {
-                        Text(if (running) "Pausar" else "Iniciar")
-                    }
-                    Button(onClick = { onSave(maxOf(1, (habit.targetDurationMinutes * 60 - remaining) / 60)) }) {
-                        Text("Guardar")
-                    }
+                    AppButton(if (running) "Pausar" else "Iniciar", onClick = { running = !running }, style = AppButtonStyle.Secondary, enabled = !saving)
+                    AppButton("Guardar", onClick = { onSave(maxOf(1, (habit.targetDurationMinutes * 60 - remaining) / 60)) }, loading = saving)
                 }
             }
         }

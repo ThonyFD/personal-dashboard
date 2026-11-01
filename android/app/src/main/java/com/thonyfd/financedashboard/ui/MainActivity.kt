@@ -40,6 +40,7 @@ import com.thonyfd.financedashboard.data.models.WidgetData
 import com.thonyfd.financedashboard.data.repository.FinanceRepository
 import com.thonyfd.financedashboard.ui.theme.FinanceDashboardTheme
 import com.thonyfd.financedashboard.widget.FinanceWidgetWorker
+import com.thonyfd.financedashboard.widget.HabitsDayRolloverReceiver
 import com.thonyfd.financedashboard.widget.WidgetAppearancePreferences
 import com.thonyfd.financedashboard.widget.WidgetKind
 import kotlinx.coroutines.launch
@@ -62,6 +63,7 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         FinanceWidgetWorker.schedule(this)
+        HabitsDayRolloverReceiver.schedule(this)
         categoryNav = parseCategoryFromIntent(intent)
         externalTab = parseTabFromIntent(intent)
         setContent {
@@ -179,10 +181,13 @@ fun DashboardTab(padding: PaddingValues, onCategoryClick: (CategorySpend) -> Uni
     var isLoading by remember { mutableStateOf(true) }
     var error by remember { mutableStateOf<String?>(null) }
     var showWidgetAppearance by remember { mutableStateOf(false) }
+    var refreshing by remember { mutableStateOf(false) }
 
     fun load(showResult: Boolean = false) {
+        if (refreshing) return
         scope.launch {
             if (data == null) isLoading = true
+            refreshing = true
             error = null
             try {
                 data = repo.getWidgetData()
@@ -194,6 +199,7 @@ fun DashboardTab(padding: PaddingValues, onCategoryClick: (CategorySpend) -> Uni
                 Toast.makeText(context, "No se pudo actualizar el dashboard", Toast.LENGTH_SHORT).show()
             } finally {
                 isLoading = false
+                refreshing = false
             }
         }
     }
@@ -213,12 +219,8 @@ fun DashboardTab(padding: PaddingValues, onCategoryClick: (CategorySpend) -> Uni
                 }
             },
             actions = {
-                IconButton(onClick = { showWidgetAppearance = true }) {
-                    Icon(Icons.Outlined.Widgets, contentDescription = "Apariencia de widgets")
-                }
-                IconButton(onClick = { load(showResult = true) }) {
-                    Icon(Icons.Outlined.Refresh, contentDescription = "Actualizar")
-                }
+                AppIconButton(Icons.Outlined.Widgets, "Apariencia de widgets", onClick = { showWidgetAppearance = true })
+                AppIconButton(Icons.Outlined.Refresh, "Actualizar", onClick = { load(showResult = true) }, loading = refreshing && data != null)
             },
             colors = TopAppBarDefaults.topAppBarColors(
                 containerColor = AppColors.Night,
@@ -237,7 +239,7 @@ fun DashboardTab(padding: PaddingValues, onCategoryClick: (CategorySpend) -> Uni
                     Spacer(Modifier.height(6.dp))
                     Text(error!!, color = AppColors.Mist, style = MaterialTheme.typography.bodySmall, textAlign = TextAlign.Center)
                     Spacer(Modifier.height(16.dp))
-                    OutlinedButton(onClick = { load(showResult = true) }) { Text("Reintentar", color = AppColors.Cyan) }
+                    AppButton("Reintentar", onClick = { load(showResult = true) }, style = AppButtonStyle.Secondary, loading = refreshing)
                 }
             }
             data != null -> DashboardContent(data!!, onCategoryClick)
@@ -268,6 +270,7 @@ private fun WidgetAppearanceDialog(
     var paymentsOpacity by remember {
         mutableFloatStateOf(WidgetAppearancePreferences.getOpacity(context, WidgetKind.PAYMENTS))
     }
+    var applying by remember { mutableStateOf(false) }
     var habitsOpacity by remember {
         mutableFloatStateOf(WidgetAppearancePreferences.getOpacity(context, WidgetKind.HABITS))
     }
@@ -288,20 +291,28 @@ private fun WidgetAppearanceDialog(
             }
         },
         confirmButton = {
-            TextButton(onClick = {
-                WidgetAppearancePreferences.setOpacity(context, WidgetKind.FINANCE, financeOpacity)
-                WidgetAppearancePreferences.setOpacity(context, WidgetKind.PAYMENTS, paymentsOpacity)
-                WidgetAppearancePreferences.setOpacity(context, WidgetKind.HABITS, habitsOpacity)
-                scope.launch {
-                    WidgetAppearancePreferences.refreshAll(context)
-                    onSaved()
+            AppButton(
+                "Aplicar",
+                style = AppButtonStyle.Text,
+                loading = applying,
+                onClick = {
+                    WidgetAppearancePreferences.setOpacity(context, WidgetKind.FINANCE, financeOpacity)
+                    WidgetAppearancePreferences.setOpacity(context, WidgetKind.PAYMENTS, paymentsOpacity)
+                    WidgetAppearancePreferences.setOpacity(context, WidgetKind.HABITS, habitsOpacity)
+                    scope.launch {
+                        applying = true
+                        try {
+                            WidgetAppearancePreferences.refreshAll(context)
+                            onSaved()
+                        } finally {
+                            applying = false
+                        }
+                    }
                 }
-            }) {
-                Text("Aplicar", color = AppColors.Lime, fontWeight = FontWeight.Bold)
-            }
+            )
         },
         dismissButton = {
-            TextButton(onClick = onDismiss) { Text("Cancelar", color = AppColors.Mist) }
+            AppButton("Cancelar", onClick = onDismiss, style = AppButtonStyle.Text, enabled = !applying)
         }
     )
 }

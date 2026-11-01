@@ -1,6 +1,11 @@
 package com.thonyfd.financedashboard.ui
 
 import com.thonyfd.financedashboard.ui.theme.AppColors
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.material3.ripple
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import java.time.format.DateTimeFormatter
 import java.time.ZoneId
 import java.time.OffsetDateTime
@@ -97,8 +102,12 @@ fun MoodScreen(padding: PaddingValues = PaddingValues()) {
     var score by remember { mutableIntStateOf(3) }
     var journal by remember { mutableStateOf("") }
     val selectedTags = remember { mutableStateListOf<Long>() }
+    val haptics = LocalHapticFeedback.current
     var checkins by remember { mutableStateOf<List<MoodCheckinRow>>(emptyList()) }
     var savingCheckin by remember { mutableStateOf(false) }
+    var savingScore by remember { mutableStateOf<Int?>(null) }
+    var savingMood by remember { mutableStateOf(false) }
+    var refreshing by remember { mutableStateOf(false) }
 
     // Separado del load principal: si falla, el resto de la pantalla sigue funcionando
     fun loadCheckins() {
@@ -111,6 +120,7 @@ fun MoodScreen(padding: PaddingValues = PaddingValues()) {
         if (savingCheckin) return
         scope.launch {
             savingCheckin = true
+            savingScore = value
             runCatching { repo.addCheckin(value, source = "app") }
                 .onSuccess {
                     val time = LocalTime.now().format(DateTimeFormatter.ofPattern("HH:mm"))
@@ -121,12 +131,14 @@ fun MoodScreen(padding: PaddingValues = PaddingValues()) {
                 }
                 .onFailure { Toast.makeText(context, "No se pudo registrar el mood", Toast.LENGTH_SHORT).show() }
             savingCheckin = false
+            savingScore = null
         }
     }
 
     fun load(showResult: Boolean = false) {
         scope.launch {
             if (!hasLoaded) isLoading = true
+            if (showResult) refreshing = true
             try {
                 tags = repo.getMoodTags()
                 history = repo.getMoodRange(today.minusDays(13), today)
@@ -145,6 +157,7 @@ fun MoodScreen(padding: PaddingValues = PaddingValues()) {
                 Toast.makeText(context, "No se pudo actualizar Mood", Toast.LENGTH_SHORT).show()
             } finally {
                 isLoading = false
+                refreshing = false
             }
         }
     }
@@ -165,9 +178,7 @@ fun MoodScreen(padding: PaddingValues = PaddingValues()) {
                 }
             },
             actions = {
-                IconButton(onClick = { load(showResult = true) }) {
-                    Icon(Icons.Outlined.Refresh, "Actualizar")
-                }
+                AppIconButton(Icons.Outlined.Refresh, "Actualizar", onClick = { if (!refreshing) load(showResult = true) }, loading = refreshing)
             },
             colors = appTopBarColors()
         )
@@ -199,13 +210,25 @@ fun MoodScreen(padding: PaddingValues = PaddingValues()) {
                                 modifier = Modifier.weight(1f).padding(start = 4.dp)
                             )
                             MoodScale.scores.forEach { value ->
+                                val interaction = remember { MutableInteractionSource() }
                                 Box(
                                     Modifier
+                                        .pressFeedback(interaction, pressedScale = 0.8f)
                                         .size(40.dp)
                                         .clip(CircleShape)
-                                        .clickable(enabled = !savingCheckin) { logCheckin(value) },
+                                        .clickable(
+                                            interactionSource = interaction,
+                                            indication = ripple(bounded = true),
+                                            enabled = !savingCheckin
+                                        ) {
+                                            haptics.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                                            logCheckin(value)
+                                        },
                                     contentAlignment = Alignment.Center
-                                ) { Text(MoodScale.emoji(value), fontSize = 22.sp) }
+                                ) {
+                                    if (savingScore == value) LoadingDots(color = TimelinePrimary, dotSize = 4.dp)
+                                    else Text(MoodScale.emoji(value), fontSize = 22.sp, modifier = Modifier.graphicsLayer { alpha = if (savingCheckin) 0.4f else 1f })
+                                }
                             }
                         }
                     }
@@ -279,23 +302,23 @@ fun MoodScreen(padding: PaddingValues = PaddingValues()) {
                 }
 
                 item {
-                    Button(
+                    AppButton(
+                        "Guardar mood",
+                        modifier = Modifier.fillMaxWidth(),
+                        loading = savingMood,
                         onClick = {
-                            scope.launch {
+                            if (!savingMood) scope.launch {
+                                savingMood = true
                                 runCatching { repo.upsertMood(today, score, journal.ifBlank { null }, selectedTags.toList()) }
                                     .onSuccess {
                                         Toast.makeText(context, "Mood guardado", Toast.LENGTH_SHORT).show()
                                         load()
                                     }
                                     .onFailure { Toast.makeText(context, "No se pudo guardar el mood", Toast.LENGTH_SHORT).show() }
+                                savingMood = false
                             }
-                        },
-                        modifier = Modifier.fillMaxWidth().height(50.dp),
-                        shape = RoundedCornerShape(16.dp),
-                        colors = ButtonDefaults.buttonColors(containerColor = TimelinePrimary, contentColor = AppColors.Night)
-                    ) {
-                        Text("Guardar mood", style = MaterialTheme.typography.labelLarge)
-                    }
+                        }
+                    )
                 }
 
                 if (history.isNotEmpty()) {

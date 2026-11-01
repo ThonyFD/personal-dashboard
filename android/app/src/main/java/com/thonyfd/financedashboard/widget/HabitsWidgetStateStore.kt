@@ -162,13 +162,18 @@ object HabitsWidgetStateStore {
             } ?: emptyList()
         }.getOrDefault(emptyList())
 
+        // Datos de otro día: se muestran sin completar hasta que llegue el refresco,
+        // así en la mañana no se ve el progreso de ayer aunque no haya red
+        val date = prefs[DATE] ?: ""
+        val isOtherDay = date.isNotEmpty() && date != LocalDate.now().toString()
+
         return HabitsWidgetData(
-            date = prefs[DATE] ?: "",
+            date = date,
             lastUpdated = prefs[LAST_UPDATED] ?: "--:--",
             streak = prefs[STREAK] ?: 0,
-            completedCount = prefs[COMPLETED] ?: 0,
+            completedCount = if (isOtherDay) 0 else prefs[COMPLETED] ?: 0,
             dueCount = prefs[DUE] ?: 0,
-            items = items,
+            items = if (isOtherDay) items.map { it.copy(completed = false) } else items,
             isError = prefs[IS_ERROR] == "true",
             isRefreshing = prefs[IS_REFRESHING] ?: false,
             mood = toMoodState(prefs)

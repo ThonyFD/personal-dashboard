@@ -47,6 +47,7 @@ import androidx.glance.text.TextStyle
 import androidx.glance.unit.ColorProvider
 import com.thonyfd.financedashboard.data.models.HabitsWidgetItem
 import com.thonyfd.financedashboard.data.models.MoodScale
+import com.thonyfd.financedashboard.data.models.StreakLevel
 import com.thonyfd.financedashboard.data.repository.HabitRepository
 import com.thonyfd.financedashboard.data.repository.MoodRepository
 import com.thonyfd.financedashboard.ui.MainActivity
@@ -177,7 +178,7 @@ private fun ProgressPanel(data: HabitsWidgetData, progress: Float, openHabits: I
         )
         Spacer(GlanceModifier.height(10.dp))
         Text(
-            text = "🔥 ${data.streak}d",
+            text = "🔥 ${data.streak}d" + (StreakLevel.of(data.completedCount, data.dueCount)?.let { " ${it.emoji}" } ?: ""),
             modifier = GlanceModifier
                 .background(ColorProvider(HabitsPalette.Violet.copy(alpha = 0.22f)))
                 .cornerRadius(12.dp)

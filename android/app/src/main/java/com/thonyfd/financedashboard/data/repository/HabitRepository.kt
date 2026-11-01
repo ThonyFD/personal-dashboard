@@ -1,7 +1,9 @@
 package com.thonyfd.financedashboard.data.repository
 
 import com.thonyfd.financedashboard.data.SupabaseConfig
+import com.thonyfd.financedashboard.data.models.DayHabits
 import com.thonyfd.financedashboard.data.models.HabitDailyCompletionRow
+import com.thonyfd.financedashboard.data.models.HabitDaySummary
 import com.thonyfd.financedashboard.data.models.HabitIcons
 import com.thonyfd.financedashboard.data.models.HabitLogInsert
 import com.thonyfd.financedashboard.data.models.HabitLogRow
@@ -42,23 +44,25 @@ class HabitRepository {
         return rows.sortedWith(compareBy({ dayBlockOrder(it.dayBlock) }, { it.sortOrder }, { it.name }))
     }
 
-    suspend fun getHabitsForToday(date: LocalDate = LocalDate.now()): List<UserHabitRow> {
+    suspend fun getHabitsForToday(date: LocalDate = LocalDate.now()): List<UserHabitRow> =
+        getDayHabits(date).habits
+
+    suspend fun getDayHabits(date: LocalDate = LocalDate.now()): DayHabits {
         val habits = getAllHabits(activeOnly = true)
-        val periodHabits = habits.filter { it.frequencyType == "WEEKLY" || it.frequencyType == "MONTHLY" }
-        if (periodHabits.isEmpty()) return habits.filter { isHabitDueOnDate(it, date) }
-
-        val monthStart = date.withDayOfMonth(1)
-        val weekStart = date.minusDays((date.dayOfWeek.value - 1).toLong())
-        val logs = getLogsInRange(monthStart.coerceAtMost(weekStart), date)
-            .filter { it.status == "COMPLETED" }
-
-        return habits.filter { habit ->
-            when (habit.frequencyType) {
-                "WEEKLY" -> logs.count { it.userHabitId == habit.id && LocalDate.parse(it.logDate) >= weekStart } < habit.targetCompletionsPerPeriod
-                "MONTHLY" -> logs.count { it.userHabitId == habit.id && LocalDate.parse(it.logDate) >= monthStart } < habit.targetCompletionsPerPeriod
-                else -> isHabitDueOnDate(habit, date)
+        val completedDates = completedDatesByHabit(getLogsInRange(periodWindowStart(date), date))
+        val visible = dueHabitsOn(habits, completedDates, date)
+        val periodDone = visible.mapNotNull { habit ->
+            periodStart(habit, date)?.let { start ->
+                habit.id to completedDates[habit.id].orEmpty().count { it in start..date }
             }
-        }
+        }.toMap()
+        return DayHabits(visible, periodDone)
+    }
+
+    /** Resumen (debidos/completados y nivel) de cada día entre hoy-[days] y hoy. */
+    suspend fun getDaySummaries(today: LocalDate = LocalDate.now(), days: Long = HISTORY_DAYS): Map<LocalDate, HabitDaySummary> {
+        val from = today.minusDays(days)
+        return summarizeDays(getAllHabits(activeOnly = true), getLogsInRange(periodWindowStart(from), today), from, today)
     }
 
     suspend fun getLogsForDate(date: LocalDate): List<HabitLogRow> =
@@ -159,7 +163,7 @@ class HabitRepository {
         val habits = getHabitsForToday(today)
         val logs = getLogsForDate(today)
         val logsByHabit = logs.associateBy { it.userHabitId }
-        val streak = computeStreak(getAllHabits(activeOnly = true), getLogsInRange(today.minusDays(365), today), today)
+        val streak = streakFrom(getDaySummaries(today), today)
 
         return HabitsWidgetDataBundle(
             date = today.toString(),
@@ -193,41 +197,72 @@ class HabitRepository {
         habits: List<UserHabitRow>,
         logs: List<HabitLogRow>,
         today: LocalDate
-    ): Int {
-        val activeHabits = habits.filter { it.isActive }
-        if (activeHabits.isEmpty()) return 0
+    ): Int = streakFrom(summarizeDays(habits, logs, today.minusDays(HISTORY_DAYS), today), today)
 
-        val logsByDate = logs.groupBy { it.logDate }
-            .mapValues { (_, rows) -> rows.associateBy { it.userHabitId } }
-
+    /**
+     * Días seguidos con al menos nivel Bronce. Los días sin hábitos debidos no rompen la racha
+     * y hoy solo suma si ya alcanzó un nivel (sigue en curso).
+     */
+    fun streakFrom(summaries: Map<LocalDate, HabitDaySummary>, today: LocalDate): Int {
+        val first = summaries.keys.minOrNull() ?: return 0
         var streak = 0
         var cursor = today
-        repeat(3650) {
-            val dueHabits = activeHabits.filter { isHabitDueOnDate(it, cursor) }
-            if (dueHabits.isEmpty()) {
-                cursor = cursor.minusDays(1)
-                return@repeat
+        while (cursor >= first) {
+            val day = summaries[cursor]
+            when {
+                day == null || day.due == 0 -> Unit
+                day.level != null -> streak += 1
+                cursor != today -> return streak
             }
-
-            val logsForDay = logsByDate[cursor.toString()]
-            val allCompleted = dueHabits.all { logsForDay?.get(it.id)?.status == "COMPLETED" }
-
-            if (cursor == today && !allCompleted) {
-                cursor = cursor.minusDays(1)
-                return@repeat
-            }
-
-            if (!allCompleted) return streak
-
-            streak += 1
             cursor = cursor.minusDays(1)
         }
-
         return streak
     }
 
+    fun summarizeDays(
+        habits: List<UserHabitRow>,
+        logs: List<HabitLogRow>,
+        from: LocalDate,
+        to: LocalDate
+    ): Map<LocalDate, HabitDaySummary> {
+        val active = habits.filter { it.isActive }
+        val completedDates = completedDatesByHabit(logs)
+        return generateSequence(from) { it.plusDays(1) }
+            .takeWhile { it <= to }
+            .associateWith { date ->
+                val due = dueHabitsOn(active, completedDates, date)
+                HabitDaySummary(due = due.size, completed = due.count { date in completedDates[it.id].orEmpty() })
+            }
+    }
+
+    /** Semanales/mensuales siguen debidos mientras no se haya llegado a la meta antes de ese día. */
+    private fun dueHabitsOn(
+        habits: List<UserHabitRow>,
+        completedDates: Map<Long, Set<LocalDate>>,
+        date: LocalDate
+    ): List<UserHabitRow> = habits.filter { habit ->
+        val start = periodStart(habit, date) ?: return@filter isHabitDueOnDate(habit, date)
+        habit.isActive && completedDates[habit.id].orEmpty().count { it >= start && it < date } < habit.targetCompletionsPerPeriod
+    }
+
+    private fun completedDatesByHabit(logs: List<HabitLogRow>): Map<Long, Set<LocalDate>> =
+        logs.filter { it.status == "COMPLETED" }
+            .groupBy({ it.userHabitId }, { LocalDate.parse(it.logDate) })
+            .mapValues { (_, dates) -> dates.toSet() }
+
+    private fun periodStart(habit: UserHabitRow, date: LocalDate): LocalDate? = when (habit.frequencyType) {
+        "WEEKLY" -> date.minusDays(date.dayOfWeek.value - 1L)
+        "MONTHLY" -> date.withDayOfMonth(1)
+        else -> null
+    }
+
+    /** Primer día cuyos logs hacen falta para contar el periodo semanal y mensual de [date]. */
+    private fun periodWindowStart(date: LocalDate): LocalDate =
+        date.withDayOfMonth(1).coerceAtMost(date.minusDays(date.dayOfWeek.value - 1L))
+
     private companion object {
         const val MAX_WIDGET_ITEMS = 20
+        const val HISTORY_DAYS = 365L
     }
 
     private fun dayBlockOrder(dayBlock: String): Int = when (dayBlock) {
