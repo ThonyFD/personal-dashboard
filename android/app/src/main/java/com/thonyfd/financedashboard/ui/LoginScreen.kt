@@ -1,5 +1,8 @@
 package com.thonyfd.financedashboard.ui
 
+import android.content.Context
+import android.net.ConnectivityManager
+import android.net.NetworkCapabilities
 import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -20,12 +23,15 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.thonyfd.financedashboard.data.SupabaseConfig
 import com.thonyfd.financedashboard.data.auth.AuthGateState
+import com.thonyfd.financedashboard.data.auth.NETWORK_ERROR_MESSAGE
+import com.thonyfd.financedashboard.data.auth.signInErrorMessage
 import com.thonyfd.financedashboard.data.auth.toGateState
 import com.thonyfd.financedashboard.ui.theme.AppColors
 import io.github.jan.supabase.auth.auth
@@ -49,6 +55,7 @@ fun LoginGate(content: @Composable () -> Unit) {
 
 @Composable
 private fun LoginScreen() {
+    val context = LocalContext.current
     var loading by remember { mutableStateOf(false) }
     var message by remember { mutableStateOf<String?>(null) }
     // On success the session status flow switches LoginGate to the app.
@@ -57,10 +64,10 @@ private fun LoginScreen() {
             loading = false
             message = when (result) {
                 is NativeSignInResult.Success, NativeSignInResult.ClosedByUser -> null
-                is NativeSignInResult.NetworkError -> "Sin conexión, intenta de nuevo"
+                is NativeSignInResult.NetworkError -> NETWORK_ERROR_MESSAGE
                 is NativeSignInResult.Error -> {
                     Log.w("LoginScreen", "Google sign-in failed: ${result.message}", result.exception)
-                    "No se pudo iniciar sesión"
+                    signInErrorMessage(result.exception, isOnline(context))
                 }
             }
         }
@@ -91,4 +98,10 @@ private fun LoginScreen() {
             Text(it, color = AppColors.Mist, fontSize = 13.sp, textAlign = TextAlign.Center)
         }
     }
+}
+
+private fun isOnline(context: Context): Boolean {
+    val cm = context.getSystemService(ConnectivityManager::class.java) ?: return true
+    val caps = cm.getNetworkCapabilities(cm.activeNetwork) ?: return false
+    return caps.hasCapability(NetworkCapabilities.NET_CAPABILITY_VALIDATED)
 }

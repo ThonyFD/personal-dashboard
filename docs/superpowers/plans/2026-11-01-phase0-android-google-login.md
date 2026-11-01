@@ -21,7 +21,7 @@
 
 ## Review Focus
 
-1. Cold start with a saved but expired session: the gate must wait for `SessionStatus.Initializing` to finish and refresh, never flash the login screen. Covered by `mapsInitializingToLoading` / `mapsRefreshFailureToLoggedOut`.
+1. Cold start with a saved but expired session: the gate must wait for `SessionStatus.Initializing` to finish and refresh, never flash the login screen. Covered by `mapsInitializingToLoading` / `mapsRefreshFailureToLoggedIn`.
 2. Widget update or alarm firing before the app was ever opened after reboot: must not crash and must still load data (anon fallback). Covered by Task 3 manual check.
 3. User cancels the Google sheet: stays on the login screen with no error toast. Covered by Task 2 step on `NativeSignInResult.ClosedByUser`.
 4. No network on login: shows "Sin conexión, intenta de nuevo" and keeps the button enabled. Covered by Task 2 step on `NativeSignInResult.NetworkError`.

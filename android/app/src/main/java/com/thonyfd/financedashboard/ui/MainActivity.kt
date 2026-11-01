@@ -19,6 +19,7 @@ import androidx.compose.material.icons.outlined.Widgets
 import androidx.compose.material.icons.outlined.Refresh
 import androidx.compose.material.icons.automirrored.outlined.Logout
 import com.thonyfd.financedashboard.data.SupabaseConfig
+import com.thonyfd.financedashboard.data.auth.signOutWithFallback
 import io.github.jan.supabase.auth.auth
 import androidx.compose.foundation.border
 import androidx.compose.ui.text.style.TextAlign
@@ -227,7 +228,10 @@ fun DashboardTab(padding: PaddingValues, onCategoryClick: (CategorySpend) -> Uni
                 AppIconButton(Icons.Outlined.Widgets, "Apariencia de widgets", onClick = { showWidgetAppearance = true })
                 AppIconButton(Icons.Outlined.Refresh, "Actualizar", onClick = { load(showResult = true) }, loading = refreshing && data != null)
                 AppIconButton(Icons.AutoMirrored.Outlined.Logout, "Cerrar sesión", onClick = {
-                    scope.launch { runCatching { SupabaseConfig.client.auth.signOut() } }
+                    scope.launch {
+                        val auth = SupabaseConfig.client.auth
+                        signOutWithFallback(signOut = { auth.signOut() }, clearSession = { auth.clearSession() })
+                    }
                 })
             },
             colors = TopAppBarDefaults.topAppBarColors(

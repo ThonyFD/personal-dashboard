@@ -13,6 +13,11 @@ val localProperties = Properties().apply {
     if (localFile.exists()) load(localFile.inputStream())
 }
 
+// Without the web client ID, native Google sign-in fails and the login gate locks the user out.
+if ((localProperties["GOOGLE_WEB_CLIENT_ID"] as String?).isNullOrBlank()) {
+    throw GradleException("GOOGLE_WEB_CLIENT_ID is missing in android/local.properties")
+}
+
 android {
     namespace = "com.thonyfd.financedashboard"
     compileSdk = 35
