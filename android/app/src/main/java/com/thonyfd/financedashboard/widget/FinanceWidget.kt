@@ -1,5 +1,6 @@
 package com.thonyfd.financedashboard.widget
 
+import com.thonyfd.financedashboard.data.SupabaseConfig
 import android.content.Context
 import android.content.Intent
 import androidx.compose.runtime.Composable
@@ -53,6 +54,7 @@ class FinanceWidget : GlanceAppWidget() {
         val needsFresh = data.lastUpdated == "--:--" || data.monthLabel.isEmpty()
         if (needsFresh) {
             data = try {
+                SupabaseConfig.awaitAuth()
                 val fresh = FinanceRepository().getWidgetData(year, month)
                 FinanceWidgetStateStore.saveWidgetData(context, fresh)
                 fresh
@@ -633,6 +635,7 @@ class OpenCategoryAction : ActionCallback {
 private suspend fun refreshAndUpdate(context: Context) {
     val (year, month) = FinanceWidgetStateStore.getSelectedYearMonth(context)
     try {
+        SupabaseConfig.awaitAuth()
         val data = FinanceRepository().getWidgetData(year, month)
         FinanceWidgetStateStore.saveWidgetData(context, data)
     } catch (_: Exception) { }

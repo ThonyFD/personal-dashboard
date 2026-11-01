@@ -1,5 +1,6 @@
 package com.thonyfd.financedashboard.widget
 
+import com.thonyfd.financedashboard.data.SupabaseConfig
 import android.content.Context
 import androidx.glance.appwidget.updateAll
 import androidx.work.CoroutineWorker
@@ -26,6 +27,7 @@ class FinanceWidgetWorker(
     }
 
     private suspend fun refreshFinanceWidgets() {
+        SupabaseConfig.awaitAuth()
         val repo = FinanceRepository()
         val today = LocalDate.now()
 

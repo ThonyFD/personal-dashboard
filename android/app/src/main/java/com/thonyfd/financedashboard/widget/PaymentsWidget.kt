@@ -1,5 +1,6 @@
 package com.thonyfd.financedashboard.widget
 
+import com.thonyfd.financedashboard.data.SupabaseConfig
 import android.content.Context
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
@@ -45,6 +46,7 @@ class PaymentsWidget : GlanceAppWidget() {
         if (needsFresh) {
             val today = LocalDate.now()
             data = try {
+                SupabaseConfig.awaitAuth()
                 val fresh = FinanceRepository().getWidgetData(today.year, today.monthValue)
                 PaymentsWidgetStateStore.saveWidgetData(context, fresh)
                 PaymentsWidgetStateStore.loadWidgetData(context)

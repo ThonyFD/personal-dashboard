@@ -1,5 +1,6 @@
 package com.thonyfd.financedashboard.widget
 
+import com.thonyfd.financedashboard.data.SupabaseConfig
 import android.content.Context
 import android.content.Intent
 import androidx.compose.runtime.Composable
@@ -100,6 +101,7 @@ object HabitsWidgetRefresher {
 
     suspend fun refresh(context: Context): Boolean = mutex.withLock {
         HabitsWidgetStateStore.setRefreshing(context, true)
+        SupabaseConfig.awaitAuth()
         runCatching { HabitRepository().buildWidgetData(LocalDate.now()) }
             .onSuccess { HabitsWidgetStateStore.saveWidgetData(context, it) }
             .onFailure { HabitsWidgetStateStore.setError(context) }
@@ -387,6 +389,7 @@ class LogMoodAction : ActionCallback {
         HabitsWidgetStateStore.setMoodStatus(context, MoodSaveStatus.SAVING)
         HabitsWidget().update(context, glanceId)
 
+        SupabaseConfig.awaitAuth()
         runCatching { MoodRepository().addCheckin(score, source = "widget") }
             .onSuccess {
                 val time = LocalTime.now().format(DateTimeFormatter.ofPattern("HH:mm"))
@@ -424,6 +427,7 @@ class ToggleHabitAction : ActionCallback {
         HabitsWidget().update(context, glanceId)
 
         val saved = runCatching {
+            SupabaseConfig.awaitAuth()
             val repository = HabitRepository()
             if (isCompleted) {
                 repository.toggleHabitLog(habitId, LocalDate.now())
