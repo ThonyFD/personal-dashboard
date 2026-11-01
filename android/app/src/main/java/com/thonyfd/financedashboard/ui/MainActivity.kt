@@ -17,6 +17,9 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material.icons.outlined.Widgets
 import androidx.compose.material.icons.outlined.Refresh
+import androidx.compose.material.icons.automirrored.outlined.Logout
+import com.thonyfd.financedashboard.data.SupabaseConfig
+import io.github.jan.supabase.auth.auth
 import androidx.compose.foundation.border
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -68,12 +71,14 @@ class MainActivity : ComponentActivity() {
         externalTab = parseTabFromIntent(intent)
         setContent {
             FinanceDashboardTheme {
-                AppRoot(
-                    externalNav = categoryNav,
-                    onExternalConsumed = { categoryNav = null },
-                    externalTab = externalTab,
-                    onExternalTabConsumed = { externalTab = null }
-                )
+                LoginGate {
+                    AppRoot(
+                        externalNav = categoryNav,
+                        onExternalConsumed = { categoryNav = null },
+                        externalTab = externalTab,
+                        onExternalTabConsumed = { externalTab = null }
+                    )
+                }
             }
         }
     }
@@ -221,6 +226,9 @@ fun DashboardTab(padding: PaddingValues, onCategoryClick: (CategorySpend) -> Uni
             actions = {
                 AppIconButton(Icons.Outlined.Widgets, "Apariencia de widgets", onClick = { showWidgetAppearance = true })
                 AppIconButton(Icons.Outlined.Refresh, "Actualizar", onClick = { load(showResult = true) }, loading = refreshing && data != null)
+                AppIconButton(Icons.AutoMirrored.Outlined.Logout, "Cerrar sesión", onClick = {
+                    scope.launch { runCatching { SupabaseConfig.client.auth.signOut() } }
+                })
             },
             colors = TopAppBarDefaults.topAppBarColors(
                 containerColor = AppColors.Night,
