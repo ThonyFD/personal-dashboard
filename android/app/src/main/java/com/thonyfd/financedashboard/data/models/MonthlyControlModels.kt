@@ -1,5 +1,7 @@
 package com.thonyfd.financedashboard.data.models
 
+import kotlinx.serialization.EncodeDefault
+import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
@@ -52,7 +54,9 @@ data class ManualTransactionInsert(
     val amount: Double,
     @SerialName("transaction_type") val transactionType: String? = null,
     @SerialName("payment_method") val paymentMethod: String? = null,
-    @SerialName("is_paid") val isPaid: Boolean = false,
+    // Always sent: the column defaults to TRUE, so omitting false would store the row as paid.
+    @OptIn(ExperimentalSerializationApi::class)
+    @EncodeDefault @SerialName("is_paid") val isPaid: Boolean = false,
     val notes: String? = null
 )
 
