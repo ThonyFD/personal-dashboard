@@ -48,6 +48,11 @@ private val CATEGORY_EMOJI_KEY = ActionParameters.Key<String>("categoryEmoji")
 class FinanceWidget : GlanceAppWidget() {
 
     override suspend fun provideGlance(context: Context, id: GlanceId) {
+        val opacity = WidgetAppearancePreferences.getOpacity(context, WidgetKind.FINANCE)
+        if (!widgetIsOwner(context)) {
+            provideContent { GlanceTheme { WidgetNotAvailable(opacity) } }
+            return
+        }
         val (year, month) = FinanceWidgetStateStore.getSelectedYearMonth(context)
         var data = FinanceWidgetStateStore.loadWidgetData(context)
 
@@ -65,10 +70,7 @@ class FinanceWidget : GlanceAppWidget() {
 
         provideContent {
             GlanceTheme {
-                FinanceWidgetContent(
-                    data = data,
-                    backgroundOpacity = WidgetAppearancePreferences.getOpacity(context, WidgetKind.FINANCE)
-                )
+                FinanceWidgetContent(data = data, backgroundOpacity = opacity)
             }
         }
     }
@@ -634,7 +636,7 @@ class OpenCategoryAction : ActionCallback {
 
 private suspend fun refreshAndUpdate(context: Context) {
     val (year, month) = FinanceWidgetStateStore.getSelectedYearMonth(context)
-    try {
+    if (widgetIsOwner(context)) try {
         SupabaseConfig.awaitAuth()
         val data = FinanceRepository().getWidgetData(year, month)
         FinanceWidgetStateStore.saveWidgetData(context, data)

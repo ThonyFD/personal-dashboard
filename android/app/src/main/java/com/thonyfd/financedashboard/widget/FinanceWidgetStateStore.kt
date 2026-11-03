@@ -60,6 +60,11 @@ object FinanceWidgetStateStore {
         }
     }
 
+    /** Removes every stored value; used when the account signs out. */
+    suspend fun clear(context: Context) {
+        context.widgetDataStore.edit { it.clear() }
+    }
+
     suspend fun invalidateCache(context: Context) {
         context.widgetDataStore.edit { prefs ->
             prefs[LAST_UPDATED] = "--:--"

@@ -36,6 +36,7 @@ import com.thonyfd.financedashboard.data.auth.OwnerCache
 import com.thonyfd.financedashboard.data.auth.signInErrorMessage
 import com.thonyfd.financedashboard.data.auth.toGateState
 import com.thonyfd.financedashboard.ui.theme.AppColors
+import com.thonyfd.financedashboard.widget.refreshWidgetsForAccount
 import io.github.jan.supabase.auth.auth
 import io.github.jan.supabase.auth.status.SessionStatus
 import io.github.jan.supabase.compose.auth.composable.NativeSignInResult
@@ -54,6 +55,7 @@ fun LoginGate(content: @Composable (isOwner: Boolean) -> Unit) {
     // Keyed on the account so switching accounts never reuses the previous answer
     val isOwner by produceState<Boolean?>(initialValue = null, userId) {
         value = if (userId == null) OwnerCache.get(context) ?: false else OwnerCache.resolve(context)
+        if (userId != null) refreshWidgetsForAccount(context)
     }
     when (status.toGateState()) {
         AuthGateState.Loading -> GateSpinner()

@@ -107,6 +107,11 @@ object HabitsWidgetStateStore {
         context.habitsWidgetDataStore.edit { prefs -> prefs[IS_REFRESHING] = refreshing }
     }
 
+    /** Removes every stored value; used when the account signs out. */
+    suspend fun clear(context: Context) {
+        context.habitsWidgetDataStore.edit { it.clear() }
+    }
+
     suspend fun invalidateCache(context: Context) {
         context.habitsWidgetDataStore.edit { prefs ->
             prefs[LAST_UPDATED] = "--:--"

@@ -40,6 +40,11 @@ import java.time.LocalDate
 class PaymentsWidget : GlanceAppWidget() {
 
     override suspend fun provideGlance(context: Context, id: GlanceId) {
+        val opacity = WidgetAppearancePreferences.getOpacity(context, WidgetKind.PAYMENTS)
+        if (!widgetIsOwner(context)) {
+            provideContent { GlanceTheme { WidgetNotAvailable(opacity) } }
+            return
+        }
         var data = PaymentsWidgetStateStore.loadWidgetData(context)
 
         val needsFresh = data.lastUpdated == "--:--"
@@ -57,10 +62,7 @@ class PaymentsWidget : GlanceAppWidget() {
 
         provideContent {
             GlanceTheme {
-                PaymentsWidgetContent(
-                    data = data,
-                    backgroundOpacity = WidgetAppearancePreferences.getOpacity(context, WidgetKind.PAYMENTS)
-                )
+                PaymentsWidgetContent(data = data, backgroundOpacity = opacity)
             }
         }
     }

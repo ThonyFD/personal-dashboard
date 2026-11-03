@@ -30,6 +30,7 @@ import androidx.compose.ui.unit.dp
 import com.thonyfd.financedashboard.data.SupabaseConfig
 import com.thonyfd.financedashboard.data.auth.signOutWithFallback
 import com.thonyfd.financedashboard.ui.theme.AppColors
+import com.thonyfd.financedashboard.widget.clearAllAccountCaches
 import io.github.jan.supabase.auth.auth
 import kotlinx.coroutines.launch
 
@@ -89,6 +90,7 @@ fun AppMenuDrawer(drawerState: DrawerState, content: @Composable () -> Unit) {
                             signingOut = true
                             val auth = SupabaseConfig.client.auth
                             signOutWithFallback(signOut = { auth.signOut() }, clearSession = { auth.clearSession() })
+                            clearAllAccountCaches(context)
                             Toast.makeText(context, "¡Vuelve pronto!", Toast.LENGTH_SHORT).show()
                         }
                     }

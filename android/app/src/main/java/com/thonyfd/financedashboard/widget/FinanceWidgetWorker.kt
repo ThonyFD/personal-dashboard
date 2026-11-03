@@ -28,6 +28,12 @@ class FinanceWidgetWorker(
 
     private suspend fun refreshFinanceWidgets() {
         SupabaseConfig.awaitAuth()
+        if (!widgetIsOwner(context)) {
+            // Non-owner: nothing to fetch, just redraw the "No disponible" state
+            FinanceWidget().updateAll(context)
+            PaymentsWidget().updateAll(context)
+            return
+        }
         val repo = FinanceRepository()
         val today = LocalDate.now()
 
