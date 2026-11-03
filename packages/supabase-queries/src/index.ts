@@ -90,6 +90,7 @@ export {
   getHabitCompletionLog,
   isHabitDueOnDate,
   isHabitCompletedOnDate,
+  pendingFirst,
   updateUserHabit,
   upsertHabitLog,
 } from './habits.js';

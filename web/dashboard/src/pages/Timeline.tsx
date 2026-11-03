@@ -10,6 +10,7 @@ import {
   fetchUserHabits,
   getHabitCompletionSummary,
   isHabitDueOnDate,
+  pendingFirst,
   upsertHabitLog,
   type HabitLog,
   type UserHabit,
@@ -92,12 +93,13 @@ export default function Timeline() {
   }, [activePeriodLogs, dueHabits, today])
 
   const groupedHabits = useMemo(() => {
+    const ordered = pendingFirst(dueHabits, habit => Boolean(completionSummaryByHabitId.get(habit.id)?.isComplete))
     return {
-      MORNING: dueHabits.filter(habit => habit.dayBlock === 'MORNING'),
-      AFTERNOON: dueHabits.filter(habit => habit.dayBlock === 'AFTERNOON'),
-      EVENING: dueHabits.filter(habit => habit.dayBlock === 'EVENING'),
+      MORNING: ordered.filter(habit => habit.dayBlock === 'MORNING'),
+      AFTERNOON: ordered.filter(habit => habit.dayBlock === 'AFTERNOON'),
+      EVENING: ordered.filter(habit => habit.dayBlock === 'EVENING'),
     }
-  }, [dueHabits])
+  }, [dueHabits, completionSummaryByHabitId])
 
   const completedCount = dueHabits.filter(habit => completionSummaryByHabitId.get(habit.id)?.isComplete).length
   const progressRatio = dueHabits.length ? completedCount / dueHabits.length : 0

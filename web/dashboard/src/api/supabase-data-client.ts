@@ -50,6 +50,7 @@ import {
   getHabitCompletionLog,
   isHabitDueOnDate,
   isHabitCompletedOnDate,
+  pendingFirst,
 } from '@personal-dashboard/supabase-queries';
 
 // Re-export types consumed by web components
@@ -281,6 +282,7 @@ export {
   getHabitCompletionLog,
   isHabitDueOnDate,
   isHabitCompletedOnDate,
+  pendingFirst,
 };
 
 export const fetchHabitTemplates = () => _fetchHabitTemplates(supabase);

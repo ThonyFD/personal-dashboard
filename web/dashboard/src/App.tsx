@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route, Link, Navigate, useLocation, useNavigate 
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { AuthProvider, useAuth } from './contexts/AuthContext'
 import ProtectedRoute from './components/ProtectedRoute'
+import { FAREWELL_STATE, FarewellToast, SignOutConfirmDialog } from './components/SignOut'
 import Login from './pages/Login'
 import Overview from './pages/Overview'
 import Transactions from './pages/Transactions'
@@ -55,13 +56,15 @@ function Navigation() {
   const navigate = useNavigate()
   const location = useLocation()
   const [isMenuOpen, setIsMenuOpen] = React.useState(false)
+  const [confirmSignOut, setConfirmSignOut] = React.useState(false)
   const currentSection = location.pathname.startsWith('/azton') ? 'azton' : 'finance'
   const currentLinks = currentSection === 'azton' ? aztonLinks : financeLinks
 
   const handleSignOut = async () => {
     try {
       await signOut()
-      navigate('/login')
+      setConfirmSignOut(false)
+      navigate('/login', { state: FAREWELL_STATE })
     } catch (error) {
       console.error('Error signing out:', error)
     }
@@ -153,26 +156,38 @@ function Navigation() {
         <div className="menu-footer">
           <button
             onClick={() => {
-              handleSignOut()
               closeMenu()
+              setConfirmSignOut(true)
             }}
             className="menu-signout-btn"
           >
             <span className="menu-icon">🚪</span>
-            Sign Out
+            Cerrar sesión
           </button>
         </div>
       </div>
+
+      {confirmSignOut && (
+        <SignOutConfirmDialog onConfirm={handleSignOut} onCancel={() => setConfirmSignOut(false)} />
+      )}
     </nav>
   )
 }
 
 function AppContent() {
   const location = useLocation()
+  const navigate = useNavigate()
   const isFinanceSection = location.pathname.startsWith('/finance')
+  const showFarewell = Boolean((location.state as typeof FAREWELL_STATE | null)?.farewell)
+  // Clears the flag so a reload or back navigation does not show the toast again.
+  const dismissFarewell = React.useCallback(
+    () => navigate(location.pathname, { replace: true, state: null }),
+    [navigate, location.pathname],
+  )
 
   return (
     <div className="app">
+      {showFarewell && <FarewellToast onDone={dismissFarewell} />}
       <Navigation />
       {isFinanceSection && <AlertBanner />}
       <main className="main">

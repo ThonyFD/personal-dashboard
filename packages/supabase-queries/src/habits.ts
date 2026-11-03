@@ -384,3 +384,8 @@ function shiftDate(date: string, days: number): string {
   );
   return shifted.toISOString().slice(0, 10);
 }
+
+/** Pending items first, completed at the bottom; the original order is kept inside each group. */
+export function pendingFirst<T>(items: readonly T[], isCompleted: (item: T) => boolean): T[] {
+  return [...items].sort((a, b) => Number(isCompleted(a)) - Number(isCompleted(b)));
+}

@@ -5,6 +5,7 @@ import {
   getHabitCompletionSummary,
   isHabitCompletedOnDate,
   isHabitDueOnDate,
+  pendingFirst,
 } from './habits.js';
 import type { HabitLog, UserHabit } from './types.js';
 
@@ -98,5 +99,23 @@ describe('habit period completion', () => {
     const logs = [buildLog({ logDate: '2026-06-24' })];
 
     expect(computeStreak(habits, logs, '2026-06-26')).toBe(3);
+  });
+});
+
+describe('pendingFirst', () => {
+  it('moves completed items to the bottom keeping relative order', () => {
+    const items = [
+      { id: 'a', done: true },
+      { id: 'b', done: false },
+      { id: 'c', done: true },
+      { id: 'd', done: false },
+    ];
+    expect(pendingFirst(items, item => item.done).map(item => item.id)).toEqual(['b', 'd', 'a', 'c']);
+  });
+
+  it('does not mutate the input', () => {
+    const items = [{ id: 'a', done: true }, { id: 'b', done: false }];
+    pendingFirst(items, item => item.done);
+    expect(items.map(item => item.id)).toEqual(['a', 'b']);
   });
 });
