@@ -69,7 +69,7 @@ export async function upsertMoodLog(
         journal_text: params.journalText ?? null,
         updated_at: timestamp,
       },
-      { onConflict: 'log_date' },
+      { onConflict: 'user_id,log_date' },
     )
     .select('id')
     .single();

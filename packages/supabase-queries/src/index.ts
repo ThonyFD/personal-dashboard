@@ -102,3 +102,5 @@ export {
   fetchMoodTags,
   upsertMoodLog,
 } from './mood.js';
+
+export { fetchIsOwner } from './account.js';
