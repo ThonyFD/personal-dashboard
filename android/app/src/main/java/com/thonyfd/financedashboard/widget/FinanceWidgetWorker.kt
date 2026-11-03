@@ -1,6 +1,8 @@
 package com.thonyfd.financedashboard.widget
 
 import com.thonyfd.financedashboard.data.SupabaseConfig
+import com.thonyfd.financedashboard.data.auth.currentUserId
+import com.thonyfd.financedashboard.data.auth.sameAccount
 import android.content.Context
 import androidx.glance.appwidget.updateAll
 import androidx.work.CoroutineWorker
@@ -34,12 +36,15 @@ class FinanceWidgetWorker(
             PaymentsWidget().updateAll(context)
             return
         }
+        val account = SupabaseConfig.currentUserId()
         val repo = FinanceRepository()
         val today = LocalDate.now()
 
         // 1. Actualizar widget principal con el mes seleccionado
         val (year, month) = FinanceWidgetStateStore.getSelectedYearMonth(context)
         val mainData = repo.getWidgetData(year, month)
+        // Account switched while fetching: drop the previous account's data
+        if (!sameAccount(account, SupabaseConfig.currentUserId())) return
         FinanceWidgetStateStore.saveWidgetData(context, mainData)
         FinanceWidget().updateAll(context)
 
@@ -50,6 +55,7 @@ class FinanceWidgetWorker(
         } else {
             repo.getWidgetData(today.year, today.monthValue)
         }
+        if (!sameAccount(account, SupabaseConfig.currentUserId())) return
         PaymentsWidgetStateStore.saveWidgetData(context, currentData)
         PaymentsWidget().updateAll(context)
     }

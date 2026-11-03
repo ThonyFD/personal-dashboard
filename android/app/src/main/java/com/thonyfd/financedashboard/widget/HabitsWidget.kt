@@ -1,6 +1,8 @@
 package com.thonyfd.financedashboard.widget
 
 import com.thonyfd.financedashboard.data.SupabaseConfig
+import com.thonyfd.financedashboard.data.auth.currentUserId
+import com.thonyfd.financedashboard.data.auth.sameAccount
 import android.content.Context
 import android.content.Intent
 import androidx.compose.runtime.Composable
@@ -103,7 +105,10 @@ object HabitsWidgetRefresher {
     suspend fun refresh(context: Context): Boolean = mutex.withLock {
         HabitsWidgetStateStore.setRefreshing(context, true)
         SupabaseConfig.awaitAuth()
+        val account = SupabaseConfig.currentUserId()
         runCatching { HabitRepository().buildWidgetData(LocalDate.now()) }
+            // Account switched while fetching: drop the previous account's data
+            .mapCatching { check(sameAccount(account, SupabaseConfig.currentUserId())) { "account changed" }; it }
             .onSuccess { HabitsWidgetStateStore.saveWidgetData(context, it) }
             .onFailure { HabitsWidgetStateStore.setError(context) }
             .isSuccess

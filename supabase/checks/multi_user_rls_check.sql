@@ -6,6 +6,7 @@
 --   <HABITS_BEFORE>   SELECT count(*) FROM user_habits;  (taken before the migration)
 --   <LOGS_BEFORE>     SELECT count(*) FROM habit_logs;
 --   <MOODS_BEFORE>    SELECT count(*) FROM mood_logs;
+--   <TX_BEFORE>       SELECT count(*) FROM transactions;
 --
 -- Everything runs in one DO block that always ends with an exception, so every
 -- write (including the throwaway user) is rolled back. The results are in the
@@ -40,6 +41,7 @@ BEGIN
     results := results || format(' owner_sees_all_logs=%s', (SELECT count(*) FROM public.habit_logs) = <LOGS_BEFORE>);
     results := results || format(' owner_sees_all_moods=%s', (SELECT count(*) FROM public.mood_logs) = <MOODS_BEFORE>);
     results := results || format(' owner_is_owner=%s', public.is_owner());
+    results := results || format(' owner_sees_all_transactions=%s', (SELECT count(*) FROM public.transactions) = <TX_BEFORE>);
     INSERT INTO public.mood_logs (log_date, mood_score) VALUES ('2099-01-01', 3);
 
     -- Other account.
@@ -62,6 +64,24 @@ BEGIN
     END LOOP;
     finance_rows := finance_rows + (SELECT count(*) FROM public.get_pending_payments_next_days(30));
     results := results || format(' other_sees_no_finance=%s', finance_rows = 0);
+
+    BEGIN
+      INSERT INTO public.monthly_incomes DEFAULT VALUES;
+      ok := false;
+    -- RLS is checked before NOT NULL constraints, so only a policy denial counts as a pass
+    EXCEPTION
+      WHEN insufficient_privilege THEN ok := true;
+      WHEN others THEN ok := false;
+    END;
+    results := results || format(' other_cannot_write_finance=%s', ok);
+
+    BEGIN
+      DELETE FROM public.mood_tags;
+      GET DIAGNOSTICS n = ROW_COUNT;
+      ok := n = 0;
+    EXCEPTION WHEN others THEN ok := true;
+    END;
+    results := results || format(' other_cannot_delete_tags=%s', ok);
 
     INSERT INTO public.user_habits (name, day_block) VALUES ('rls check', 'MORNING') RETURNING id INTO other_habit;
     results := results || format(' other_can_insert_own_habit=%s', other_habit IS NOT NULL);
@@ -102,7 +122,8 @@ BEGIN
     FOREACH t IN ARRAY ARRAY[
       'user_habits', 'habit_logs', 'mood_logs', 'mood_checkins', 'mood_log_tags', 'habit_templates', 'mood_tags',
       'transactions', 'manual_transactions', 'monthly_incomes', 'categories', 'merchants',
-      'emails', 'gmail_sync_state', 'push_subscriptions', 'notification_preferences', 'system_alerts'
+      'emails', 'gmail_sync_state', 'push_subscriptions', 'notification_preferences', 'system_alerts',
+      'v_transactions', 'v_merchant_stats', 'v_pending_payments', 'v_habit_daily_completion'
     ] LOOP
       IF to_regclass('public.' || t) IS NOT NULL THEN
         BEGIN
@@ -113,6 +134,12 @@ BEGIN
       END IF;
     END LOOP;
     results := results || format(' anon_sees_nothing=%s', anon_rows = 0);
+    BEGIN
+      PERFORM public.is_owner();
+      ok := NOT public.is_owner();
+    EXCEPTION WHEN insufficient_privilege THEN ok := true;
+    END;
+    results := results || format(' anon_is_not_owner=%s', ok);
     RAISE EXCEPTION USING ERRCODE = 'ZZ001', MESSAGE = 'anon phase done';
   EXCEPTION WHEN SQLSTATE 'ZZ001' THEN NULL;
   END;

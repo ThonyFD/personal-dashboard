@@ -122,7 +122,7 @@ fun AppRoot(
     onExternalTabConsumed: () -> Unit = {}
 ) {
     var selectedTab by remember(isOwner) { mutableStateOf(startTab(isOwner)) }
-    var categoryDetail by remember { mutableStateOf<CategoryNavState?>(null) }
+    var categoryDetail by remember(isOwner) { mutableStateOf<CategoryNavState?>(null) }
 
     LaunchedEffect(externalNav) {
         if (externalNav != null) {
@@ -145,7 +145,7 @@ fun AppRoot(
         }
     }
 
-    if (categoryDetail != null) {
+    if (categoryDetail != null && isOwner) {
         val detail = categoryDetail!!
         CategoryDetailScreen(
             categoryName = detail.name,

@@ -32,10 +32,13 @@ import androidx.compose.ui.unit.sp
 import com.thonyfd.financedashboard.data.SupabaseConfig
 import com.thonyfd.financedashboard.data.auth.AuthGateState
 import com.thonyfd.financedashboard.data.auth.NETWORK_ERROR_MESSAGE
+import com.thonyfd.financedashboard.data.auth.AccountTracker
 import com.thonyfd.financedashboard.data.auth.OwnerCache
+import com.thonyfd.financedashboard.data.auth.shouldClearAccountCaches
 import com.thonyfd.financedashboard.data.auth.signInErrorMessage
 import com.thonyfd.financedashboard.data.auth.toGateState
 import com.thonyfd.financedashboard.ui.theme.AppColors
+import com.thonyfd.financedashboard.widget.clearAllAccountCaches
 import com.thonyfd.financedashboard.widget.refreshWidgetsForAccount
 import io.github.jan.supabase.auth.auth
 import io.github.jan.supabase.auth.status.SessionStatus
@@ -51,13 +54,29 @@ import io.github.jan.supabase.compose.auth.composeAuth
 fun LoginGate(content: @Composable (isOwner: Boolean) -> Unit) {
     val context = LocalContext.current
     val status by SupabaseConfig.client.auth.sessionStatus.collectAsState()
+    val gate = status.toGateState()
     val userId = (status as? SessionStatus.Authenticated)?.session?.user?.id
     // Keyed on the account so switching accounts never reuses the previous answer
-    val isOwner by produceState<Boolean?>(initialValue = null, userId) {
-        value = if (userId == null) OwnerCache.get(context) ?: false else OwnerCache.resolve(context)
-        if (userId != null) refreshWidgetsForAccount(context)
+    val isOwner by produceState<Boolean?>(initialValue = null, userId, gate) {
+        value = null
+        when {
+            userId != null -> {
+                // Another account was here before: its widget data must not show for this one
+                if (shouldClearAccountCaches(AccountTracker.get(context), userId)) clearAllAccountCaches(context)
+                AccountTracker.set(context, userId)
+                value = OwnerCache.resolve(context, userId)
+                refreshWidgetsForAccount(context)
+            }
+            // Offline refresh failure: same account as before, last known answer
+            gate == AuthGateState.LoggedIn -> value = OwnerCache.get(context, null) ?: false
+            // Signed out or session lost: nothing of the old account may stay on the widgets
+            gate == AuthGateState.LoggedOut && AccountTracker.get(context) != null -> {
+                clearAllAccountCaches(context)
+                AccountTracker.set(context, null)
+            }
+        }
     }
-    when (status.toGateState()) {
+    when (gate) {
         AuthGateState.Loading -> GateSpinner()
         AuthGateState.LoggedOut -> LoginScreen()
         AuthGateState.LoggedIn -> isOwner?.let { content(it) } ?: GateSpinner()

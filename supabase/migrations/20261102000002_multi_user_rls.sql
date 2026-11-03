@@ -89,7 +89,12 @@ CREATE POLICY "Owner updates catalog" ON public.habit_templates FOR UPDATE TO au
 CREATE POLICY "Owner deletes catalog" ON public.habit_templates FOR DELETE TO authenticated USING (public.is_owner());
 
 ALTER TABLE public.mood_tags ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "Shared tags" ON public.mood_tags FOR ALL TO authenticated USING (true) WITH CHECK (true);
+-- Anyone may read and add tags; only the owner may rename or delete them, because a
+-- delete cascades through mood_log_tags and would strip tags from other accounts' logs.
+CREATE POLICY "Read tags" ON public.mood_tags FOR SELECT TO authenticated USING (true);
+CREATE POLICY "Add tags" ON public.mood_tags FOR INSERT TO authenticated WITH CHECK (true);
+CREATE POLICY "Owner updates tags" ON public.mood_tags FOR UPDATE TO authenticated USING (public.is_owner()) WITH CHECK (public.is_owner());
+CREATE POLICY "Owner deletes tags" ON public.mood_tags FOR DELETE TO authenticated USING (public.is_owner());
 
 -- Finance and notifications: owner only. system_alerts came from the older
 -- packages/sql folder, so every table is guarded with to_regclass.
@@ -124,6 +129,37 @@ BEGIN
     EXECUTE format('REVOKE EXECUTE ON FUNCTION %s FROM PUBLIC, anon, authenticated', f.sig);
     EXECUTE format('GRANT EXECUTE ON FUNCTION %s TO service_role', f.sig);
   END LOOP;
+END $$;
+
+-- 5. Gap check: abort if anything in public still lets anon or other accounts around RLS.
+-- Objects created outside the repo (drift) surface here instead of staying open.
+DO $$
+DECLARE
+  problems text;
+BEGIN
+  SELECT string_agg(item, '; ') INTO problems FROM (
+    SELECT 'table without RLS: ' || c.relname AS item
+    FROM pg_class c JOIN pg_namespace n ON n.oid = c.relnamespace
+    WHERE n.nspname = 'public' AND c.relkind IN ('r', 'p') AND NOT c.relrowsecurity
+    UNION ALL
+    SELECT 'policy for public/anon: ' || tablename || '.' || policyname
+    FROM pg_policies
+    WHERE schemaname = 'public' AND (roles && ARRAY['public', 'anon']::name[])
+    UNION ALL
+    SELECT 'view without security_invoker: ' || c.relname
+    FROM pg_class c JOIN pg_namespace n ON n.oid = c.relnamespace
+    WHERE n.nspname = 'public' AND c.relkind IN ('v', 'm')
+      AND NOT coalesce(c.reloptions && ARRAY['security_invoker=on', 'security_invoker=true'], false)
+    UNION ALL
+    SELECT 'security definer function callable by clients: ' || p.oid::regprocedure::text
+    FROM pg_proc p JOIN pg_namespace n ON n.oid = p.pronamespace
+    WHERE n.nspname = 'public' AND p.prosecdef AND p.proname <> 'is_owner'
+      AND (has_function_privilege('anon', p.oid, 'EXECUTE') OR has_function_privilege('authenticated', p.oid, 'EXECUTE'))
+  ) gaps;
+
+  IF problems IS NOT NULL THEN
+    RAISE EXCEPTION 'multi-user gap check failed: %', problems;
+  END IF;
 END $$;
 
 COMMIT;

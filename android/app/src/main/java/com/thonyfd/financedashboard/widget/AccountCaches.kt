@@ -3,6 +3,7 @@ package com.thonyfd.financedashboard.widget
 import android.content.Context
 import com.thonyfd.financedashboard.data.SupabaseConfig
 import com.thonyfd.financedashboard.data.auth.OwnerCache
+import com.thonyfd.financedashboard.data.auth.currentUserId
 import kotlin.coroutines.cancellation.CancellationException
 
 /** Runs every clearer even when one fails, so one busy store never leaks the previous account's data. */
@@ -39,8 +40,8 @@ suspend fun refreshWidgetsForAccount(context: Context) {
  * Finance widgets render only for the owner. The cached answer is preferred so a
  * widget redraw does not hit the network; it is resolved online only when unknown.
  */
-suspend fun widgetIsOwner(context: Context): Boolean =
-    OwnerCache.get(context) ?: run {
-        SupabaseConfig.awaitAuth()
-        OwnerCache.resolve(context)
-    }
+suspend fun widgetIsOwner(context: Context): Boolean {
+    SupabaseConfig.awaitAuth()
+    val userId = SupabaseConfig.currentUserId() ?: return false
+    return OwnerCache.get(context, userId) ?: OwnerCache.resolve(context, userId)
+}
