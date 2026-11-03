@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route, Link, Navigate, useLocation, useNavigate 
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { AuthProvider, useAuth } from './contexts/AuthContext'
 import ProtectedRoute from './components/ProtectedRoute'
+import OwnerRoute, { DefaultRedirect, NON_OWNER_HOME } from './components/OwnerRoute'
 import { FAREWELL_STATE, FarewellToast, SignOutConfirmDialog } from './components/SignOut'
 import Login from './pages/Login'
 import Overview from './pages/Overview'
@@ -52,12 +53,12 @@ const aztonLinks = [
 ] as const
 
 function Navigation() {
-  const { user, signOut } = useAuth()
+  const { user, isOwner, signOut } = useAuth()
   const navigate = useNavigate()
   const location = useLocation()
   const [isMenuOpen, setIsMenuOpen] = React.useState(false)
   const [confirmSignOut, setConfirmSignOut] = React.useState(false)
-  const currentSection = location.pathname.startsWith('/azton') ? 'azton' : 'finance'
+  const currentSection = !isOwner || location.pathname.startsWith('/azton') ? 'azton' : 'finance'
   const currentLinks = currentSection === 'azton' ? aztonLinks : financeLinks
 
   const handleSignOut = async () => {
@@ -76,7 +77,7 @@ function Navigation() {
 
   return (
     <nav className="nav">
-      <div className="nav-brand" onClick={() => navigate('/')}>
+      <div className="nav-brand" onClick={() => navigate(isOwner ? '/' : NON_OWNER_HOME)}>
         <img src="/logo.svg" alt="Personal Dashboard" className="nav-logo" />
         <div className="nav-brand-copy">
           <h1>Personal Dashboard</h1>
@@ -116,25 +117,27 @@ function Navigation() {
           </div>
         </div>
 
-        <div className="menu-section-switcher">
-          <p className="menu-section-label">Secciones</p>
-          <div className="menu-section-buttons">
-            <Link
-              to="/finance/overview"
-              onClick={closeMenu}
-              className={currentSection === 'finance' ? 'is-active' : ''}
-            >
-              Finanzas
-            </Link>
-            <Link
-              to="/azton/timeline"
-              onClick={closeMenu}
-              className={currentSection === 'azton' ? 'is-active' : ''}
-            >
-              Azton
-            </Link>
+        {isOwner && (
+          <div className="menu-section-switcher">
+            <p className="menu-section-label">Secciones</p>
+            <div className="menu-section-buttons">
+              <Link
+                to="/finance/overview"
+                onClick={closeMenu}
+                className={currentSection === 'finance' ? 'is-active' : ''}
+              >
+                Finanzas
+              </Link>
+              <Link
+                to="/azton/timeline"
+                onClick={closeMenu}
+                className={currentSection === 'azton' ? 'is-active' : ''}
+              >
+                Azton
+              </Link>
+            </div>
           </div>
-        </div>
+        )}
 
         <div className="menu-links">
           <p className="menu-section-label">
@@ -177,6 +180,7 @@ function Navigation() {
 function AppContent() {
   const location = useLocation()
   const navigate = useNavigate()
+  const { isOwner } = useAuth()
   const isFinanceSection = location.pathname.startsWith('/finance')
   const showFarewell = Boolean((location.state as typeof FAREWELL_STATE | null)?.farewell)
   // Clears the flag so a reload or back navigation does not show the toast again.
@@ -189,7 +193,7 @@ function AppContent() {
     <div className="app">
       {showFarewell && <FarewellToast onDone={dismissFarewell} />}
       <Navigation />
-      {isFinanceSection && <AlertBanner />}
+      {isFinanceSection && isOwner && <AlertBanner />}
       <main className="main">
         <Routes>
           <Route path="/" element={<HomePage />} />
@@ -197,73 +201,73 @@ function AppContent() {
           <Route path="/terms" element={<TermsOfService />} />
           <Route path="/privacy" element={<PrivacyPolicy />} />
 
-          <Route path="/app" element={<Navigate to="/finance/overview" replace />} />
-          <Route path="/finance" element={<Navigate to="/finance/overview" replace />} />
+          <Route path="/app" element={<ProtectedRoute><DefaultRedirect /></ProtectedRoute>} />
+          <Route path="/finance" element={<ProtectedRoute><DefaultRedirect /></ProtectedRoute>} />
           <Route path="/azton" element={<Navigate to="/azton/timeline" replace />} />
 
           <Route path="/finance/overview" element={
             <ProtectedRoute>
-              <Overview />
+              <OwnerRoute><Overview /></OwnerRoute>
             </ProtectedRoute>
           } />
           <Route path="/finance/cashflow" element={
             <ProtectedRoute>
-              <CashFlow />
+              <OwnerRoute><CashFlow /></OwnerRoute>
             </ProtectedRoute>
           } />
           <Route path="/finance/monthly-control" element={
             <ProtectedRoute>
-              <MonthlyControl />
+              <OwnerRoute><MonthlyControl /></OwnerRoute>
             </ProtectedRoute>
           } />
           <Route path="/finance/recurring" element={
             <ProtectedRoute>
-              <Recurring />
+              <OwnerRoute><Recurring /></OwnerRoute>
             </ProtectedRoute>
           } />
           <Route path="/finance/goals" element={
             <ProtectedRoute>
-              <Goals />
+              <OwnerRoute><Goals /></OwnerRoute>
             </ProtectedRoute>
           } />
           <Route path="/finance/budgets" element={
             <ProtectedRoute>
-              <Budgets />
+              <OwnerRoute><Budgets /></OwnerRoute>
             </ProtectedRoute>
           } />
           <Route path="/finance/reports" element={
             <ProtectedRoute>
-              <Reports />
+              <OwnerRoute><Reports /></OwnerRoute>
             </ProtectedRoute>
           } />
           <Route path="/finance/exports" element={
             <ProtectedRoute>
-              <Exports />
+              <OwnerRoute><Exports /></OwnerRoute>
             </ProtectedRoute>
           } />
           <Route path="/finance/charts" element={
             <ProtectedRoute>
-              <Charts />
+              <OwnerRoute><Charts /></OwnerRoute>
             </ProtectedRoute>
           } />
           <Route path="/finance/transactions" element={
             <ProtectedRoute>
-              <Transactions />
+              <OwnerRoute><Transactions /></OwnerRoute>
             </ProtectedRoute>
           } />
           <Route path="/finance/merchants" element={
             <ProtectedRoute>
-              <Merchants />
+              <OwnerRoute><Merchants /></OwnerRoute>
             </ProtectedRoute>
           } />
           <Route path="/finance/categories" element={
             <ProtectedRoute>
-              <Categories />
+              <OwnerRoute><Categories /></OwnerRoute>
             </ProtectedRoute>
           } />
           <Route path="/finance/system-health" element={
             <ProtectedRoute>
-              <SystemHealth />
+              <OwnerRoute><SystemHealth /></OwnerRoute>
             </ProtectedRoute>
           } />
 

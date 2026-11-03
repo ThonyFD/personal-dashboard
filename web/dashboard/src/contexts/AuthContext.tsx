@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useEffect, useMemo, useState } from 'react';
 import type { Session, User } from '@supabase/supabase-js';
 import { supabase } from '../lib/supabase';
+import { fetchIsOwner } from '../api/supabase-data-client';
 
 // Normalized user shape compatible with what App.tsx expects
 export interface AppUser {
@@ -14,6 +15,8 @@ interface AuthContextType {
   user: AppUser | null;
   session: Session | null;
   loading: boolean;
+  /** Owner account: sees finances. False for every other account. */
+  isOwner: boolean;
   signInWithGoogle: () => Promise<void>;
   signOut: () => Promise<void>;
 }
@@ -40,25 +43,44 @@ function toAppUser(user: User): AppUser {
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<AppUser | null>(null);
   const [session, setSession] = useState<Session | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [sessionLoading, setSessionLoading] = useState(true);
+  const [owner, setOwner] = useState<{ userId: string; value: boolean } | null>(null);
 
   useEffect(() => {
     // Load initial session
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
       setUser(session?.user ? toAppUser(session.user) : null);
-      setLoading(false);
+      setSessionLoading(false);
     });
 
     // Subscribe to auth state changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setSession(session);
       setUser(session?.user ? toAppUser(session.user) : null);
-      setLoading(false);
+      setSessionLoading(false);
     });
 
     return () => subscription.unsubscribe();
   }, []);
+
+  // Ownership is resolved once per account; a failed lookup means no finance access.
+  const userId = user?.id;
+  useEffect(() => {
+    if (!userId) return;
+    let active = true;
+    fetchIsOwner()
+      .then(value => { if (active) setOwner({ userId, value }); })
+      .catch(error => {
+        console.error('Error checking account owner:', error);
+        if (active) setOwner({ userId, value: false });
+      });
+    return () => { active = false; };
+  }, [userId]);
+
+  const ownerKnown = !userId || owner?.userId === userId;
+  const isOwner = Boolean(userId && owner?.userId === userId && owner.value);
+  const loading = sessionLoading || !ownerKnown;
 
   const signInWithGoogle = async () => {
     const { error } = await supabase.auth.signInWithOAuth({
@@ -74,9 +96,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const value = useMemo(
-    () => ({ user, session, loading, signInWithGoogle, signOut }),
+    () => ({ user, session, loading, isOwner, signInWithGoogle, signOut }),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [user, session, loading],
+    [user, session, loading, isOwner],
   );
 
   return (

@@ -26,6 +26,7 @@ import {
   getActivePushSubscriptionsByEmail as _getActivePushSubscriptionsByEmail,
   getMaxPushSubscriptionId as _getMaxPushSubscriptionId,
   fetchUnresolvedAlerts as _fetchUnresolvedAlerts,
+  fetchIsOwner as _fetchIsOwner,
   resolveAlert as _resolveAlert,
   fetchHabitTemplates as _fetchHabitTemplates,
   fetchUserHabits as _fetchUserHabits,
@@ -271,6 +272,10 @@ export type { SystemAlert } from '@personal-dashboard/supabase-queries';
 
 export const fetchUnresolvedAlerts = () => _fetchUnresolvedAlerts(supabase);
 export const resolveAlert = (id: number) => _resolveAlert(supabase, id);
+
+// ─── Account ──────────────────────────────────────────────────────────────────
+
+export const fetchIsOwner = () => _fetchIsOwner(supabase);
 
 // ─── Azton Habits & Mood ─────────────────────────────────────────────────────
 
