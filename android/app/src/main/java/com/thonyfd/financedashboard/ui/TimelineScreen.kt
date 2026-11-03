@@ -5,6 +5,7 @@ import com.thonyfd.financedashboard.data.models.HabitIcons
 import com.thonyfd.financedashboard.ui.theme.MoneyStyle
 import androidx.compose.material3.TextButton
 import androidx.compose.material.icons.outlined.Refresh
+import androidx.compose.material.icons.outlined.Menu
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.draw.clip
 import androidx.compose.foundation.layout.size
@@ -65,7 +66,7 @@ import android.widget.Toast
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun TimelineScreen(padding: PaddingValues = PaddingValues()) {
+fun TimelineScreen(padding: PaddingValues = PaddingValues(), onOpenMenu: (() -> Unit)? = null) {
     val repo = remember { HabitRepository() }
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
@@ -120,6 +121,7 @@ fun TimelineScreen(padding: PaddingValues = PaddingValues()) {
             .padding(padding)
     ) {
         TopAppBar(
+            navigationIcon = { onOpenMenu?.let { AppIconButton(Icons.Outlined.Menu, "Menú", onClick = it) } },
             title = {
                 Column {
                     Text("Timeline", style = MaterialTheme.typography.titleLarge)

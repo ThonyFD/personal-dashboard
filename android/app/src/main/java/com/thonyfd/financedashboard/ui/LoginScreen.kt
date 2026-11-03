@@ -19,6 +19,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -31,26 +32,42 @@ import androidx.compose.ui.unit.sp
 import com.thonyfd.financedashboard.data.SupabaseConfig
 import com.thonyfd.financedashboard.data.auth.AuthGateState
 import com.thonyfd.financedashboard.data.auth.NETWORK_ERROR_MESSAGE
+import com.thonyfd.financedashboard.data.auth.OwnerCache
 import com.thonyfd.financedashboard.data.auth.signInErrorMessage
 import com.thonyfd.financedashboard.data.auth.toGateState
 import com.thonyfd.financedashboard.ui.theme.AppColors
 import io.github.jan.supabase.auth.auth
+import io.github.jan.supabase.auth.status.SessionStatus
 import io.github.jan.supabase.compose.auth.composable.NativeSignInResult
 import io.github.jan.supabase.compose.auth.composable.rememberSignInWithGoogle
 import io.github.jan.supabase.compose.auth.composeAuth
 
-/** Muestra [content] solo con sesión; mientras carga la sesión guardada no muestra el login. */
+/**
+ * Muestra [content] solo con sesión; mientras carga la sesión guardada no muestra el login.
+ * Con sesión, resuelve una vez si la cuenta es dueña antes de mostrar las pestañas.
+ */
 @Composable
-fun LoginGate(content: @Composable () -> Unit) {
+fun LoginGate(content: @Composable (isOwner: Boolean) -> Unit) {
+    val context = LocalContext.current
     val status by SupabaseConfig.client.auth.sessionStatus.collectAsState()
-    when (status.toGateState()) {
-        AuthGateState.Loading -> Box(
-            Modifier.fillMaxSize().background(AppColors.Night),
-            contentAlignment = Alignment.Center
-        ) { CircularProgressIndicator(color = AppColors.Cyan) }
-        AuthGateState.LoggedOut -> LoginScreen()
-        AuthGateState.LoggedIn -> content()
+    val userId = (status as? SessionStatus.Authenticated)?.session?.user?.id
+    // Keyed on the account so switching accounts never reuses the previous answer
+    val isOwner by produceState<Boolean?>(initialValue = null, userId) {
+        value = if (userId == null) OwnerCache.get(context) ?: false else OwnerCache.resolve(context)
     }
+    when (status.toGateState()) {
+        AuthGateState.Loading -> GateSpinner()
+        AuthGateState.LoggedOut -> LoginScreen()
+        AuthGateState.LoggedIn -> isOwner?.let { content(it) } ?: GateSpinner()
+    }
+}
+
+@Composable
+private fun GateSpinner() {
+    Box(
+        Modifier.fillMaxSize().background(AppColors.Night),
+        contentAlignment = Alignment.Center
+    ) { CircularProgressIndicator(color = AppColors.Cyan) }
 }
 
 @Composable

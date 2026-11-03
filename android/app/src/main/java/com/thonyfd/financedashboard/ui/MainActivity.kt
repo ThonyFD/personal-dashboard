@@ -69,8 +69,9 @@ class MainActivity : ComponentActivity() {
         externalTab = parseTabFromIntent(intent)
         setContent {
             FinanceDashboardTheme {
-                LoginGate {
+                LoginGate { isOwner ->
                     AppRoot(
+                        isOwner = isOwner,
                         externalNav = categoryNav,
                         onExternalConsumed = { categoryNav = null },
                         externalTab = externalTab,
@@ -114,27 +115,32 @@ class MainActivity : ComponentActivity() {
 // ---------------------------------------------------------------------------
 @Composable
 fun AppRoot(
+    isOwner: Boolean,
     externalNav: CategoryNavState? = null,
     onExternalConsumed: () -> Unit = {},
     externalTab: Int? = null,
     onExternalTabConsumed: () -> Unit = {}
 ) {
-    var selectedTab by remember { mutableIntStateOf(0) }
+    var selectedTab by remember(isOwner) { mutableStateOf(startTab(isOwner)) }
     var categoryDetail by remember { mutableStateOf<CategoryNavState?>(null) }
 
     LaunchedEffect(externalNav) {
         if (externalNav != null) {
-            selectedTab = 0
-            categoryDetail = externalNav
+            // Category detail is finance: non-owners never open it from a deep link
+            if (isOwner) {
+                selectedTab = AppTab.Inicio
+                categoryDetail = externalNav
+            }
             onExternalConsumed()
         }
     }
 
-
     LaunchedEffect(externalTab) {
-        externalTab?.let {
-            selectedTab = it.coerceIn(0, 4)
-            categoryDetail = null
+        externalTab?.let { index ->
+            resolveDeepLinkTab(index, isOwner)?.let {
+                selectedTab = it
+                categoryDetail = null
+            }
             onExternalTabConsumed()
         }
     }
@@ -157,21 +163,22 @@ fun AppRoot(
     AppMenuDrawer(drawerState) {
         Scaffold(
             containerColor = AppColors.Night,
-            bottomBar = { AppNavigationBar(selectedTab) { selectedTab = it } }
+            bottomBar = { AppNavigationBar(visibleTabs(isOwner), selectedTab) { selectedTab = it } }
         ) { innerPadding ->
+            val openMenu = { scope.launch { drawerState.open() }; Unit }
             when (selectedTab) {
-                0 -> DashboardTab(
+                AppTab.Inicio -> DashboardTab(
                     padding = innerPadding,
-                    onOpenMenu = { scope.launch { drawerState.open() } },
+                    onOpenMenu = openMenu,
                     onCategoryClick = { cat ->
                         val now = LocalDate.now()
                         categoryDetail = CategoryNavState(cat.name, cat.emoji, now.year, now.monthValue)
                     }
                 )
-                1 -> MonthlyControlScreen(innerPadding)
-                2 -> TimelineScreen(innerPadding)
-                3 -> HabitsScreen(innerPadding)
-                4 -> MoodScreen(innerPadding)
+                AppTab.Control -> MonthlyControlScreen(innerPadding)
+                AppTab.Timeline -> TimelineScreen(innerPadding, onOpenMenu = openMenu)
+                AppTab.Habitos -> HabitsScreen(innerPadding, onOpenMenu = openMenu)
+                AppTab.Mood -> MoodScreen(innerPadding, onOpenMenu = openMenu)
             }
         }
     }
@@ -580,25 +587,16 @@ private fun shortDate(raw: String): String = runCatching {
 // ---------------------------------------------------------------------------
 // Navegación inferior
 // ---------------------------------------------------------------------------
-private data class NavDestination(val label: String, val icon: ImageVector)
-
-private val navDestinations = listOf(
-    NavDestination("Inicio", Icons.Default.Home),
-    NavDestination("Control", Icons.Default.DateRange),
-    NavDestination("Timeline", Icons.Default.Timeline),
-    NavDestination("Hábitos", Icons.Default.AutoAwesome),
-    NavDestination("Mood", Icons.Default.Favorite)
-)
 
 @Composable
-private fun AppNavigationBar(selectedTab: Int, onSelect: (Int) -> Unit) {
+private fun AppNavigationBar(tabs: List<AppTab>, selectedTab: AppTab, onSelect: (AppTab) -> Unit) {
     Column {
         HorizontalDivider(thickness = 1.dp, color = AppColors.Hairline)
         NavigationBar(containerColor = AppColors.Deep, tonalElevation = 0.dp) {
-            navDestinations.forEachIndexed { index, destination ->
+            tabs.forEach { destination ->
                 NavigationBarItem(
-                    selected = selectedTab == index,
-                    onClick = { onSelect(index) },
+                    selected = selectedTab == destination,
+                    onClick = { onSelect(destination) },
                     icon = { Icon(destination.icon, destination.label) },
                     label = { Text(destination.label, style = MaterialTheme.typography.labelSmall) },
                     colors = NavigationBarItemDefaults.colors(

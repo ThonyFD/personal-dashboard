@@ -28,6 +28,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.ui.unit.sp
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material.icons.outlined.Refresh
+import androidx.compose.material.icons.outlined.Menu
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.draw.clip
 import androidx.compose.foundation.clickable
@@ -90,7 +91,7 @@ import android.widget.Toast
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
-fun MoodScreen(padding: PaddingValues = PaddingValues()) {
+fun MoodScreen(padding: PaddingValues = PaddingValues(), onOpenMenu: (() -> Unit)? = null) {
     val repo = remember { MoodRepository() }
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
@@ -171,6 +172,7 @@ fun MoodScreen(padding: PaddingValues = PaddingValues()) {
             .padding(padding)
     ) {
         TopAppBar(
+            navigationIcon = { onOpenMenu?.let { AppIconButton(Icons.Outlined.Menu, "Menú", onClick = it) } },
             title = {
                 Column {
                     Text("Mood", style = MaterialTheme.typography.titleLarge)

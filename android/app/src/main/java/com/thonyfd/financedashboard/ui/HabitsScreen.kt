@@ -3,6 +3,7 @@ package com.thonyfd.financedashboard.ui
 import com.thonyfd.financedashboard.ui.theme.AppColors
 import com.thonyfd.financedashboard.ui.theme.MoneyStyle
 import androidx.compose.material.icons.outlined.Refresh
+import androidx.compose.material.icons.outlined.Menu
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.draw.clip
@@ -100,7 +101,7 @@ import kotlin.math.ceil
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun HabitsScreen(padding: PaddingValues = PaddingValues()) {
+fun HabitsScreen(padding: PaddingValues = PaddingValues(), onOpenMenu: (() -> Unit)? = null) {
     val repo = remember { HabitRepository() }
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
@@ -158,6 +159,7 @@ fun HabitsScreen(padding: PaddingValues = PaddingValues()) {
             .padding(padding)
     ) {
         TopAppBar(
+            navigationIcon = { onOpenMenu?.let { AppIconButton(Icons.Outlined.Menu, "Menú", onClick = it) } },
             title = {
                 Column {
                     Text(
