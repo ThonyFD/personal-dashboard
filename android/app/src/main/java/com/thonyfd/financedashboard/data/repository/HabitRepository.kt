@@ -171,15 +171,18 @@ class HabitRepository {
             streak = streak,
             completedCount = habits.count { logsByHabit[it.id]?.status == "COMPLETED" },
             dueCount = habits.size,
-            items = habits.take(MAX_WIDGET_ITEMS).map { habit ->
-                HabitsWidgetItem(
-                    id = habit.id,
-                    name = habit.name,
-                    icon = HabitIcons.resolve(habit.iconIdentifier),
-                    colorHex = habit.colorHex,
-                    completed = logsByHabit[habit.id]?.status == "COMPLETED"
-                )
-            }
+            items = habits
+                .pendingFirst { logsByHabit[it.id]?.status == "COMPLETED" }
+                .take(MAX_WIDGET_ITEMS)
+                .map { habit ->
+                    HabitsWidgetItem(
+                        id = habit.id,
+                        name = habit.name,
+                        icon = HabitIcons.resolve(habit.iconIdentifier),
+                        colorHex = habit.colorHex,
+                        completed = logsByHabit[habit.id]?.status == "COMPLETED"
+                    )
+                }
         )
     }
 

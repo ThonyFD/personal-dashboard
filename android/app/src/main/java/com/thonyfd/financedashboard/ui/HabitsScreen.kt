@@ -87,6 +87,7 @@ import com.thonyfd.financedashboard.data.models.HabitTemplateRow
 import com.thonyfd.financedashboard.data.models.UserHabitInsert
 import com.thonyfd.financedashboard.data.models.UserHabitRow
 import com.thonyfd.financedashboard.data.repository.HabitRepository
+import com.thonyfd.financedashboard.data.repository.pendingFirst
 import com.thonyfd.financedashboard.widget.HabitsWidget
 import com.thonyfd.financedashboard.widget.HabitsWidgetStateStore
 import androidx.glance.appwidget.updateAll
@@ -182,7 +183,9 @@ fun HabitsScreen(padding: PaddingValues = PaddingValues()) {
                 CircularProgressIndicator(color = TimelinePrimary, strokeWidth = 2.dp, modifier = Modifier.size(32.dp))
             }
         } else {
-            val visibleHabits = habits.filter { selectedBlock == "ALL" || it.dayBlock == selectedBlock }
+            val visibleHabits = habits
+                .filter { selectedBlock == "ALL" || it.dayBlock == selectedBlock }
+                .pendingFirst { it.id in completedIds }
             val completed = habits.count { it.id in completedIds }
             val progress = if (habits.isEmpty()) 0f else completed.toFloat() / habits.size
             val today = LocalDate.now()

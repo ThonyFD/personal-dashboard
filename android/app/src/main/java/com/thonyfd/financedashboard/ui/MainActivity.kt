@@ -17,10 +17,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material.icons.outlined.Widgets
 import androidx.compose.material.icons.outlined.Refresh
-import androidx.compose.material.icons.automirrored.outlined.Logout
-import com.thonyfd.financedashboard.data.SupabaseConfig
-import com.thonyfd.financedashboard.data.auth.signOutWithFallback
-import io.github.jan.supabase.auth.auth
+import androidx.compose.material.icons.outlined.Menu
 import androidx.compose.foundation.border
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -154,22 +151,28 @@ fun AppRoot(
         return
     }
 
-    Scaffold(
-        containerColor = AppColors.Night,
-        bottomBar = { AppNavigationBar(selectedTab) { selectedTab = it } }
-    ) { innerPadding ->
-        when (selectedTab) {
-            0 -> DashboardTab(
-                padding = innerPadding,
-                onCategoryClick = { cat ->
-                    val now = LocalDate.now()
-                    categoryDetail = CategoryNavState(cat.name, cat.emoji, now.year, now.monthValue)
-                }
-            )
-            1 -> MonthlyControlScreen(innerPadding)
-            2 -> TimelineScreen(innerPadding)
-            3 -> HabitsScreen(innerPadding)
-            4 -> MoodScreen(innerPadding)
+    val drawerState = rememberDrawerState(DrawerValue.Closed)
+    val scope = rememberCoroutineScope()
+
+    AppMenuDrawer(drawerState) {
+        Scaffold(
+            containerColor = AppColors.Night,
+            bottomBar = { AppNavigationBar(selectedTab) { selectedTab = it } }
+        ) { innerPadding ->
+            when (selectedTab) {
+                0 -> DashboardTab(
+                    padding = innerPadding,
+                    onOpenMenu = { scope.launch { drawerState.open() } },
+                    onCategoryClick = { cat ->
+                        val now = LocalDate.now()
+                        categoryDetail = CategoryNavState(cat.name, cat.emoji, now.year, now.monthValue)
+                    }
+                )
+                1 -> MonthlyControlScreen(innerPadding)
+                2 -> TimelineScreen(innerPadding)
+                3 -> HabitsScreen(innerPadding)
+                4 -> MoodScreen(innerPadding)
+            }
         }
     }
 }
@@ -179,7 +182,7 @@ fun AppRoot(
 // ---------------------------------------------------------------------------
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun DashboardTab(padding: PaddingValues, onCategoryClick: (CategorySpend) -> Unit = {}) {
+fun DashboardTab(padding: PaddingValues, onOpenMenu: () -> Unit = {}, onCategoryClick: (CategorySpend) -> Unit = {}) {
     val repo = remember { FinanceRepository() }
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
@@ -214,6 +217,7 @@ fun DashboardTab(padding: PaddingValues, onCategoryClick: (CategorySpend) -> Uni
 
     Column(modifier = Modifier.fillMaxSize().padding(padding)) {
         TopAppBar(
+            navigationIcon = { AppIconButton(Icons.Outlined.Menu, "Menú", onClick = onOpenMenu) },
             title = {
                 Column {
                     Text("Finanzas", style = MaterialTheme.typography.titleLarge, color = AppColors.Ice)
@@ -227,12 +231,6 @@ fun DashboardTab(padding: PaddingValues, onCategoryClick: (CategorySpend) -> Uni
             actions = {
                 AppIconButton(Icons.Outlined.Widgets, "Apariencia de widgets", onClick = { showWidgetAppearance = true })
                 AppIconButton(Icons.Outlined.Refresh, "Actualizar", onClick = { load(showResult = true) }, loading = refreshing && data != null)
-                AppIconButton(Icons.AutoMirrored.Outlined.Logout, "Cerrar sesión", onClick = {
-                    scope.launch {
-                        val auth = SupabaseConfig.client.auth
-                        signOutWithFallback(signOut = { auth.signOut() }, clearSession = { auth.clearSession() })
-                    }
-                })
             },
             colors = TopAppBarDefaults.topAppBarColors(
                 containerColor = AppColors.Night,

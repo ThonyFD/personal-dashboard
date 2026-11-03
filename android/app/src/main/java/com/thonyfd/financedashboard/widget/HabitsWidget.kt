@@ -27,6 +27,7 @@ import androidx.glance.appwidget.action.actionStartActivity
 import androidx.glance.appwidget.cornerRadius
 import androidx.glance.appwidget.lazy.LazyColumn
 import androidx.glance.appwidget.lazy.items
+import com.thonyfd.financedashboard.data.repository.pendingFirst
 import androidx.glance.appwidget.provideContent
 import androidx.glance.background
 import androidx.glance.layout.Alignment
@@ -299,7 +300,7 @@ private fun ErrorBanner(lastUpdated: String) {
 @Composable
 private fun HabitList(data: HabitsWidgetData) {
     LazyColumn(modifier = GlanceModifier.fillMaxSize()) {
-        items(items = data.items, itemId = { it.id }) { item ->
+        items(items = data.items.pendingFirst { it.completed }, itemId = { it.id }) { item ->
             Column(modifier = GlanceModifier.fillMaxWidth()) {
                 HabitRow(item)
                 Spacer(GlanceModifier.height(5.dp))
