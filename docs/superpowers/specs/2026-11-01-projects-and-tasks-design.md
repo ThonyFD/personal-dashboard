@@ -37,7 +37,7 @@ This is a large feature expansion of the app, not a small "add categories" tweak
 
 ## Constraints
 
-- Backend: Supabase (Postgres + Storage). Migrations live in the repo's `supabase/migrations/` (authoritative; `/Users/thonyfd/supabase/migrations` is a drifted copy, not used) with `YYYYMMDDHHMMSS_name.sql` naming. Follow the existing single-user pattern: RLS enabled with `"Allow all for authenticated"` policies, `BIGSERIAL` ids, `created_at`/`updated_at` with the `update_updated_at_column()` trigger.
+- Backend: Supabase (Postgres + Storage). Migrations live in the repo's `supabase/migrations/` (authoritative; `/Users/thonyfd/supabase/migrations` is a drifted copy, not used) with `YYYYMMDDHHMMSS_name.sql` naming. Follow the per-user pattern from `docs/superpowers/specs/2026-11-02-multi-user-design.md`: every new table has `user_id uuid NOT NULL DEFAULT auth.uid() REFERENCES auth.users(id) ON DELETE CASCADE`, RLS enabled with `TO authenticated USING (user_id = auth.uid()) WITH CHECK (user_id = auth.uid())` (child rows also check that the parent belongs to `auth.uid()`), `BIGSERIAL` ids, `created_at`/`updated_at` with the `update_updated_at_column()` trigger.
 - Shared TypeScript queries go in `packages/supabase-queries/src` (new `projects.ts`, `tasks.ts`, types in `types.ts`, exported from `index.ts`), with tests next to them like `habits.test.ts`.
 - Android: Kotlin + Compose, supabase-kt Postgrest. Insert payloads that carry booleans/defaults that differ from DB defaults must use `@EncodeDefault` (see the `is_paid` bug fixed on 2026-11-01).
 - Visual style: follow `design/BRAND_BOOK.md` and the existing app components (`AppComponents.kt`, `appFieldColors()`, `AppColors`).
@@ -59,6 +59,7 @@ This is a large feature expansion of the app, not a small "add categories" tweak
 ```sql
 projects (
   id BIGSERIAL PK,
+  user_id UUID NOT NULL DEFAULT auth.uid(),        -- owner account (per-user RLS)
   name VARCHAR(80) NOT NULL,
   description TEXT,
   color_hex VARCHAR(7),
@@ -72,6 +73,7 @@ user_habits.project_id BIGINT NULL REFERENCES projects(id) ON DELETE SET NULL
 
 tasks (
   id BIGSERIAL PK,
+  user_id UUID NOT NULL DEFAULT auth.uid(),        -- owner account (per-user RLS)
   project_id BIGINT NULL REFERENCES projects(id) ON DELETE CASCADE,  -- NULL = inbox (no project)
   title VARCHAR(200) NOT NULL,
   notes TEXT,
@@ -87,6 +89,7 @@ tasks (
 
 task_checklist_items (
   id BIGSERIAL PK,
+  user_id UUID NOT NULL DEFAULT auth.uid(),        -- owner account (per-user RLS)
   task_id BIGINT NOT NULL REFERENCES tasks(id) ON DELETE CASCADE,
   title VARCHAR(200) NOT NULL,
   is_done BOOLEAN NOT NULL DEFAULT FALSE,
@@ -95,7 +98,7 @@ task_checklist_items (
 )
 ```
 
-CHECK constraints on `status` and `priority`. Indexes on `tasks(project_id, status)`, `tasks(due_date)`, `user_habits(project_id)`.
+CHECK constraints on `status` and `priority`. Indexes on `projects(user_id, sort_order)`, `tasks(user_id, status)`, `tasks(project_id, status)`, `tasks(due_date)`, `user_habits(project_id)`.
 
 Deleting a project: UI offers **archive** as the primary action; hard delete cascades tasks and unlinks habits (habits survive with `project_id = NULL`).
 
@@ -105,14 +108,14 @@ Deleting a project: UI offers **archive** as the primary action; hard delete cas
 - Add Supabase Auth with Google sign-in (Credential Manager / native Google ID token flow, or OAuth deep link; builder picks, preferring native ID token). Only the owner's Google account is expected.
 - Session persisted on device and auto-refreshed. Login screen shown when there is no session; existing screens unchanged after login.
 - Widgets, `HabitsDayRolloverReceiver`, and new reminder receivers must load the persisted session before calling Supabase, and degrade gracefully (show last cached state) if there is none.
-- Tightening RLS on existing tables to `authenticated` only is **out of scope** for this iteration but becomes possible afterwards; new storage policies are `authenticated` only from day one.
+- Existing tables are already split per user (habits, mood) and owner-only (finances) by `docs/superpowers/specs/2026-11-02-multi-user-design.md`, which supersedes the earlier "tightening RLS is out of scope" note. A habit may only link to a project of the same user.
 
 ## Images
 
-- Supabase Storage bucket `project-images`, private, with `storage.objects` policies for the `authenticated` role only (not anon). Bucket and policies are created in the same migration (insert into `storage.buckets`).
+- Supabase Storage bucket `project-images`, private, with `storage.objects` policies for the `authenticated` role only (not anon), restricted to the caller's own folder: `(storage.foldername(name))[1] = auth.uid()::text`. Bucket and policies are created in the same migration (insert into `storage.buckets`).
 - Display via signed URLs (or authenticated download) on both surfaces.
 - Accept PNG and JPG only. Client resizes/compresses before upload to max 1024px on the long edge, target under ~500 KB.
-- Path: `projects/{project_id}/{uuid}.{ext}`. Replacing an image uploads a new object, updates `image_path`, then deletes the old object.
+- Path: `{user_id}/{project_id}/{uuid}.{ext}` (the first folder is the owner's uid, which the storage policies check). Replacing an image uploads a new object, updates `image_path`, then deletes the old object.
 - Android: system photo picker (`PickVisualMedia`), needs adding `supabase-kt` storage module. Web: `<input type="file" accept="image/png,image/jpeg">`.
 
 ## Screens
