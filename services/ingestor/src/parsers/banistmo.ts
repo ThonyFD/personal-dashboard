@@ -174,6 +174,10 @@ export class BanistmoParser extends BaseParser {
       /transacci[oó]n:?\s*(\d+)/i,
       /comprobante:?\s*(\d+)/i,
       /referencia:?\s*(\d+)/i,
+      // Card purchases carry no comprobante, only an authorization code. Banistmo
+      // sometimes re-sends the same purchase alert minutes later; the shared code
+      // lets the (provider, reference_number) unique index drop the repeat.
+      /n[uú]mero\s+de\s+autorizaci[oó]n:?\s*([A-Z0-9]+)/i,
     ];
 
     for (const pattern of patterns) {

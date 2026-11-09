@@ -237,6 +237,21 @@ export class DatabaseClient {
   }
 
   /**
+   * Whether a transaction was already recorded for this email.
+   * Each email yields at most one transaction, so a re-parse must not insert
+   * another one even if the parser now produces a different idempotency key.
+   */
+  async hasTransactionForEmail(emailId: number): Promise<boolean> {
+    const { count, error } = await this.supabase
+      .from('transactions')
+      .select('id', { count: 'exact', head: true })
+      .eq('email_id', emailId);
+
+    if (error) throw error;
+    return (count ?? 0) > 0;
+  }
+
+  /**
    * Mark an email as parsed.
    */
   async markEmailParsed(emailId: number): Promise<void> {
