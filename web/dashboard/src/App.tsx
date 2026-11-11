@@ -4,6 +4,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { AuthProvider, useAuth } from './contexts/AuthContext'
 import ProtectedRoute from './components/ProtectedRoute'
 import OwnerRoute, { DefaultRedirect, NON_OWNER_HOME } from './components/OwnerRoute'
+import AppearanceSettings from './components/AppearanceSettings'
 import { FAREWELL_STATE, FarewellToast, SignOutConfirmDialog } from './components/SignOut'
 import Login from './pages/Login'
 import Overview from './pages/Overview'
@@ -156,6 +157,8 @@ function Navigation() {
             </Link>
           ))}
         </div>
+
+        <AppearanceSettings />
 
         <div className="menu-footer">
           <button
