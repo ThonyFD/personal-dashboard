@@ -26,6 +26,7 @@ import TermsOfService from './pages/TermsOfService'
 import PrivacyPolicy from './pages/PrivacyPolicy'
 import HomePage from './pages/HomePage'
 import AlertBanner from './components/AlertBanner'
+import { AppearanceProvider } from './theme/AppearanceContext'
 import './App.css'
 
 const queryClient = new QueryClient()
@@ -313,7 +314,9 @@ function App() {
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
         <BrowserRouter>
-          <AppContent />
+          <AppearanceProvider>
+            <AppContent />
+          </AppearanceProvider>
         </BrowserRouter>
       </AuthProvider>
     </QueryClientProvider>
