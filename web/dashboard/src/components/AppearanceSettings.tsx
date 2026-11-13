@@ -6,6 +6,7 @@ import './AppearanceSettings.css'
 // own colors regardless of the active variant, so CSS vars cannot be used here.
 const SKIN_SWATCHES: Partial<Record<Skin, { label: string; bg: string; surface: string; accent: string }>> = {
   brand: { label: 'Brand', bg: '#081022', surface: '#111A2E', accent: '#00D9FF' },
+  nothing: { label: 'Nothing', bg: '#000000', surface: '#111111', accent: '#E61921' },
 }
 
 const MODE_OPTIONS: { value: Mode; label: string }[] = [

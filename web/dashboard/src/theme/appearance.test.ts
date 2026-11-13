@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import {
   DEFAULT_APPEARANCE,
+  SELECTABLE_SKINS,
   STORAGE_KEY,
   effectiveAppearance,
   isPublicPath,
@@ -47,6 +48,24 @@ describe('loadAppearance', () => {
     expect(loadAppearance(storageWith('{"skin":"brand","mode":"light"}'))).toEqual({
       skin: 'brand',
       mode: 'light',
+    })
+  })
+
+  it('round-trips the nothing skin', () => {
+    expect(loadAppearance(storageWith('{"skin":"nothing","mode":"light"}'))).toEqual({
+      skin: 'nothing',
+      mode: 'light',
+    })
+  })
+
+  it('exposes brand and nothing as selectable', () => {
+    expect(SELECTABLE_SKINS).toEqual(['brand', 'nothing'])
+  })
+
+  it('still rejects glass in dark mode', () => {
+    expect(loadAppearance(storageWith('{"skin":"glass","mode":"dark"}'))).toEqual({
+      skin: 'brand',
+      mode: 'dark',
     })
   })
 

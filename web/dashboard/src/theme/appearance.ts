@@ -9,8 +9,8 @@ export interface Appearance {
 
 export const DEFAULT_APPEARANCE: Appearance = { skin: 'brand', mode: 'dark' }
 
-// Only brand is selectable in this phase; nothing and glass are typed but hidden.
-export const SELECTABLE_SKINS: readonly Skin[] = ['brand']
+// Brand and nothing are selectable; glass is typed but hidden.
+export const SELECTABLE_SKINS: readonly Skin[] = ['brand', 'nothing']
 
 export const STORAGE_KEY = 'appearance.v1'
 

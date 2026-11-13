@@ -18,12 +18,17 @@ describe('contrastRatio', () => {
   })
 })
 
+const nothingDark = parseTokenBlock(css, ':root[data-skin="nothing"]')
+const nothingLight = parseTokenBlock(css, ':root[data-skin="nothing"][data-variant="light"]')
+
 const variants: Array<[string, Record<string, string>]> = [
-  ['dark', dark],
-  ['light', light],
+  ['brand dark', dark],
+  ['brand light', light],
+  ['nothing dark', nothingDark],
+  ['nothing light', nothingLight],
 ]
 
-describe.each(variants)('brand %s tokens', (_name, t) => {
+describe.each(variants)('%s tokens', (_name, t) => {
   const c = (fg: string, bg: string) => contrastRatio(t[fg], t[bg])
   it('text tokens meet 4.5:1', () => {
     expect(c('--c-text', '--c-bg')).toBeGreaterThanOrEqual(4.5)
@@ -43,6 +48,9 @@ describe.each(variants)('brand %s tokens', (_name, t) => {
     expect(c('--c-on-accent', '--c-green')).toBeGreaterThanOrEqual(4.5)
     expect(c('--c-on-accent', '--c-negative')).toBeGreaterThanOrEqual(4.5)
   })
+  it('negative text meets 4.5:1 on bg', () => {
+    expect(c('--c-negative', '--c-bg')).toBeGreaterThanOrEqual(4.5)
+  })
   it('green text meets 4.5:1 on bg and surface', () => {
     expect(c('--c-green', '--c-bg')).toBeGreaterThanOrEqual(4.5)
     expect(c('--c-green', '--c-surface')).toBeGreaterThanOrEqual(4.5)
@@ -52,5 +60,16 @@ describe.each(variants)('brand %s tokens', (_name, t) => {
 describe('variant parity', () => {
   it('every dark token exists in light', () => {
     for (const k of Object.keys(dark)) expect(light, k).toHaveProperty(k)
+  })
+  it('every brand dark token exists in both nothing blocks', () => {
+    for (const k of Object.keys(dark)) {
+      expect(nothingDark, k).toHaveProperty(k)
+      expect(nothingLight, k).toHaveProperty(k)
+    }
+  })
+  it('brand blocks define the font tokens', () => {
+    for (const t of [dark, light]) {
+      for (const k of ['--f-display', '--f-numeric', '--f-label']) expect(t, k).toHaveProperty(k)
+    }
   })
 })

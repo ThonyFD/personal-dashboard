@@ -32,6 +32,9 @@
   --c-chart-8: #00A3BF;
   /* Typography */
   --f-heading: 'Space Grotesk', -apple-system, sans-serif;
+  --f-display: 'Space Grotesk', -apple-system, sans-serif;
+  --f-numeric: 'Space Grotesk', -apple-system, sans-serif;
+  --f-label: 'Manrope', -apple-system, sans-serif;
   --f-body: 'Manrope', -apple-system, sans-serif;
   /* Radius */
   --r-sm: 6px;
@@ -70,9 +73,93 @@
   --c-chart-7: #5E677A;
   --c-chart-8: #00A3BF;
   --f-heading: 'Space Grotesk', -apple-system, sans-serif;
+  --f-display: 'Space Grotesk', -apple-system, sans-serif;
+  --f-numeric: 'Space Grotesk', -apple-system, sans-serif;
+  --f-label: 'Manrope', -apple-system, sans-serif;
   --f-body: 'Manrope', -apple-system, sans-serif;
   --r-sm: 6px;
   --r-md: 10px;
   --r-lg: 14px;
   --r-xl: 18px;
+}
+
+/* Nothing skin: monochrome with a red accent. Scoped so Brand is untouched. */
+:root[data-skin="nothing"] {
+  --c-primary: #FFFFFF;
+  --c-green: #FFFFFF;
+  --c-violet: #808080;
+  --c-glow: #FFFFFF;
+  --c-white: #FFFFFF;
+  --c-bg: #000000;
+  --c-surface: #111111;
+  --c-surface-2: #0A0A0A;
+  --c-surface-raised: #1A1A1A;
+  --c-hairline: #2A2A2A;
+  --c-muted: #808080;
+  --c-border: color-mix(in srgb, #FFFFFF 14%, transparent);
+  --c-border-violet: color-mix(in srgb, #808080 20%, transparent);
+  --c-text: #FFFFFF;
+  --c-text-2: #B3B3B3;
+  --c-text-3: #808080;
+  --c-negative: #E61921;
+  --c-warning: #E0B040;
+  --c-on-accent: #000000;
+  --c-scrim: #000000;
+  --c-chart-1: #FFFFFF;
+  --c-chart-2: #E61921;
+  --c-chart-3: #A6A6A6;
+  --c-chart-4: #6E6E6E;
+  --c-chart-5: #E0B040;
+  --c-chart-6: #FF6A70;
+  --c-chart-7: #4D4D4D;
+  --c-chart-8: #CFCFCF;
+  --f-heading: 'Space Mono', ui-monospace, monospace;
+  --f-display: 'Doto', 'Space Mono', ui-monospace, monospace;
+  --f-numeric: 'Space Mono', ui-monospace, monospace;
+  --f-label: 'Space Mono', ui-monospace, monospace;
+  --f-body: 'Inter', -apple-system, sans-serif;
+  --r-sm: 4px;
+  --r-md: 8px;
+  --r-lg: 12px;
+  --r-xl: 16px;
+}
+
+:root[data-skin="nothing"][data-variant="light"] {
+  --c-primary: #000000;
+  --c-green: #000000;
+  --c-violet: #6E6E6E;
+  --c-glow: #000000;
+  --c-white: #FFFFFF;
+  --c-bg: #F2F2F2;
+  --c-surface: #FFFFFF;
+  --c-surface-2: #EAEAEA;
+  --c-surface-raised: #E0E0E0;
+  --c-hairline: #CCCCCC;
+  --c-muted: #6E6E6E;
+  --c-border: color-mix(in srgb, #000000 14%, transparent);
+  --c-border-violet: color-mix(in srgb, #6E6E6E 20%, transparent);
+  --c-text: #000000;
+  --c-text-2: #4D4D4D;
+  --c-text-3: #6E6E6E;
+  --c-negative: #C8102E;
+  --c-warning: #8A6100;
+  --c-on-accent: #FFFFFF;
+  --c-scrim: #000000;
+  --c-chart-1: #000000;
+  --c-chart-2: #C8102E;
+  --c-chart-3: #6E6E6E;
+  --c-chart-4: #A6A6A6;
+  --c-chart-5: #8A6100;
+  --c-chart-6: #E0404A;
+  --c-chart-7: #333333;
+  --c-chart-8: #8C8C8C;
+  --f-heading: 'Space Mono', ui-monospace, monospace;
+  --f-display: 'Doto', 'Space Mono', ui-monospace, monospace;
+  --f-numeric: 'Space Mono', ui-monospace, monospace;
+  --f-label: 'Space Mono', ui-monospace, monospace;
+  --f-body: 'Inter', -apple-system, sans-serif;
+  --r-sm: 4px;
+  --r-md: 8px;
+  --r-lg: 12px;
+  --r-xl: 16px;
 }
