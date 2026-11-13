@@ -42,7 +42,7 @@
 
 :root[data-variant="light"] {
   --c-primary: #007C99;
-  --c-green: #2A8C0F;
+  --c-green: #237A0C;
   --c-violet: #5B3FE0;
   --c-glow: #081022;
   --c-white: #FFFFFF;
@@ -53,7 +53,7 @@
   --c-hairline: #D3DEE6;
   --c-muted: #5E677A;
   --c-border: color-mix(in srgb, #007C99 18%, transparent);
-  --c-border-violet: rgba(122, 92, 255, 0.2);
+  --c-border-violet: color-mix(in srgb, var(--c-violet) 20%, transparent);
   --c-text: #081022;
   --c-text-2: #3E4A5E;
   --c-text-3: #5E677A;
@@ -62,7 +62,7 @@
   --c-on-accent: #FFFFFF;
   --c-scrim: #000000;
   --c-chart-1: #007C99;
-  --c-chart-2: #2A8C0F;
+  --c-chart-2: #237A0C;
   --c-chart-3: #5B3FE0;
   --c-chart-4: #C8304A;
   --c-chart-5: #9A5B00;

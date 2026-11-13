@@ -6,7 +6,7 @@
   align-items: center;
   justify-content: center;
   padding: 16px;
-  background: color-mix(in srgb, var(--c-bg) 72%, transparent);
+  background: color-mix(in srgb, var(--c-scrim) 72%, transparent);
   backdrop-filter: blur(4px);
 }
 

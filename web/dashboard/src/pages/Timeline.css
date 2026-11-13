@@ -231,7 +231,7 @@
 .timeline-modal-backdrop {
   position: fixed;
   inset: 0;
-  background: color-mix(in srgb, var(--c-bg) 72%, transparent);
+  background: color-mix(in srgb, var(--c-scrim) 72%, transparent);
   display: grid;
   place-items: center;
   padding: 1rem;

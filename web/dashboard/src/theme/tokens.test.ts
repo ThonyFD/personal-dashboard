@@ -39,6 +39,14 @@ describe.each(variants)('brand %s tokens', (_name, t) => {
   it('on-accent over primary meets 4.5:1', () => {
     expect(c('--c-on-accent', '--c-primary')).toBeGreaterThanOrEqual(4.5)
   })
+  it('on-accent over green and negative meets 4.5:1', () => {
+    expect(c('--c-on-accent', '--c-green')).toBeGreaterThanOrEqual(4.5)
+    expect(c('--c-on-accent', '--c-negative')).toBeGreaterThanOrEqual(4.5)
+  })
+  it('green text meets 4.5:1 on bg and surface', () => {
+    expect(c('--c-green', '--c-bg')).toBeGreaterThanOrEqual(4.5)
+    expect(c('--c-green', '--c-surface')).toBeGreaterThanOrEqual(4.5)
+  })
 })
 
 describe('variant parity', () => {

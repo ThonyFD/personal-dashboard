@@ -19,7 +19,7 @@ function prettyLabel(key: string): string {
 // Render any DB value as a display string. Special-cases amount, booleans and nulls.
 function renderValue(key: string, value: unknown, txnType: string): { text: string; color?: string } {
   if (value === null || value === undefined || value === '') {
-    return { text: '—', color: 'var(--c-muted)' }
+    return { text: '-', color: 'var(--c-muted)' }
   }
   if (key === 'amount') {
     return {
