@@ -435,7 +435,7 @@ function HabitListItem({
 }>) {
   return (
     <article className="habit-item">
-      <div className="habit-item-accent" style={{ background: habit.colorHex ?? '#00D9FF' }} />
+      <div className="habit-item-accent" style={{ background: habit.colorHex ?? 'var(--c-primary)' }} />
       <div className="habit-item-copy">
         <strong>{habit.name}</strong>
         <span>

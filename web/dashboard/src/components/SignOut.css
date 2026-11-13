@@ -6,7 +6,7 @@
   align-items: center;
   justify-content: center;
   padding: 16px;
-  background: rgba(8, 16, 34, 0.72);
+  background: color-mix(in srgb, var(--c-bg) 72%, transparent);
   backdrop-filter: blur(4px);
 }
 
@@ -59,9 +59,9 @@
 }
 
 .signout-confirm {
-  background: #160808;
-  color: #ff6b6b;
-  border: 1px solid rgba(229, 62, 62, 0.45);
+  background: color-mix(in srgb, var(--c-negative) 10%, transparent);
+  color: var(--c-negative);
+  border: 1px solid color-mix(in srgb, var(--c-negative) 45%, transparent);
 }
 
 .farewell-toast {
@@ -77,5 +77,5 @@
   color: var(--c-text);
   font-family: var(--f-body);
   font-weight: 600;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+  box-shadow: 0 8px 24px color-mix(in srgb, var(--c-scrim) 35%, transparent);
 }

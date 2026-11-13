@@ -14,10 +14,10 @@
   border-radius: 22px;
   border: 1px solid var(--c-border-violet);
   background:
-    radial-gradient(circle at top right, rgba(0, 217, 255, 0.08), transparent 42%),
-    radial-gradient(circle at bottom left, rgba(122, 92, 255, 0.08), transparent 42%),
-    linear-gradient(180deg, rgba(17, 26, 46, 0.96), rgba(8, 16, 34, 0.96));
-  box-shadow: 0 22px 60px rgba(0, 0, 0, 0.26);
+    radial-gradient(circle at top right, color-mix(in srgb, var(--c-primary) 8%, transparent), transparent 42%),
+    radial-gradient(circle at bottom left, color-mix(in srgb, var(--c-violet) 8%, transparent), transparent 42%),
+    linear-gradient(180deg, color-mix(in srgb, var(--c-surface) 96%, transparent), color-mix(in srgb, var(--c-bg) 96%, transparent));
+  box-shadow: 0 22px 60px color-mix(in srgb, var(--c-scrim) 26%, transparent);
 }
 
 .mood-header {
@@ -56,8 +56,8 @@
   min-height: 48px;
   padding: 0.85rem 1.2rem;
   border-radius: 999px;
-  border: 1px solid rgba(57, 255, 20, 0.3);
-  background: rgba(57, 255, 20, 0.12);
+  border: 1px solid color-mix(in srgb, var(--c-green) 30%, transparent);
+  background: color-mix(in srgb, var(--c-green) 12%, transparent);
   color: var(--c-green);
   font-weight: 700;
   font-family: var(--f-body);
@@ -83,8 +83,8 @@
 .mood-scale button,
 .mood-tag-list button {
   border-radius: 18px;
-  border: 1px solid rgba(0, 217, 255, 0.12);
-  background: rgba(8, 16, 34, 0.72);
+  border: 1px solid color-mix(in srgb, var(--c-primary) 12%, transparent);
+  background: color-mix(in srgb, var(--c-bg) 72%, transparent);
   color: var(--c-text-2);
   cursor: pointer;
   transition: all 0.2s ease;
@@ -113,10 +113,10 @@
 
 .mood-scale button.is-selected,
 .mood-tag-list button.is-selected {
-  border-color: rgba(0, 217, 255, 0.36);
-  background: linear-gradient(180deg, rgba(0, 217, 255, 0.14), rgba(122, 92, 255, 0.12));
+  border-color: color-mix(in srgb, var(--c-primary) 36%, transparent);
+  background: linear-gradient(180deg, color-mix(in srgb, var(--c-primary) 14%, transparent), color-mix(in srgb, var(--c-violet) 12%, transparent));
   color: var(--c-glow);
-  box-shadow: 0 0 26px rgba(0, 217, 255, 0.12);
+  box-shadow: 0 0 26px color-mix(in srgb, var(--c-primary) 12%, transparent);
 }
 
 .mood-field {
@@ -162,8 +162,8 @@
 .mood-history-card {
   padding: 0.95rem 1rem;
   border-radius: 18px;
-  border: 1px solid rgba(0, 217, 255, 0.12);
-  background: rgba(8, 16, 34, 0.72);
+  border: 1px solid color-mix(in srgb, var(--c-primary) 12%, transparent);
+  background: color-mix(in srgb, var(--c-bg) 72%, transparent);
 }
 
 .mood-history-top {
@@ -195,7 +195,7 @@
 .mood-history-tags span {
   padding: 0.35rem 0.65rem;
   border-radius: 999px;
-  background: rgba(122, 92, 255, 0.16);
+  background: color-mix(in srgb, var(--c-violet) 16%, transparent);
   color: var(--c-glow);
   font-size: 0.78rem;
 }
@@ -203,7 +203,7 @@
 .mood-empty-state {
   padding: 1rem;
   border-radius: 16px;
-  border: 1px dashed rgba(0, 217, 255, 0.18);
+  border: 1px dashed color-mix(in srgb, var(--c-primary) 18%, transparent);
   color: var(--c-text-2);
 }
 

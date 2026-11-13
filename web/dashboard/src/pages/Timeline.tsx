@@ -213,7 +213,7 @@ export default function Timeline() {
                       >
                         {completed ? '✓' : isProgressLoggedToday ? '•' : ''}
                       </button>
-                      <div className="timeline-habit-icon" style={{ background: habit.colorHex ?? 'rgba(0,217,255,0.14)' }}>
+                      <div className="timeline-habit-icon" style={{ background: habit.colorHex ?? 'color-mix(in srgb, var(--c-primary) 14%, transparent)' }}>
                         {resolveHabitIcon(habit.iconIdentifier)}
                       </div>
                       <div className="timeline-habit-copy">

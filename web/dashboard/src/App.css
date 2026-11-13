@@ -16,12 +16,12 @@
   padding: 2.5rem 2rem;
   border-radius: 24px;
   background:
-    radial-gradient(ellipse at top right, rgba(0, 217, 255, 0.1) 0%, transparent 50%),
-    radial-gradient(ellipse at bottom left, rgba(122, 92, 255, 0.08) 0%, transparent 50%),
+    radial-gradient(ellipse at top right, color-mix(in srgb, var(--c-primary) 10%, transparent) 0%, transparent 50%),
+    radial-gradient(ellipse at bottom left, color-mix(in srgb, var(--c-violet) 8%, transparent) 0%, transparent 50%),
     var(--c-surface);
   border: 1px solid var(--c-border-violet);
   color: var(--c-text);
-  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.4);
+  box-shadow: 0 24px 60px color-mix(in srgb, var(--c-scrim) 40%, transparent);
   position: relative;
   overflow: hidden;
 }
@@ -30,7 +30,7 @@
   content: '';
   position: absolute;
   inset: 0;
-  background: radial-gradient(ellipse at 70% 20%, rgba(57, 255, 20, 0.04) 0%, transparent 60%);
+  background: radial-gradient(ellipse at 70% 20%, color-mix(in srgb, var(--c-green) 4%, transparent) 0%, transparent 60%);
   pointer-events: none;
 }
 
@@ -40,7 +40,7 @@
   border-radius: 20px;
   margin-bottom: 1rem;
   display: block;
-  box-shadow: 0 0 32px rgba(57, 255, 20, 0.2), 0 0 16px rgba(0, 217, 255, 0.15);
+  box-shadow: 0 0 32px color-mix(in srgb, var(--c-green) 20%, transparent), 0 0 16px color-mix(in srgb, var(--c-primary) 15%, transparent);
   position: relative;
   z-index: 1;
 }
@@ -107,26 +107,26 @@
 
 .marketing-primary {
   background: var(--c-green);
-  color: #081022;
-  box-shadow: 0 0 24px rgba(57, 255, 20, 0.35), 0 8px 24px rgba(0, 0, 0, 0.25);
+  color: var(--c-on-accent);
+  box-shadow: 0 0 24px color-mix(in srgb, var(--c-green) 35%, transparent), 0 8px 24px color-mix(in srgb, var(--c-scrim) 25%, transparent);
 }
 
 .marketing-primary:hover {
   transform: translateY(-2px);
-  box-shadow: 0 0 36px rgba(57, 255, 20, 0.55), 0 12px 30px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 0 36px color-mix(in srgb, var(--c-green) 55%, transparent), 0 12px 30px color-mix(in srgb, var(--c-scrim) 30%, transparent);
 }
 
 .marketing-secondary {
   color: var(--c-primary);
-  border: 1px solid rgba(0, 217, 255, 0.35);
-  background: rgba(0, 217, 255, 0.06);
+  border: 1px solid color-mix(in srgb, var(--c-primary) 35%, transparent);
+  background: color-mix(in srgb, var(--c-primary) 6%, transparent);
 }
 
 .marketing-secondary:hover {
   transform: translateY(-2px);
-  background: rgba(0, 217, 255, 0.12);
-  border-color: rgba(0, 217, 255, 0.6);
-  box-shadow: 0 0 20px rgba(0, 217, 255, 0.15);
+  background: color-mix(in srgb, var(--c-primary) 12%, transparent);
+  border-color: color-mix(in srgb, var(--c-primary) 60%, transparent);
+  box-shadow: 0 0 20px color-mix(in srgb, var(--c-primary) 15%, transparent);
 }
 
 .marketing-card-grid {
@@ -146,17 +146,17 @@
   border-radius: 20px;
   border: 1px solid var(--c-border-violet);
   background:
-    radial-gradient(circle at top right, rgba(0, 217, 255, 0.08), transparent 40%),
-    linear-gradient(180deg, rgba(17, 26, 46, 0.96), rgba(8, 16, 34, 0.98));
-  box-shadow: 0 18px 50px rgba(0, 0, 0, 0.28);
+    radial-gradient(circle at top right, color-mix(in srgb, var(--c-primary) 8%, transparent), transparent 40%),
+    linear-gradient(180deg, color-mix(in srgb, var(--c-surface) 96%, transparent), color-mix(in srgb, var(--c-bg) 98%, transparent));
+  box-shadow: 0 18px 50px color-mix(in srgb, var(--c-scrim) 28%, transparent);
 }
 
 .marketing-selector-card.finance {
-  border-color: rgba(0, 217, 255, 0.22);
+  border-color: color-mix(in srgb, var(--c-primary) 22%, transparent);
 }
 
 .marketing-selector-card.azton {
-  border-color: rgba(122, 92, 255, 0.28);
+  border-color: color-mix(in srgb, var(--c-violet) 28%, transparent);
 }
 
 .marketing-selector-tag {
@@ -203,7 +203,7 @@
   height: 6px;
   border-radius: 999px;
   background: linear-gradient(135deg, var(--c-primary), var(--c-green));
-  box-shadow: 0 0 12px rgba(0, 217, 255, 0.3);
+  box-shadow: 0 0 12px color-mix(in srgb, var(--c-primary) 30%, transparent);
 }
 
 .marketing-selector-cta {
@@ -215,12 +215,12 @@
   border-radius: 16px;
   background: var(--c-surface);
   border: 1px solid var(--c-border);
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 4px 20px color-mix(in srgb, var(--c-scrim) 20%, transparent);
   transition: border-color 0.25s ease, transform 0.25s ease;
 }
 
 .marketing-card:hover {
-  border-color: rgba(0, 217, 255, 0.28);
+  border-color: color-mix(in srgb, var(--c-primary) 28%, transparent);
   transform: translateY(-2px);
 }
 
@@ -279,7 +279,7 @@
 
 /* ─── Navigation ────────────────────────────────────────────────── */
 .nav {
-  background: rgba(8, 16, 34, 0.95);
+  background: color-mix(in srgb, var(--c-bg) 95%, transparent);
   backdrop-filter: blur(14px);
   -webkit-backdrop-filter: blur(14px);
   border-bottom: 1px solid var(--c-border);
@@ -318,7 +318,7 @@
   width: 36px;
   border-radius: 8px;
   flex-shrink: 0;
-  box-shadow: 0 0 12px rgba(57, 255, 20, 0.2);
+  box-shadow: 0 0 12px color-mix(in srgb, var(--c-green) 20%, transparent);
 }
 
 .nav-brand:hover {
@@ -357,11 +357,11 @@
 }
 
 .hamburger-btn:hover {
-  background-color: rgba(0, 217, 255, 0.08);
+  background-color: color-mix(in srgb, var(--c-primary) 8%, transparent);
 }
 
 .hamburger-btn:active {
-  background-color: rgba(0, 217, 255, 0.14);
+  background-color: color-mix(in srgb, var(--c-primary) 14%, transparent);
 }
 
 .hamburger-icon {
@@ -401,7 +401,7 @@
   left: 0;
   right: 0;
   bottom: 0;
-  background-color: rgba(0, 0, 0, 0.72);
+  background-color: color-mix(in srgb, var(--c-scrim) 72%, transparent);
   z-index: 999;
   animation: fadeIn 0.2s ease;
 }
@@ -420,7 +420,7 @@
   height: 100vh;
   background: var(--c-surface-2);
   border-left: 1px solid var(--c-border-violet);
-  box-shadow: -8px 0 48px rgba(0, 0, 0, 0.55);
+  box-shadow: -8px 0 48px color-mix(in srgb, var(--c-scrim) 55%, transparent);
   z-index: 1000;
   transition: right 0.3s ease;
   display: flex;
@@ -434,7 +434,7 @@
 
 .menu-header {
   background:
-    radial-gradient(circle at top right, rgba(0, 217, 255, 0.08) 0%, transparent 60%),
+    radial-gradient(circle at top right, color-mix(in srgb, var(--c-primary) 8%, transparent) 0%, transparent 60%),
     var(--c-surface);
   padding: 1.5rem 1rem;
   display: flex;
@@ -447,8 +447,8 @@
   width: 48px;
   height: 48px;
   border-radius: 50%;
-  border: 2px solid rgba(0, 217, 255, 0.35);
-  box-shadow: 0 0 12px rgba(0, 217, 255, 0.18);
+  border: 2px solid color-mix(in srgb, var(--c-primary) 35%, transparent);
+  box-shadow: 0 0 12px color-mix(in srgb, var(--c-primary) 18%, transparent);
 }
 
 .menu-user-info {
@@ -512,18 +512,18 @@
   min-height: 40px;
   border-radius: 999px;
   text-decoration: none;
-  background: rgba(0, 217, 255, 0.04);
-  border: 1px solid rgba(0, 217, 255, 0.12);
+  background: color-mix(in srgb, var(--c-primary) 4%, transparent);
+  border: 1px solid color-mix(in srgb, var(--c-primary) 12%, transparent);
   color: var(--c-text-2);
   font-size: 0.84rem;
   font-weight: 700;
 }
 
 .menu-section-buttons a.is-active {
-  background: rgba(0, 217, 255, 0.14);
-  border-color: rgba(0, 217, 255, 0.35);
+  background: color-mix(in srgb, var(--c-primary) 14%, transparent);
+  border-color: color-mix(in srgb, var(--c-primary) 35%, transparent);
   color: var(--c-primary);
-  box-shadow: 0 0 20px rgba(0, 217, 255, 0.12);
+  box-shadow: 0 0 20px color-mix(in srgb, var(--c-primary) 12%, transparent);
 }
 
 .menu-links a {
@@ -540,19 +540,19 @@
 }
 
 .menu-links a.is-current {
-  background-color: rgba(0, 217, 255, 0.08);
+  background-color: color-mix(in srgb, var(--c-primary) 8%, transparent);
   border-left-color: var(--c-primary);
   color: var(--c-primary);
 }
 
 .menu-links a:hover {
-  background-color: rgba(0, 217, 255, 0.05);
+  background-color: color-mix(in srgb, var(--c-primary) 5%, transparent);
   border-left-color: var(--c-primary);
   color: var(--c-primary);
 }
 
 .menu-links a:active {
-  background-color: rgba(0, 217, 255, 0.08);
+  background-color: color-mix(in srgb, var(--c-primary) 8%, transparent);
 }
 
 .menu-icon {
@@ -574,9 +574,9 @@
   justify-content: center;
   gap: 0.75rem;
   padding: 0.75rem 1rem;
-  background: #160808;
-  color: #ff6b6b;
-  border: 1px solid rgba(229, 62, 62, 0.35);
+  background: color-mix(in srgb, var(--c-negative) 10%, transparent);
+  color: var(--c-negative);
+  border: 1px solid color-mix(in srgb, var(--c-negative) 35%, transparent);
   border-radius: 8px;
   cursor: pointer;
   font-size: 0.9rem;
@@ -586,9 +586,9 @@
 }
 
 .menu-signout-btn:hover {
-  background: #1e0b0b;
-  border-color: rgba(229, 62, 62, 0.55);
-  color: #ff8a8a;
+  background: color-mix(in srgb, var(--c-negative) 16%, transparent);
+  border-color: color-mix(in srgb, var(--c-negative) 55%, transparent);
+  color: var(--c-negative);
 }
 
 /* ─── Main content ───────────────────────────────────────────────── */
@@ -636,7 +636,7 @@
 }
 
 .stat-card:hover {
-  border-color: rgba(0, 217, 255, 0.22);
+  border-color: color-mix(in srgb, var(--c-primary) 22%, transparent);
 }
 
 .stat-card h3 {
@@ -673,7 +673,7 @@
 }
 
 .table th {
-  background-color: rgba(0, 217, 255, 0.03);
+  background-color: color-mix(in srgb, var(--c-primary) 3%, transparent);
   font-weight: 600;
   font-family: var(--f-body);
   color: var(--c-muted);
@@ -691,7 +691,7 @@
 }
 
 .table tbody tr:hover {
-  background-color: rgba(0, 217, 255, 0.04);
+  background-color: color-mix(in srgb, var(--c-primary) 4%, transparent);
 }
 
 @media (max-width: 767px) {
@@ -710,9 +710,9 @@
 }
 
 .error {
-  background: #150707;
-  color: #ff6b6b;
-  border: 1px solid rgba(229, 62, 62, 0.3);
+  background: color-mix(in srgb, var(--c-negative) 10%, transparent);
+  color: var(--c-negative);
+  border: 1px solid color-mix(in srgb, var(--c-negative) 30%, transparent);
   padding: 1rem;
   border-radius: var(--r-md);
   margin-bottom: 1rem;

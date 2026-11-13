@@ -53,21 +53,21 @@
 }
 
 .badge.active {
-  background: #041a00;
+  background: color-mix(in srgb, var(--c-green) 10%, transparent);
   color: var(--c-green);
-  border: 1px solid rgba(57, 255, 20, 0.3);
+  border: 1px solid color-mix(in srgb, var(--c-green) 30%, transparent);
 }
 
 .badge.inactive {
-  background: #150707;
-  color: #ff6b6b;
-  border: 1px solid rgba(229, 62, 62, 0.3);
+  background: color-mix(in srgb, var(--c-negative) 10%, transparent);
+  color: var(--c-negative);
+  border: 1px solid color-mix(in srgb, var(--c-negative) 30%, transparent);
 }
 
 .notification-schedule {
   margin: 16px 0;
   padding: 12px;
-  background: rgba(0, 217, 255, 0.05);
+  background: color-mix(in srgb, var(--c-primary) 5%, transparent);
   border-left: 3px solid var(--c-primary);
   border-radius: 0 var(--r-sm) var(--r-sm) 0;
 }
@@ -80,30 +80,30 @@
 
 .notification-error {
   padding: 12px;
-  background: #150707;
-  border: 1px solid rgba(229, 62, 62, 0.35);
+  background: color-mix(in srgb, var(--c-negative) 10%, transparent);
+  border: 1px solid color-mix(in srgb, var(--c-negative) 35%, transparent);
   border-radius: var(--r-sm);
-  color: #ff6b6b;
+  color: var(--c-negative);
   margin: 12px 0;
   font-size: 14px;
 }
 
 .notification-warning {
   padding: 12px;
-  background: #140e00;
-  border: 1px solid rgba(245, 158, 11, 0.35);
+  background: color-mix(in srgb, var(--c-warning) 10%, transparent);
+  border: 1px solid color-mix(in srgb, var(--c-warning) 35%, transparent);
   border-radius: var(--r-sm);
-  color: #fbbf24;
+  color: var(--c-warning);
   margin: 12px 0;
   font-size: 14px;
 }
 
 .notification-unsupported {
   padding: 12px;
-  background: #150707;
-  border: 1px solid rgba(229, 62, 62, 0.35);
+  background: color-mix(in srgb, var(--c-negative) 10%, transparent);
+  border: 1px solid color-mix(in srgb, var(--c-negative) 35%, transparent);
   border-radius: var(--r-sm);
-  color: #ff6b6b;
+  color: var(--c-negative);
   font-size: 14px;
 }
 
@@ -130,16 +130,16 @@
 }
 
 .btn-primary {
-  background: rgba(0, 217, 255, 0.12);
+  background: color-mix(in srgb, var(--c-primary) 12%, transparent);
   color: var(--c-primary);
-  border: 1px solid rgba(0, 217, 255, 0.35);
+  border: 1px solid color-mix(in srgb, var(--c-primary) 35%, transparent);
 }
 
 .btn-primary:hover:not(:disabled) {
-  background: rgba(0, 217, 255, 0.2);
-  border-color: rgba(0, 217, 255, 0.6);
+  background: color-mix(in srgb, var(--c-primary) 20%, transparent);
+  border-color: color-mix(in srgb, var(--c-primary) 60%, transparent);
   transform: translateY(-1px);
-  box-shadow: 0 0 16px rgba(0, 217, 255, 0.15);
+  box-shadow: 0 0 16px color-mix(in srgb, var(--c-primary) 15%, transparent);
 }
 
 .btn-secondary {
@@ -149,8 +149,8 @@
 }
 
 .btn-secondary:hover:not(:disabled) {
-  background: rgba(255, 255, 255, 0.04);
-  border-color: rgba(0, 217, 255, 0.2);
+  background: color-mix(in srgb, var(--c-text) 4%, transparent);
+  border-color: color-mix(in srgb, var(--c-primary) 20%, transparent);
   transform: translateY(-1px);
 }
 

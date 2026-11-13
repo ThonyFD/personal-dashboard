@@ -17,11 +17,11 @@ export function HabitHeatmap({ month, data }: Readonly<HabitHeatmapProps>) {
   return (
     <section
       style={{
-        background: 'linear-gradient(180deg, rgba(17,26,46,0.96), rgba(8,16,34,0.96))',
+        background: 'linear-gradient(180deg, color-mix(in srgb, var(--c-surface) 96%, transparent), color-mix(in srgb, var(--c-bg) 96%, transparent))',
         border: '1px solid var(--c-border-violet)',
         borderRadius: '18px',
         padding: '1.25rem',
-        boxShadow: '0 24px 60px rgba(0, 0, 0, 0.28)',
+        boxShadow: '0 24px 60px color-mix(in srgb, var(--c-scrim) 28%, transparent)',
       }}
     >
       <div style={{ display: 'flex', justifyContent: 'space-between', gap: '1rem', flexWrap: 'wrap', marginBottom: '1rem' }}>
@@ -35,10 +35,10 @@ export function HabitHeatmap({ month, data }: Readonly<HabitHeatmapProps>) {
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--c-text-2)', fontSize: '0.8rem' }}>
           <span>Vacío</span>
-          <LegendSwatch color="rgba(94,103,122,0.2)" />
-          <LegendSwatch color="rgba(122,92,255,0.45)" />
-          <LegendSwatch color="rgba(0,217,255,0.6)" />
-          <LegendSwatch color="rgba(57,255,20,0.75)" />
+          <LegendSwatch color="color-mix(in srgb, var(--c-muted) 20%, transparent)" />
+          <LegendSwatch color="color-mix(in srgb, var(--c-violet) 45%, transparent)" />
+          <LegendSwatch color="color-mix(in srgb, var(--c-primary) 60%, transparent)" />
+          <LegendSwatch color="color-mix(in srgb, var(--c-green) 75%, transparent)" />
           <span>100%</span>
         </div>
       </div>
@@ -71,9 +71,9 @@ export function HabitHeatmap({ month, data }: Readonly<HabitHeatmapProps>) {
               style={{
                 aspectRatio: '1',
                 borderRadius: '10px',
-                border: '1px solid rgba(232, 255, 255, 0.08)',
+                border: '1px solid color-mix(in srgb, var(--c-text) 8%, transparent)',
                 background: resolveHeatmapColor(ratio, completion?.loggedCount ?? 0),
-                boxShadow: ratio >= 1 ? '0 0 18px rgba(57,255,20,0.2)' : 'none',
+                boxShadow: ratio >= 1 ? '0 0 18px color-mix(in srgb, var(--c-green) 20%, transparent)' : 'none',
                 display: 'grid',
                 placeItems: 'center',
                 color: 'var(--c-text)',
@@ -105,9 +105,9 @@ function LegendSwatch({ color }: Readonly<{ color: string }>) {
 }
 
 function resolveHeatmapColor(ratio: number, loggedCount: number): string {
-  if (!loggedCount) return 'rgba(94,103,122,0.2)'
-  if (ratio >= 1) return 'linear-gradient(180deg, rgba(57,255,20,0.82), rgba(0,217,255,0.45))'
-  if (ratio >= 0.66) return 'rgba(0,217,255,0.62)'
-  if (ratio >= 0.33) return 'rgba(122,92,255,0.5)'
-  return 'rgba(255,107,107,0.42)'
+  if (!loggedCount) return 'color-mix(in srgb, var(--c-muted) 20%, transparent)'
+  if (ratio >= 1) return 'linear-gradient(180deg, color-mix(in srgb, var(--c-green) 82%, transparent), color-mix(in srgb, var(--c-primary) 45%, transparent))'
+  if (ratio >= 0.66) return 'color-mix(in srgb, var(--c-primary) 62%, transparent)'
+  if (ratio >= 0.33) return 'color-mix(in srgb, var(--c-violet) 50%, transparent)'
+  return 'color-mix(in srgb, var(--c-negative) 42%, transparent)'
 }

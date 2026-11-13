@@ -22,7 +22,7 @@ export function formatSignedAmount(txnType: string, amount: number, decimals: nu
  * other types fall back to the default text color (undefined → inherit).
  */
 export function amountColor(txnType: string): string | undefined {
-  return txnType === 'INCOME' ? '#39FF14' : undefined
+  return txnType === 'INCOME' ? 'var(--c-green)' : undefined
 }
 
 /**
