@@ -25,7 +25,7 @@
 .nav-btn {
   padding: 0.5rem 1rem;
   background: var(--c-surface);
-  border: 1px solid rgba(0, 217, 255, 0.18);
+  border: 1px solid color-mix(in srgb, var(--c-primary) 18%, transparent);
   border-radius: var(--r-sm);
   color: var(--c-text-2);
   cursor: pointer;
@@ -35,8 +35,8 @@
 }
 
 .nav-btn:hover:not(:disabled) {
-  background: rgba(0, 217, 255, 0.07);
-  border-color: rgba(0, 217, 255, 0.4);
+  background: color-mix(in srgb, var(--c-primary) 7%, transparent);
+  border-color: color-mix(in srgb, var(--c-primary) 40%, transparent);
   color: var(--c-primary);
 }
 
@@ -78,7 +78,7 @@
   justify-content: space-between;
   align-items: center;
   padding: 0.75rem;
-  background: rgba(0, 217, 255, 0.04);
+  background: color-mix(in srgb, var(--c-primary) 4%, transparent);
   border: 1px solid var(--c-border);
   border-radius: var(--r-sm);
   margin-bottom: 0.5rem;
@@ -101,14 +101,14 @@
   gap: 0.5rem;
   margin-bottom: 0.5rem;
   padding: 0.75rem;
-  background: rgba(0, 217, 255, 0.05);
+  background: color-mix(in srgb, var(--c-primary) 5%, transparent);
   border-radius: var(--r-sm);
-  border: 1px solid rgba(0, 217, 255, 0.3);
+  border: 1px solid color-mix(in srgb, var(--c-primary) 30%, transparent);
 }
 
 .income-form input {
   padding: 0.5rem;
-  border: 1px solid rgba(0, 217, 255, 0.18);
+  border: 1px solid color-mix(in srgb, var(--c-primary) 18%, transparent);
   border-radius: var(--r-sm);
   font-size: 0.9rem;
   background: var(--c-surface);
@@ -140,14 +140,14 @@
 }
 
 .save-btn {
-  background: #041a00;
+  background: color-mix(in srgb, var(--c-green) 8%, transparent);
   color: var(--c-green);
-  border: 1px solid rgba(57, 255, 20, 0.4);
+  border: 1px solid color-mix(in srgb, var(--c-green) 40%, transparent);
 }
 
 .save-btn:hover {
-  background: #072500;
-  border-color: rgba(57, 255, 20, 0.6);
+  background: color-mix(in srgb, var(--c-green) 14%, transparent);
+  border-color: color-mix(in srgb, var(--c-green) 60%, transparent);
 }
 
 .cancel-btn {
@@ -157,15 +157,15 @@
 }
 
 .cancel-btn:hover {
-  background: rgba(255, 255, 255, 0.04);
+  background: color-mix(in srgb, var(--c-text) 4%, transparent);
   color: var(--c-text-2);
 }
 
 .add-btn {
   padding: 0.6rem 1rem;
-  background: rgba(0, 217, 255, 0.1);
+  background: color-mix(in srgb, var(--c-primary) 10%, transparent);
   color: var(--c-primary);
-  border: 1px solid rgba(0, 217, 255, 0.3);
+  border: 1px solid color-mix(in srgb, var(--c-primary) 30%, transparent);
   border-radius: var(--r-sm);
   cursor: pointer;
   font-weight: 600;
@@ -174,14 +174,14 @@
 }
 
 .add-btn:hover {
-  background: rgba(0, 217, 255, 0.18);
-  border-color: rgba(0, 217, 255, 0.55);
+  background: color-mix(in srgb, var(--c-primary) 18%, transparent);
+  border-color: color-mix(in srgb, var(--c-primary) 55%, transparent);
 }
 
 .delete-btn {
   background: none;
   border: none;
-  color: rgba(229, 62, 62, 0.7);
+  color: color-mix(in srgb, var(--c-negative) 70%, transparent);
   cursor: pointer;
   font-size: 1.2rem;
   padding: 0.25rem 0.5rem;
@@ -189,7 +189,7 @@
 }
 
 .delete-btn:hover {
-  color: #ff6b6b;
+  color: var(--c-negative);
 }
 
 /* Incomes Summary */
@@ -208,8 +208,8 @@
 }
 
 .summary-row.total {
-  border-top: 1px solid rgba(0, 217, 255, 0.25);
-  border-bottom: 1px solid rgba(0, 217, 255, 0.25);
+  border-top: 1px solid color-mix(in srgb, var(--c-primary) 25%, transparent);
+  border-bottom: 1px solid color-mix(in srgb, var(--c-primary) 25%, transparent);
   margin-top: 0.5rem;
   padding-top: 0.75rem;
   padding-bottom: 0.75rem;
@@ -232,7 +232,7 @@
 .balance-input {
   width: 120px;
   padding: 0.25rem 0.5rem;
-  border: 1px solid rgba(0, 217, 255, 0.18);
+  border: 1px solid color-mix(in srgb, var(--c-primary) 18%, transparent);
   border-radius: var(--r-sm);
   text-align: right;
   font-weight: 600;
@@ -284,11 +284,11 @@
 }
 
 .summary-card.debt {
-  border-left-color: #e53e3e;
+  border-left-color: var(--c-negative);
 }
 
 .summary-card.debt .amount {
-  color: #ff6b6b;
+  color: var(--c-negative);
 }
 
 .summary-card.savings {
@@ -301,7 +301,7 @@
 
 .summary-card.balance.positive {
   border-left-color: var(--c-green);
-  background: rgba(57, 255, 20, 0.05);
+  background: color-mix(in srgb, var(--c-green) 5%, transparent);
 }
 
 .summary-card.balance.positive .amount {
@@ -309,12 +309,12 @@
 }
 
 .summary-card.balance.negative {
-  border-left-color: #e53e3e;
-  background: #150707;
+  border-left-color: var(--c-negative);
+  background: color-mix(in srgb, var(--c-negative) 10%, transparent);
 }
 
 .summary-card.balance.negative .amount {
-  color: #ff6b6b;
+  color: var(--c-negative);
 }
 
 .summary-card.total-spent {
@@ -344,11 +344,11 @@
 .summary-totals-group {
   display: flex;
   gap: 0.5rem;
-  background: radial-gradient(ellipse at top, rgba(0, 217, 255, 0.08) 0%, rgba(122, 92, 255, 0.06) 100%);
-  border: 1px solid rgba(122, 92, 255, 0.3);
+  background: radial-gradient(ellipse at top, color-mix(in srgb, var(--c-primary) 8%, transparent) 0%, color-mix(in srgb, var(--c-violet) 6%, transparent) 100%);
+  border: 1px solid color-mix(in srgb, var(--c-violet) 30%, transparent);
   border-radius: 12px;
   padding: 0.5rem;
-  box-shadow: 0 4px 20px rgba(122, 92, 255, 0.1);
+  box-shadow: 0 4px 20px color-mix(in srgb, var(--c-violet) 10%, transparent);
 }
 
 .summary-totals-group .summary-card {
@@ -391,9 +391,9 @@
 
 .export-btn {
   padding: 0.5rem 1rem;
-  background: #041a00;
+  background: color-mix(in srgb, var(--c-green) 8%, transparent);
   color: var(--c-green);
-  border: 1px solid rgba(57, 255, 20, 0.35);
+  border: 1px solid color-mix(in srgb, var(--c-green) 35%, transparent);
   border-radius: var(--r-sm);
   cursor: pointer;
   font-size: 0.9rem;
@@ -403,15 +403,15 @@
 }
 
 .export-btn:hover {
-  background: #072500;
-  border-color: rgba(57, 255, 20, 0.55);
+  background: color-mix(in srgb, var(--c-green) 14%, transparent);
+  border-color: color-mix(in srgb, var(--c-green) 55%, transparent);
 }
 
 .copy-btn {
   padding: 0.5rem 1rem;
-  background: #001720;
+  background: color-mix(in srgb, var(--c-primary) 8%, transparent);
   color: var(--c-primary);
-  border: 1px solid rgba(0, 217, 255, 0.35);
+  border: 1px solid color-mix(in srgb, var(--c-primary) 35%, transparent);
   border-radius: var(--r-sm);
   cursor: pointer;
   font-size: 0.9rem;
@@ -421,8 +421,8 @@
 }
 
 .copy-btn:hover:not(:disabled) {
-  background: #002030;
-  border-color: rgba(0, 217, 255, 0.55);
+  background: color-mix(in srgb, var(--c-primary) 14%, transparent);
+  border-color: color-mix(in srgb, var(--c-primary) 55%, transparent);
 }
 
 .copy-btn:disabled {
@@ -441,7 +441,7 @@
 .filters select,
 .filters .search-input {
   padding: 0.5rem;
-  border: 1px solid rgba(0, 217, 255, 0.18);
+  border: 1px solid color-mix(in srgb, var(--c-primary) 18%, transparent);
   border-radius: var(--r-sm);
   font-size: 0.9rem;
   background: var(--c-surface);
@@ -471,8 +471,8 @@
 }
 
 .transactions-table thead {
-  background: rgba(0, 217, 255, 0.04);
-  border-bottom: 1px solid rgba(0, 217, 255, 0.15);
+  background: color-mix(in srgb, var(--c-primary) 4%, transparent);
+  border-bottom: 1px solid color-mix(in srgb, var(--c-primary) 15%, transparent);
 }
 
 .transactions-table th {
@@ -494,11 +494,11 @@
 }
 
 .transactions-table tr.pending {
-  background: rgba(245, 158, 11, 0.05);
+  background: color-mix(in srgb, var(--c-warning) 5%, transparent);
 }
 
 .transactions-table tr:hover {
-  background: rgba(0, 217, 255, 0.04);
+  background: color-mix(in srgb, var(--c-primary) 4%, transparent);
 }
 
 .transactions-table td.description {
@@ -523,7 +523,7 @@
 }
 
 .transactions-table td.type.deuda {
-  color: #ff6b6b;
+  color: var(--c-negative);
 }
 
 .transactions-table td.type.ahorro {
@@ -552,7 +552,7 @@
 }
 
 .paid-toggle.pending {
-  color: #f59e0b;
+  color: var(--c-warning);
 }
 
 .transactions-table td.balance {
@@ -566,7 +566,7 @@
 }
 
 .transactions-table td.balance.negative {
-  color: #ff6b6b;
+  color: var(--c-negative);
 }
 
 /* Responsive */

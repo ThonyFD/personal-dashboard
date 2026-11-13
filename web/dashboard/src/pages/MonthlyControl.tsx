@@ -691,7 +691,8 @@ export default function MonthlyControl() {
                 const categoryName = txn.categoryName ?? category?.name
                 const categoryIcon = txn.categoryIcon ?? category?.icon
                 const categoryColor = txn.categoryColor ?? category?.color
-                const tagColor = categoryColor || '#95A5A6'
+                const tagColor = categoryColor || 'var(--c-text-2)'
+                const tagBg = categoryColor ? `${categoryColor}20` : 'color-mix(in srgb, var(--c-text-2) 12%, transparent)'
 
                 if (isEditing) {
                   return (
@@ -717,7 +718,7 @@ export default function MonthlyControl() {
                           gap: '0.3rem',
                           padding: '0.2rem 0.5rem',
                           borderRadius: '4px',
-                          backgroundColor: `${tagColor}20`,
+                          backgroundColor: tagBg,
                           border: `1px solid ${tagColor}`,
                           fontSize: '0.85rem'
                         }}>
@@ -917,7 +918,7 @@ function TransactionForm({ categories, onSave, onCancel }: TransactionFormProps)
   }
 
   return (
-    <form onSubmit={handleSubmit} className="transaction-form" style={{ marginBottom: '1rem', padding: '1rem', border: '1px solid #ddd', borderRadius: '8px' }}>
+    <form onSubmit={handleSubmit} className="transaction-form" style={{ marginBottom: '1rem', padding: '1rem', border: '1px solid var(--c-hairline)', borderRadius: '8px' }}>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem' }}>
         <div>
           <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 'bold' }}>Día</label>

@@ -19,11 +19,10 @@ import {
 } from 'recharts'
 import { formatCurrency } from '../utils/format'
 import { format, startOfMonth, endOfMonth, eachMonthOfInterval, subMonths, parseISO } from 'date-fns'
-
-// Color palette
-const COLORS = ['#8884d8', '#82ca9d', '#ffc658', '#ff7c7c', '#a4de6c', '#d084d0']
+import { useChartColors } from '../theme/AppearanceContext'
 
 export default function CashFlow() {
+  const chart = useChartColors()
   const [periodType, setPeriodType] = useState<PeriodType>('year')
   const [periodOffset, setPeriodOffset] = useState(0)
 
@@ -206,14 +205,14 @@ export default function CashFlow() {
       <div style={{
         marginBottom: '1.5rem',
         padding: '0.75rem',
-        backgroundColor: '#f8f9fa',
+        backgroundColor: 'var(--c-surface-2)',
         borderRadius: '8px',
         display: 'flex',
         flexDirection: 'column',
         gap: '0.75rem'
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
-          <label style={{ fontWeight: '500', color: '#333', fontSize: '0.9rem' }}>Analysis Period:</label>
+          <label style={{ fontWeight: '500', color: 'var(--c-text)', fontSize: '0.9rem' }}>Analysis Period:</label>
           <select
             value={periodType}
             onChange={(e) => {
@@ -222,11 +221,11 @@ export default function CashFlow() {
             }}
             style={{
               padding: '0.4rem 0.75rem',
-              border: '1px solid #ddd',
+              border: '1px solid var(--c-hairline)',
               borderRadius: '4px',
               fontSize: '0.9rem',
               cursor: 'pointer',
-              backgroundColor: 'white'
+              backgroundColor: 'var(--c-surface)'
             }}
           >
             <option value="year">Last Year</option>
@@ -238,9 +237,9 @@ export default function CashFlow() {
               onClick={() => setPeriodOffset(offset => offset + 1)}
               style={{
                 padding: '0.4rem 0.6rem',
-                border: '1px solid #ddd',
+                border: '1px solid var(--c-hairline)',
                 borderRadius: '4px',
-                backgroundColor: 'white',
+                backgroundColor: 'var(--c-surface)',
                 cursor: 'pointer',
                 fontSize: '1.1rem',
                 lineHeight: 1,
@@ -254,7 +253,7 @@ export default function CashFlow() {
             <span style={{
               padding: '0.4rem 0.5rem',
               fontWeight: '600',
-              color: '#333',
+              color: 'var(--c-text)',
               textAlign: 'center',
               fontSize: '0.85rem',
               whiteSpace: 'nowrap',
@@ -271,9 +270,9 @@ export default function CashFlow() {
               disabled={periodOffset === 0}
               style={{
                 padding: '0.4rem 0.6rem',
-                border: '1px solid #ddd',
+                border: '1px solid var(--c-hairline)',
                 borderRadius: '4px',
-                backgroundColor: periodOffset === 0 ? '#f5f5f5' : 'white',
+                backgroundColor: periodOffset === 0 ? 'var(--c-surface-2)' : 'var(--c-surface)',
                 cursor: periodOffset === 0 ? 'not-allowed' : 'pointer',
                 opacity: periodOffset === 0 ? 0.5 : 1,
                 fontSize: '1.1rem',
@@ -289,7 +288,7 @@ export default function CashFlow() {
 
         <div style={{
           fontSize: '0.75rem',
-          color: '#666',
+          color: 'var(--c-text-2)',
           textAlign: 'center'
         }}>
           {dateRange.startDate} to {dateRange.endDate}
@@ -299,39 +298,39 @@ export default function CashFlow() {
       {/* Summary Cards */}
       {summaryStats && (
         <div className="stats-grid" style={{ marginBottom: '2rem' }}>
-          <div className="stat-card" style={{ backgroundColor: '#f0fff4', borderLeft: '4px solid #38a169' }}>
-            <h3 style={{ color: '#2f855a' }}>Total Income</h3>
-            <div className="value" style={{ color: '#38a169' }}>
+          <div className="stat-card" style={{ backgroundColor: 'color-mix(in srgb, var(--c-green) 10%, transparent)', borderLeft: '4px solid var(--c-green)' }}>
+            <h3 style={{ color: 'var(--c-green)' }}>Total Income</h3>
+            <div className="value" style={{ color: 'var(--c-green)' }}>
               ${formatCurrency(summaryStats.totalIncome)}
             </div>
-            <div style={{ fontSize: '0.85rem', color: '#666', marginTop: '0.5rem' }}>
+            <div style={{ fontSize: '0.85rem', color: 'var(--c-text-2)', marginTop: '0.5rem' }}>
               Avg: ${formatCurrency(summaryStats.avgMonthlyIncome)}/month
             </div>
           </div>
 
-          <div className="stat-card" style={{ backgroundColor: '#fff5f5', borderLeft: '4px solid #e53e3e' }}>
-            <h3 style={{ color: '#c53030' }}>Total Expenses</h3>
-            <div className="value" style={{ color: '#e53e3e' }}>
+          <div className="stat-card" style={{ backgroundColor: 'color-mix(in srgb, var(--c-negative) 10%, transparent)', borderLeft: '4px solid var(--c-negative)' }}>
+            <h3 style={{ color: 'var(--c-negative)' }}>Total Expenses</h3>
+            <div className="value" style={{ color: 'var(--c-negative)' }}>
               ${formatCurrency(summaryStats.totalExpenses)}
             </div>
-            <div style={{ fontSize: '0.85rem', color: '#666', marginTop: '0.5rem' }}>
+            <div style={{ fontSize: '0.85rem', color: 'var(--c-text-2)', marginTop: '0.5rem' }}>
               Avg: ${formatCurrency(summaryStats.avgMonthlyExpenses)}/month
             </div>
           </div>
 
           <div className="stat-card" style={{
-            backgroundColor: summaryStats.netCashFlow >= 0 ? '#f0fff4' : '#fff5f5',
-            borderLeft: `4px solid ${summaryStats.netCashFlow >= 0 ? '#38a169' : '#e53e3e'}`
+            backgroundColor: summaryStats.netCashFlow >= 0 ? 'color-mix(in srgb, var(--c-green) 10%, transparent)' : 'color-mix(in srgb, var(--c-negative) 10%, transparent)',
+            borderLeft: `4px solid ${summaryStats.netCashFlow >= 0 ? 'var(--c-green)' : 'var(--c-negative)'}`
           }}>
-            <h3 style={{ color: summaryStats.netCashFlow >= 0 ? '#2f855a' : '#c53030' }}>
+            <h3 style={{ color: summaryStats.netCashFlow >= 0 ? 'var(--c-green)' : 'var(--c-negative)' }}>
               Net Cash Flow
             </h3>
             <div className="value" style={{
-              color: summaryStats.netCashFlow >= 0 ? '#38a169' : '#e53e3e'
+              color: summaryStats.netCashFlow >= 0 ? 'var(--c-green)' : 'var(--c-negative)'
             }}>
               ${formatCurrency(summaryStats.netCashFlow)}
             </div>
-            <div style={{ fontSize: '0.85rem', color: '#666', marginTop: '0.5rem' }}>
+            <div style={{ fontSize: '0.85rem', color: 'var(--c-text-2)', marginTop: '0.5rem' }}>
               Avg: ${formatCurrency(summaryStats.avgMonthlyNet)}/month
             </div>
           </div>
@@ -339,7 +338,7 @@ export default function CashFlow() {
           <div className="stat-card">
             <h3>Analysis Period</h3>
             <div className="value">{summaryStats.monthsAnalyzed} months</div>
-            <div style={{ fontSize: '0.85rem', color: '#666', marginTop: '0.5rem' }}>
+            <div style={{ fontSize: '0.85rem', color: 'var(--c-text-2)', marginTop: '0.5rem' }}>
               {dateRange.label}
             </div>
           </div>
@@ -349,21 +348,21 @@ export default function CashFlow() {
       {/* Monthly Cash Flow Chart */}
       <div className="card" style={{ marginBottom: '1.5rem' }}>
         <h2>Monthly Income vs Expenses</h2>
-        <p style={{ fontSize: '0.9rem', color: '#666', marginBottom: '1rem' }}>
+        <p style={{ fontSize: '0.9rem', color: 'var(--c-text-2)', marginBottom: '1rem' }}>
           Track your cash flow patterns over time, including imported manual incomes
         </p>
         <ResponsiveContainer width="100%" height={400}>
           <BarChart data={monthlyCashFlow}>
-            <CartesianGrid strokeDasharray="3 3" />
-            <XAxis dataKey="monthShort" />
-            <YAxis />
+            <CartesianGrid strokeDasharray="3 3" stroke={chart.grid} />
+            <XAxis tick={{ fill: chart.text }} dataKey="monthShort" />
+            <YAxis tick={{ fill: chart.text }} />
             <Tooltip
               formatter={(value: number) => `$${formatCurrency(value)}`}
-              contentStyle={{ backgroundColor: 'white', border: '1px solid #ccc' }}
+              contentStyle={{ backgroundColor: chart.tooltipBg, border: `1px solid ${chart.grid}` }}
             />
             <Legend />
-            <Bar dataKey="income" fill="#38a169" name="Income" />
-            <Bar dataKey="expenses" fill="#e53e3e" name="Expenses" />
+            <Bar dataKey="income" fill="var(--c-green)" name="Income" />
+            <Bar dataKey="expenses" fill="var(--c-negative)" name="Expenses" />
           </BarChart>
         </ResponsiveContainer>
       </div>
@@ -371,22 +370,22 @@ export default function CashFlow() {
       {/* Net Cash Flow Trend */}
       <div className="card" style={{ marginBottom: '1.5rem' }}>
         <h2>Net Cash Flow Trend</h2>
-        <p style={{ fontSize: '0.9rem', color: '#666', marginBottom: '1rem' }}>
+        <p style={{ fontSize: '0.9rem', color: 'var(--c-text-2)', marginBottom: '1rem' }}>
           Monthly surplus or deficit over time
         </p>
         <ResponsiveContainer width="100%" height={300}>
           <LineChart data={monthlyCashFlow}>
-            <CartesianGrid strokeDasharray="3 3" />
-            <XAxis dataKey="monthShort" />
-            <YAxis />
+            <CartesianGrid strokeDasharray="3 3" stroke={chart.grid} />
+            <XAxis tick={{ fill: chart.text }} dataKey="monthShort" />
+            <YAxis tick={{ fill: chart.text }} />
             <Tooltip
               formatter={(value: number) => `$${formatCurrency(value)}`}
-              contentStyle={{ backgroundColor: 'white', border: '1px solid #ccc' }}
+              contentStyle={{ backgroundColor: chart.tooltipBg, border: `1px solid ${chart.grid}` }}
             />
             <Line
               type="monotone"
               dataKey="net"
-              stroke="#3182ce"
+              stroke="var(--c-primary)"
               strokeWidth={3}
               name="Net Cash Flow"
             />
@@ -404,7 +403,7 @@ export default function CashFlow() {
         {/* Expense Categories */}
         <div className="card">
           <h2>Expense Categories</h2>
-          <p style={{ fontSize: '0.9rem', color: '#666', marginBottom: '1rem' }}>
+          <p style={{ fontSize: '0.9rem', color: 'var(--c-text-2)', marginBottom: '1rem' }}>
             Breakdown of spending by category
           </p>
           <ResponsiveContainer width="100%" height={300}>
@@ -416,14 +415,14 @@ export default function CashFlow() {
                 labelLine={false}
                 label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
                 outerRadius={80}
-                fill="#8884d8"
+                fill="var(--c-violet)"
                 dataKey="value"
               >
                 {expenseCategories.map((entry, index) => (
-                  <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                  <Cell key={`cell-${index}`} fill={chart.series[index % chart.series.length]} />
                 ))}
               </Pie>
-              <Tooltip formatter={(value: number) => `$${formatCurrency(value)}`} />
+              <Tooltip contentStyle={{ backgroundColor: chart.tooltipBg, border: `1px solid ${chart.grid}` }} formatter={(value: number) => `$${formatCurrency(value)}`} />
             </PieChart>
           </ResponsiveContainer>
         </div>
@@ -431,7 +430,7 @@ export default function CashFlow() {
         {/* Recurring Expenses */}
         <div className="card">
           <h2>Recurring Expenses</h2>
-          <p style={{ fontSize: '0.9rem', color: '#666', marginBottom: '1rem' }}>
+          <p style={{ fontSize: '0.9rem', color: 'var(--c-text-2)', marginBottom: '1rem' }}>
             Top recurring monthly expenses (3+ occurrences)
           </p>
           <div style={{ maxHeight: '300px', overflowY: 'auto' }}>
@@ -455,13 +454,13 @@ export default function CashFlow() {
                           padding: '0.2rem 0.4rem',
                           borderRadius: '3px',
                           fontSize: '0.75rem',
-                          backgroundColor: '#e8f5e9',
-                          color: '#2e7d32'
+                          backgroundColor: 'color-mix(in srgb, var(--c-green) 10%, transparent)',
+                          color: 'var(--c-green)'
                         }}>
                           {expense.frequency}
                         </span>
                       </td>
-                      <td style={{ fontWeight: 'bold', color: '#e53e3e' }}>
+                      <td style={{ fontWeight: 'bold', color: 'var(--c-negative)' }}>
                         ${formatCurrency(expense.avgMonthly)}
                       </td>
                     </tr>
@@ -471,7 +470,7 @@ export default function CashFlow() {
             ) : (
               <div style={{
                 textAlign: 'center',
-                color: '#666',
+                color: 'var(--c-text-2)',
                 padding: '2rem',
                 fontStyle: 'italic'
               }}>
@@ -486,19 +485,19 @@ export default function CashFlow() {
       {/* Monthly Transaction Volume */}
       <div className="card">
         <h2>Transaction Volume</h2>
-        <p style={{ fontSize: '0.9rem', color: '#666', marginBottom: '1rem' }}>
+        <p style={{ fontSize: '0.9rem', color: 'var(--c-text-2)', marginBottom: '1rem' }}>
           Number of transaction rows plus manual income entries per month
         </p>
         <ResponsiveContainer width="100%" height={300}>
           <BarChart data={monthlyCashFlow}>
-            <CartesianGrid strokeDasharray="3 3" />
-            <XAxis dataKey="monthShort" />
-            <YAxis />
-            <Tooltip contentStyle={{ backgroundColor: 'white', border: '1px solid #ccc' }} />
+            <CartesianGrid strokeDasharray="3 3" stroke={chart.grid} />
+            <XAxis tick={{ fill: chart.text }} dataKey="monthShort" />
+            <YAxis tick={{ fill: chart.text }} />
+            <Tooltip contentStyle={{ backgroundColor: chart.tooltipBg, border: `1px solid ${chart.grid}` }} />
             <Legend />
-            <Bar dataKey="payments" fill="#38a169" name="Income Transactions" />
-            <Bar dataKey="manualIncomeEntries" fill="#68d391" name="Manual Income Entries" />
-            <Bar dataKey="purchases" fill="#e53e3e" name="Expense Transactions" />
+            <Bar dataKey="payments" fill="var(--c-green)" name="Income Transactions" />
+            <Bar dataKey="manualIncomeEntries" fill="color-mix(in srgb, var(--c-green) 60%, var(--c-surface))" name="Manual Income Entries" />
+            <Bar dataKey="purchases" fill="var(--c-negative)" name="Expense Transactions" />
           </BarChart>
         </ResponsiveContainer>
       </div>

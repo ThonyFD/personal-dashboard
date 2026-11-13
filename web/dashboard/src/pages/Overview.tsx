@@ -37,10 +37,10 @@ async function triggerEmailSync(lookbackDays?: number): Promise<void> {
 }
 
 const SYNC_BUTTON_STYLES: Record<string, { background: string; color: string; border: string }> = {
-  success: { background: '#041a00', color: '#39FF14', border: '1px solid rgba(57, 255, 20, 0.4)' },
-  error: { background: '#150707', color: '#ff6b6b', border: '1px solid rgba(229, 62, 62, 0.4)' },
-  idle: { background: '#001720', color: '#00D9FF', border: '1px solid rgba(0, 217, 255, 0.35)' },
-  loading: { background: '#001720', color: 'rgba(0, 217, 255, 0.5)', border: '1px solid rgba(0, 217, 255, 0.15)' },
+  success: { background: 'color-mix(in srgb, var(--c-green) 8%, transparent)', color: 'var(--c-green)', border: '1px solid color-mix(in srgb, var(--c-green) 40%, transparent)' },
+  error: { background: 'color-mix(in srgb, var(--c-negative) 10%, transparent)', color: 'var(--c-negative)', border: '1px solid color-mix(in srgb, var(--c-negative) 40%, transparent)' },
+  idle: { background: 'color-mix(in srgb, var(--c-primary) 8%, transparent)', color: 'var(--c-primary)', border: '1px solid color-mix(in srgb, var(--c-primary) 35%, transparent)' },
+  loading: { background: 'color-mix(in srgb, var(--c-primary) 8%, transparent)', color: 'color-mix(in srgb, var(--c-primary) 50%, transparent)', border: '1px solid color-mix(in srgb, var(--c-primary) 15%, transparent)' },
 }
 
 const SYNC_BUTTON_LABELS: Record<string, string> = {
@@ -127,7 +127,7 @@ export default function Overview() {
   return (
     <div>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '0.75rem', marginBottom: '1rem' }}>
-        <h1 style={{ margin: 0, color: '#E8FFFF', letterSpacing: '-0.03em' }}>Dashboard Overview</h1>
+        <h1 style={{ margin: 0, color: 'var(--c-text)', letterSpacing: '-0.03em' }}>Dashboard Overview</h1>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
           <input
@@ -145,7 +145,7 @@ export default function Overview() {
           />
           <SyncButton syncState={syncState} onClick={handleSync} />
           {syncState === 'error' && (
-            <span style={{ fontSize: '0.78rem', color: '#ff6b6b', maxWidth: '200px' }}>{syncError}</span>
+            <span style={{ fontSize: '0.78rem', color: 'var(--c-negative)', maxWidth: '200px' }}>{syncError}</span>
           )}
         </div>
       </div>
@@ -154,15 +154,15 @@ export default function Overview() {
       <div style={{
         marginBottom: '1.5rem',
         padding: '0.75rem',
-        backgroundColor: '#111A2E',
+        backgroundColor: 'var(--c-surface)',
         borderRadius: '10px',
-        border: '1px solid rgba(0, 217, 255, 0.1)',
+        border: '1px solid color-mix(in srgb, var(--c-primary) 10%, transparent)',
         display: 'flex',
         flexDirection: 'column',
         gap: '0.75rem'
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
-          <label style={{ fontWeight: '600', color: '#E8FFFF', fontSize: '0.85rem' }}>Period:</label>
+          <label style={{ fontWeight: '600', color: 'var(--c-text)', fontSize: '0.85rem' }}>Period:</label>
           <select
             value={periodType}
             onChange={(e) => {
@@ -189,10 +189,10 @@ export default function Overview() {
               }}
               style={{
                 padding: '0.4rem 0.6rem',
-                border: '1px solid rgba(0, 217, 255, 0.18)',
+                border: '1px solid color-mix(in srgb, var(--c-primary) 18%, transparent)',
                 borderRadius: '6px',
-                backgroundColor: '#111A2E',
-                color: '#E8FFFF',
+                backgroundColor: 'var(--c-surface)',
+                color: 'var(--c-text)',
                 cursor: 'pointer',
                 fontSize: '1.1rem',
                 lineHeight: 1,
@@ -206,7 +206,7 @@ export default function Overview() {
             <span style={{
               padding: '0.4rem 0.5rem',
               fontWeight: '600',
-              color: '#E8FFFF',
+              color: 'var(--c-text)',
               textAlign: 'center',
               fontSize: '0.85rem',
               whiteSpace: 'nowrap',
@@ -226,10 +226,10 @@ export default function Overview() {
               disabled={periodOffset === 0}
               style={{
                 padding: '0.4rem 0.6rem',
-                border: '1px solid rgba(0, 217, 255, 0.18)',
+                border: '1px solid color-mix(in srgb, var(--c-primary) 18%, transparent)',
                 borderRadius: '6px',
-                backgroundColor: '#111A2E',
-                color: '#E8FFFF',
+                backgroundColor: 'var(--c-surface)',
+                color: 'var(--c-text)',
                 cursor: periodOffset === 0 ? 'not-allowed' : 'pointer',
                 opacity: periodOffset === 0 ? 0.4 : 1,
                 fontSize: '1.1rem',
@@ -249,10 +249,10 @@ export default function Overview() {
                 }}
                 style={{
                   padding: '0.4rem 0.75rem',
-                  border: '1px solid rgba(0, 217, 255, 0.4)',
+                  border: '1px solid color-mix(in srgb, var(--c-primary) 40%, transparent)',
                   borderRadius: '6px',
-                  backgroundColor: 'rgba(0, 217, 255, 0.1)',
-                  color: '#00D9FF',
+                  backgroundColor: 'color-mix(in srgb, var(--c-primary) 10%, transparent)',
+                  color: 'var(--c-primary)',
                   cursor: 'pointer',
                   fontSize: '0.85rem',
                   fontWeight: '600',
@@ -268,7 +268,7 @@ export default function Overview() {
 
         <div style={{
           fontSize: '0.75rem',
-          color: '#5E677A',
+          color: 'var(--c-text-3)',
           textAlign: 'center'
         }}>
           {dateRange.startDate} to {dateRange.endDate}
@@ -279,21 +279,21 @@ export default function Overview() {
         <div className="stat-card">
           <h3>Total Transactions</h3>
           <div className="value">{stats?.total_transactions || 0}</div>
-          <div style={{ fontSize: '0.82rem', color: '#5E677A', marginTop: '0.5rem' }}>
+          <div style={{ fontSize: '0.82rem', color: 'var(--c-text-3)', marginTop: '0.5rem' }}>
             {dateRange.label}
           </div>
         </div>
 
-        <div className="stat-card" style={{ borderLeft: '3px solid #ff6b6b' }}>
-          <h3 style={{ color: '#ff8a8a' }}>Total Spent</h3>
-          <div className="value" style={{ color: '#ff6b6b' }}>
+        <div className="stat-card" style={{ borderLeft: '3px solid var(--c-negative)' }}>
+          <h3 style={{ color: 'var(--c-negative)' }}>Total Spent</h3>
+          <div className="value" style={{ color: 'var(--c-negative)' }}>
             ${formatCurrency(stats?.total_spent_amount || 0)}
           </div>
-          <div style={{ fontSize: '0.82rem', color: '#5E677A', marginTop: '0.5rem' }}>
+          <div style={{ fontSize: '0.82rem', color: 'var(--c-text-3)', marginTop: '0.5rem' }}>
             {stats?.total_spent_count || 0} transactions · {dateRange.label}
           </div>
           {stats && (stats.purchase_count > 0 || stats.payment_count > 0) && (
-            <div style={{ fontSize: '0.75rem', color: '#5E677A', marginTop: '0.25rem' }}>
+            <div style={{ fontSize: '0.75rem', color: 'var(--c-text-3)', marginTop: '0.25rem' }}>
               {stats.purchase_count > 0 && `${stats.purchase_count} purchases`}
               {stats.purchase_count > 0 && stats.payment_count > 0 && ' · '}
               {stats.payment_count > 0 && `${stats.payment_count} payments`}
@@ -303,20 +303,20 @@ export default function Overview() {
 
         <div className="stat-card">
           <h3>Top Merchant</h3>
-          <div className="value" style={{ fontSize: '1.2rem', color: '#00D9FF' }}>
+          <div className="value" style={{ fontSize: '1.2rem', color: 'var(--c-primary)' }}>
             {stats?.top_merchant || 'N/A'}
           </div>
-          <div style={{ fontSize: '0.82rem', color: '#5E677A', marginTop: '0.5rem' }}>
+          <div style={{ fontSize: '0.82rem', color: 'var(--c-text-3)', marginTop: '0.5rem' }}>
             {stats?.top_merchant_amount ? `$${formatCurrency(stats.top_merchant_amount)} · ` : ''}{dateRange.label}
           </div>
         </div>
 
         <div className="stat-card">
           <h3>Most Frequent</h3>
-          <div className="value" style={{ fontSize: '1.2rem', color: '#00D9FF' }}>
+          <div className="value" style={{ fontSize: '1.2rem', color: 'var(--c-primary)' }}>
             {stats?.busiest_merchant || 'N/A'}
           </div>
-          <div style={{ fontSize: '0.82rem', color: '#5E677A', marginTop: '0.5rem' }}>
+          <div style={{ fontSize: '0.82rem', color: 'var(--c-text-3)', marginTop: '0.5rem' }}>
             {stats?.busiest_merchant ? `${stats.busiest_merchant_count} transactions · ` : ''}{dateRange.label}
           </div>
         </div>
@@ -350,16 +350,16 @@ export default function Overview() {
                     padding: '0.2rem 0.5rem',
                     borderRadius: '4px',
                     fontSize: '0.82rem',
-                    backgroundColor: 'rgba(57, 255, 20, 0.08)',
-                    color: '#39FF14',
-                    border: '1px solid rgba(57, 255, 20, 0.18)',
+                    backgroundColor: 'color-mix(in srgb, var(--c-green) 8%, transparent)',
+                    color: 'var(--c-green)',
+                    border: '1px solid color-mix(in srgb, var(--c-green) 18%, transparent)',
                     fontWeight: '500',
                   }}>
                     {txn.merchant?.categoryRef?.name || 'Uncategorized'}
                   </span>
                 </td>
-                <td style={{ textTransform: 'capitalize', color: 'rgba(232, 255, 255, 0.65)' }}>{txn.txn_type}</td>
-                <td style={{ fontWeight: '700', color: amountColor(txn.txn_type) ?? '#E8FFFF' }}>
+                <td style={{ textTransform: 'capitalize', color: 'var(--c-text-2)' }}>{txn.txn_type}</td>
+                <td style={{ fontWeight: '700', color: amountColor(txn.txn_type) ?? 'var(--c-text)' }}>
                   {formatSignedAmount(txn.txn_type, txn.amount)}
                 </td>
                 <td>{txn.provider}</td>
@@ -372,13 +372,13 @@ export default function Overview() {
         <div style={{
           marginTop: '0.75rem',
           padding: '0.75rem',
-          borderTop: '1px solid rgba(0, 217, 255, 0.1)',
+          borderTop: '1px solid color-mix(in srgb, var(--c-primary) 10%, transparent)',
           display: 'flex',
           flexDirection: 'column',
           gap: '0.75rem'
         }}>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', alignItems: 'center' }}>
-            <div style={{ color: '#5E677A', fontSize: '0.8rem', textAlign: 'center' }}>
+            <div style={{ color: 'var(--c-text-3)', fontSize: '0.8rem', textAlign: 'center' }}>
               {allTransactions && allTransactions.length > 0 ? (
                 <>
                   Showing {((currentPage - 1) * itemsPerPage) + 1} to {Math.min(currentPage * itemsPerPage, allTransactions.length)} of {allTransactions.length}
@@ -388,7 +388,7 @@ export default function Overview() {
               )}
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-              <span style={{ fontSize: '0.8rem', color: '#5E677A' }}>Per page:</span>
+              <span style={{ fontSize: '0.8rem', color: 'var(--c-text-3)' }}>Per page:</span>
               <select
                 value={itemsPerPage}
                 onChange={(e) => {
@@ -427,10 +427,10 @@ export default function Overview() {
                       padding: '0.4rem 0.6rem',
                       cursor: disabled ? 'not-allowed' : 'pointer',
                       opacity: disabled ? 0.4 : 1,
-                      border: '1px solid rgba(0, 217, 255, 0.18)',
+                      border: '1px solid color-mix(in srgb, var(--c-primary) 18%, transparent)',
                       borderRadius: '6px',
-                      backgroundColor: '#111A2E',
-                      color: '#E8FFFF',
+                      backgroundColor: 'var(--c-surface)',
+                      color: 'var(--c-text)',
                       fontSize: '0.8rem',
                     }}
                   >
@@ -438,7 +438,7 @@ export default function Overview() {
                   </button>
                 )
               })}
-              <span style={{ padding: '0 0.5rem', fontWeight: '600', fontSize: '0.8rem', color: '#E8FFFF' }}>
+              <span style={{ padding: '0 0.5rem', fontWeight: '600', fontSize: '0.8rem', color: 'var(--c-text)' }}>
                 {currentPage} / {totalPages}
               </span>
               {(['Next', 'Last'] as const).map((label) => {
@@ -453,10 +453,10 @@ export default function Overview() {
                       padding: '0.4rem 0.6rem',
                       cursor: disabled ? 'not-allowed' : 'pointer',
                       opacity: disabled ? 0.4 : 1,
-                      border: '1px solid rgba(0, 217, 255, 0.18)',
+                      border: '1px solid color-mix(in srgb, var(--c-primary) 18%, transparent)',
                       borderRadius: '6px',
-                      backgroundColor: '#111A2E',
-                      color: '#E8FFFF',
+                      backgroundColor: 'var(--c-surface)',
+                      color: 'var(--c-text)',
                       fontSize: '0.8rem',
                     }}
                   >

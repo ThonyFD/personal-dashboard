@@ -20,6 +20,7 @@
   --c-negative: #FF6B81;
   --c-warning: #FFC069;
   --c-on-accent: #081022;
+  --c-scrim: #000000;
   /* Chart series */
   --c-chart-1: #00D9FF;
   --c-chart-2: #39FF14;
@@ -59,6 +60,7 @@
   --c-negative: #C8304A;
   --c-warning: #9A5B00;
   --c-on-accent: #FFFFFF;
+  --c-scrim: #000000;
   --c-chart-1: #007C99;
   --c-chart-2: #2A8C0F;
   --c-chart-3: #5B3FE0;

@@ -27,6 +27,7 @@ import {
   addMonths,
   subMonths
 } from 'date-fns'
+import { useChartColors } from '../theme/AppearanceContext'
 
 // Budget data structure (stored in localStorage for now)
 interface Budget {
@@ -39,9 +40,8 @@ interface Budget {
   isActive: boolean
 }
 
-const COLORS = ['#8884d8', '#82ca9d', '#ffc658', '#ff7c7c', '#a4de6c', '#d084d0']
-
 export default function Budgets() {
+  const chart = useChartColors()
   const [showCreateForm, setShowCreateForm] = useState(false)
   const [selectedPeriod, setSelectedPeriod] = useState<'monthly' | 'yearly'>('monthly')
   const [selectedMonth, setSelectedMonth] = useState(new Date())
@@ -231,11 +231,11 @@ export default function Budgets() {
     if (active && payload && payload.length) {
       return (
         <div style={{
-          backgroundColor: 'white',
+          backgroundColor: 'var(--c-surface)',
           padding: '10px',
-          border: '1px solid #ccc',
+          border: '1px solid var(--c-hairline)',
           borderRadius: '4px',
-          boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+          boxShadow: '0 2px 4px color-mix(in srgb, var(--c-scrim) 10%, transparent)'
         }}>
           <p style={{ margin: 0, fontWeight: 'bold' }}>{label}</p>
           {payload.map((entry: any, index: number) => (
@@ -264,10 +264,10 @@ export default function Budgets() {
           zIndex: 2000,
           padding: '0.75rem 1.25rem',
           borderRadius: '6px',
-          backgroundColor: toast.type === 'success' ? '#4CAF50' : '#f44336',
-          color: 'white',
+          backgroundColor: toast.type === 'success' ? 'var(--c-green)' : 'var(--c-negative)',
+          color: 'var(--c-on-accent)',
           fontWeight: '500',
-          boxShadow: '0 4px 12px rgba(0,0,0,0.2)',
+          boxShadow: '0 4px 12px color-mix(in srgb, var(--c-scrim) 20%, transparent)',
           display: 'flex',
           alignItems: 'center',
           gap: '0.5rem',
@@ -283,8 +283,8 @@ export default function Budgets() {
           onClick={() => setShowCreateForm(true)}
           style={{
             padding: '0.5rem 1rem',
-            backgroundColor: '#4CAF50',
-            color: 'white',
+            backgroundColor: 'var(--c-green)',
+            color: 'var(--c-on-accent)',
             border: 'none',
             borderRadius: '4px',
             cursor: 'pointer',
@@ -299,7 +299,7 @@ export default function Budgets() {
       <div style={{
         marginBottom: '2rem',
         padding: '1rem',
-        backgroundColor: '#f8f9fa',
+        backgroundColor: 'var(--c-surface-2)',
         borderRadius: '8px',
         display: 'flex',
         gap: '1rem',
@@ -313,7 +313,7 @@ export default function Budgets() {
             onChange={(e) => setSelectedPeriod(e.target.value as 'monthly' | 'yearly')}
             style={{
               padding: '0.4rem 0.75rem',
-              border: '1px solid #ddd',
+              border: '1px solid var(--c-hairline)',
               borderRadius: '4px',
               fontSize: '0.9rem'
             }}
@@ -332,7 +332,7 @@ export default function Budgets() {
               onChange={(e) => setSelectedMonth(new Date(e.target.value))}
               style={{
                 padding: '0.4rem 0.75rem',
-                border: '1px solid #ddd',
+                border: '1px solid var(--c-hairline)',
                 borderRadius: '4px',
                 fontSize: '0.9rem'
               }}
@@ -344,35 +344,35 @@ export default function Budgets() {
       {/* Budget Overview Cards */}
       <div className="stats-grid" style={{ marginBottom: '2rem' }}>
         <div className="stat-card" style={{
-          backgroundColor: budgetVsActual.percentage > 90 ? '#fff5f5' : '#f0fff4',
-          borderLeft: `4px solid ${budgetVsActual.percentage > 90 ? '#e53e3e' : '#38a169'}`
+          backgroundColor: budgetVsActual.percentage > 90 ? 'color-mix(in srgb, var(--c-negative) 10%, transparent)' : 'color-mix(in srgb, var(--c-green) 10%, transparent)',
+          borderLeft: `4px solid ${budgetVsActual.percentage > 90 ? 'var(--c-negative)' : 'var(--c-green)'}`
         }}>
-          <h3 style={{ color: budgetVsActual.percentage > 90 ? '#c53030' : '#2f855a' }}>
+          <h3 style={{ color: budgetVsActual.percentage > 90 ? 'var(--c-negative)' : 'var(--c-green)' }}>
             Total Budget
           </h3>
           <div className="value" style={{
-            color: budgetVsActual.percentage > 90 ? '#e53e3e' : '#38a169'
+            color: budgetVsActual.percentage > 90 ? 'var(--c-negative)' : 'var(--c-green)'
           }}>
             ${formatCurrency(budgetVsActual.totalBudget)}
           </div>
-          <div style={{ fontSize: '0.85rem', color: '#666', marginTop: '0.5rem' }}>
+          <div style={{ fontSize: '0.85rem', color: 'var(--c-text-2)', marginTop: '0.5rem' }}>
             {budgetVsActual.percentage.toFixed(1)}% used
           </div>
         </div>
 
         <div className="stat-card" style={{
-          backgroundColor: budgetVsActual.overspent > 0 ? '#fff5f5' : '#f0fff4',
-          borderLeft: `4px solid ${budgetVsActual.overspent > 0 ? '#e53e3e' : '#38a169'}`
+          backgroundColor: budgetVsActual.overspent > 0 ? 'color-mix(in srgb, var(--c-negative) 10%, transparent)' : 'color-mix(in srgb, var(--c-green) 10%, transparent)',
+          borderLeft: `4px solid ${budgetVsActual.overspent > 0 ? 'var(--c-negative)' : 'var(--c-green)'}`
         }}>
-          <h3 style={{ color: budgetVsActual.overspent > 0 ? '#c53030' : '#2f855a' }}>
+          <h3 style={{ color: budgetVsActual.overspent > 0 ? 'var(--c-negative)' : 'var(--c-green)' }}>
             {budgetVsActual.overspent > 0 ? 'Over Budget' : 'Remaining'}
           </h3>
           <div className="value" style={{
-            color: budgetVsActual.overspent > 0 ? '#e53e3e' : '#38a169'
+            color: budgetVsActual.overspent > 0 ? 'var(--c-negative)' : 'var(--c-green)'
           }}>
             ${formatCurrency(budgetVsActual.overspent > 0 ? budgetVsActual.overspent : budgetVsActual.remaining)}
           </div>
-          <div style={{ fontSize: '0.85rem', color: '#666', marginTop: '0.5rem' }}>
+          <div style={{ fontSize: '0.85rem', color: 'var(--c-text-2)', marginTop: '0.5rem' }}>
             {selectedPeriod === 'monthly' ? 'This month' : 'This year'}
           </div>
         </div>
@@ -380,17 +380,17 @@ export default function Budgets() {
         <div className="stat-card">
           <h3>Active Budgets</h3>
           <div className="value">{budgets.filter((b: Budget) => b.isActive).length}</div>
-          <div style={{ fontSize: '0.85rem', color: '#666', marginTop: '0.5rem' }}>
+          <div style={{ fontSize: '0.85rem', color: 'var(--c-text-2)', marginTop: '0.5rem' }}>
             Categories tracked
           </div>
         </div>
 
         <div className="stat-card">
           <h3>Categories Over Budget</h3>
-          <div className="value" style={{ color: '#e53e3e' }}>
+          <div className="value" style={{ color: 'var(--c-negative)' }}>
             {categorySpending.filter(c => c.overspent > 0).length}
           </div>
-          <div style={{ fontSize: '0.85rem', color: '#666', marginTop: '0.5rem' }}>
+          <div style={{ fontSize: '0.85rem', color: 'var(--c-text-2)', marginTop: '0.5rem' }}>
             Need attention
           </div>
         </div>
@@ -399,18 +399,18 @@ export default function Budgets() {
       {/* Budget vs Actual Chart */}
       <div className="card" style={{ marginBottom: '1.5rem' }}>
         <h2>Budget vs Actual Spending</h2>
-        <p style={{ fontSize: '0.9rem', color: '#666', marginBottom: '1rem' }}>
+        <p style={{ fontSize: '0.9rem', color: 'var(--c-text-2)', marginBottom: '1rem' }}>
           Compare your budgeted amounts with actual spending by category
         </p>
         <ResponsiveContainer width="100%" height={400}>
           <BarChart data={categorySpending.filter(c => c.budget > 0)}>
-            <CartesianGrid strokeDasharray="3 3" />
-            <XAxis dataKey="categoryName" angle={-45} textAnchor="end" height={100} />
-            <YAxis />
+            <CartesianGrid strokeDasharray="3 3" stroke={chart.grid} />
+            <XAxis tick={{ fill: chart.text }} dataKey="categoryName" angle={-45} textAnchor="end" height={100} />
+            <YAxis tick={{ fill: chart.text }} />
             <Tooltip content={<CustomTooltip />} />
             <Legend />
-            <Bar dataKey="budget" fill="#82ca9d" name="Budget" />
-            <Bar dataKey="spent" fill="#8884d8" name="Actual" />
+            <Bar dataKey="budget" fill="var(--c-green)" name="Budget" />
+            <Bar dataKey="spent" fill="var(--c-violet)" name="Actual" />
           </BarChart>
         </ResponsiveContainer>
       </div>
@@ -419,18 +419,18 @@ export default function Budgets() {
       {selectedPeriod === 'yearly' && monthlyBudgetTracking.length > 0 && (
         <div className="card" style={{ marginBottom: '1.5rem' }}>
           <h2>Monthly Budget Tracking</h2>
-          <p style={{ fontSize: '0.9rem', color: '#666', marginBottom: '1rem' }}>
+          <p style={{ fontSize: '0.9rem', color: 'var(--c-text-2)', marginBottom: '1rem' }}>
             Track budget performance month by month
           </p>
           <ResponsiveContainer width="100%" height={300}>
             <LineChart data={monthlyBudgetTracking}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="month" />
-              <YAxis />
+              <CartesianGrid strokeDasharray="3 3" stroke={chart.grid} />
+              <XAxis tick={{ fill: chart.text }} dataKey="month" />
+              <YAxis tick={{ fill: chart.text }} />
               <Tooltip content={<CustomTooltip />} />
               <Legend />
-              <Line type="monotone" dataKey="budget" stroke="#82ca9d" strokeWidth={2} name="Budget" />
-              <Line type="monotone" dataKey="spent" stroke="#8884d8" strokeWidth={2} name="Spent" />
+              <Line type="monotone" dataKey="budget" stroke="var(--c-green)" strokeWidth={2} name="Budget" />
+              <Line type="monotone" dataKey="spent" stroke="var(--c-violet)" strokeWidth={2} name="Spent" />
             </LineChart>
           </ResponsiveContainer>
         </div>
@@ -457,7 +457,7 @@ export default function Budgets() {
                 <td>${formatCurrency(category.budget)}</td>
                 <td>${formatCurrency(category.spent)}</td>
                 <td style={{
-                  color: category.remaining > 0 ? '#38a169' : '#e53e3e',
+                  color: category.remaining > 0 ? 'var(--c-green)' : 'var(--c-negative)',
                   fontWeight: '500'
                 }}>
                   ${formatCurrency(category.remaining > 0 ? category.remaining : category.overspent)}
@@ -468,10 +468,10 @@ export default function Budgets() {
                     borderRadius: '4px',
                     fontSize: '0.8rem',
                     fontWeight: '500',
-                    backgroundColor: category.percentage > 90 ? '#fed7d7' :
-                                   category.percentage > 75 ? '#fef5e7' : '#c6f6d5',
-                    color: category.percentage > 90 ? '#c53030' :
-                           category.percentage > 75 ? '#d69e2e' : '#2f855a'
+                    backgroundColor: category.percentage > 90 ? 'color-mix(in srgb, var(--c-negative) 15%, transparent)' :
+                                   category.percentage > 75 ? 'color-mix(in srgb, var(--c-warning) 12%, transparent)' : 'color-mix(in srgb, var(--c-green) 12%, transparent)',
+                    color: category.percentage > 90 ? 'var(--c-negative)' :
+                           category.percentage > 75 ? 'var(--c-warning)' : 'var(--c-green)'
                   }}>
                     {category.percentage > 100 ? 'Over Budget' :
                      category.percentage > 90 ? 'Near Limit' :
@@ -485,8 +485,8 @@ export default function Budgets() {
                     )}
                     style={{
                       padding: '0.25rem 0.5rem',
-                      backgroundColor: '#e53e3e',
-                      color: 'white',
+                      backgroundColor: 'var(--c-negative)',
+                      color: 'var(--c-on-accent)',
                       border: 'none',
                       borderRadius: '3px',
                       cursor: 'pointer',
@@ -511,14 +511,14 @@ export default function Budgets() {
           left: 0,
           right: 0,
           bottom: 0,
-          backgroundColor: 'rgba(0,0,0,0.5)',
+          backgroundColor: 'color-mix(in srgb, var(--c-scrim) 50%, transparent)',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
           zIndex: 1000
         }}>
           <div style={{
-            backgroundColor: 'white',
+            backgroundColor: 'var(--c-surface)',
             padding: '2rem',
             borderRadius: '8px',
             width: '400px',
@@ -539,7 +539,7 @@ export default function Budgets() {
                   style={{
                     width: '100%',
                     padding: '0.5rem',
-                    border: '1px solid #ddd',
+                    border: '1px solid var(--c-hairline)',
                     borderRadius: '4px'
                   }}
                 >
@@ -565,14 +565,14 @@ export default function Budgets() {
                   style={{
                     width: '100%',
                     padding: '0.5rem',
-                    border: '1px solid #ddd',
+                    border: '1px solid var(--c-hairline)',
                     borderRadius: '4px'
                   }}
                 />
               </div>
 
               {saveBudgetMutation.isError && (
-                <p style={{ color: '#f44336', fontSize: '0.85rem', marginBottom: '0.75rem' }}>
+                <p style={{ color: 'var(--c-negative)', fontSize: '0.85rem', marginBottom: '0.75rem' }}>
                   Failed to create budget. Please try again.
                 </p>
               )}
@@ -584,8 +584,8 @@ export default function Budgets() {
                   disabled={saveBudgetMutation.isPending}
                   style={{
                     padding: '0.5rem 1rem',
-                    border: '1px solid #ddd',
-                    backgroundColor: 'white',
+                    border: '1px solid var(--c-hairline)',
+                    backgroundColor: 'var(--c-surface)',
                     borderRadius: '4px',
                     cursor: saveBudgetMutation.isPending ? 'not-allowed' : 'pointer',
                     opacity: saveBudgetMutation.isPending ? 0.5 : 1
@@ -598,8 +598,8 @@ export default function Budgets() {
                   disabled={saveBudgetMutation.isPending}
                   style={{
                     padding: '0.5rem 1rem',
-                    backgroundColor: '#4CAF50',
-                    color: 'white',
+                    backgroundColor: 'var(--c-green)',
+                    color: 'var(--c-on-accent)',
                     border: 'none',
                     borderRadius: '4px',
                     cursor: saveBudgetMutation.isPending ? 'not-allowed' : 'pointer',
@@ -613,8 +613,8 @@ export default function Budgets() {
                     <span style={{
                       width: '14px',
                       height: '14px',
-                      border: '2px solid rgba(255,255,255,0.4)',
-                      borderTopColor: 'white',
+                      border: '2px solid color-mix(in srgb, var(--c-on-accent) 40%, transparent)',
+                      borderTopColor: 'var(--c-on-accent)',
                       borderRadius: '50%',
                       display: 'inline-block',
                       animation: 'spin 0.7s linear infinite'

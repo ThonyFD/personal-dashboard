@@ -29,6 +29,7 @@ import {
   eachDayOfInterval,
   subDays,
 } from 'date-fns'
+import { useChartColors } from '../theme/AppearanceContext'
 
 // Transaction pattern interface
 interface TransactionPattern {
@@ -161,15 +162,16 @@ function detectAnomalies(patterns: TransactionPattern[], allTransactions: any[])
 }
 
 const FREQUENCY_COLORS = {
-  daily: '#8884d8',
-  weekly: '#82ca9d',
-  biweekly: '#ffc658',
-  monthly: '#ff7c7c',
-  quarterly: '#a4de6c',
-  irregular: '#c0c0c0'
+  daily: 'var(--c-chart-3)',
+  weekly: 'var(--c-chart-2)',
+  biweekly: 'var(--c-chart-5)',
+  monthly: 'var(--c-chart-4)',
+  quarterly: 'var(--c-chart-1)',
+  irregular: 'var(--c-chart-7)'
 }
 
 export default function Recurring() {
+  const chart = useChartColors()
   const [selectedPattern, setSelectedPattern] = useState<TransactionPattern | null>(null)
   const [showAnomalies, setShowAnomalies] = useState(false)
 
@@ -251,11 +253,11 @@ export default function Recurring() {
     if (active && payload && payload.length) {
       return (
         <div style={{
-          backgroundColor: 'white',
+          backgroundColor: 'var(--c-surface)',
           padding: '10px',
-          border: '1px solid #ccc',
+          border: '1px solid var(--c-hairline)',
           borderRadius: '4px',
-          boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+          boxShadow: '0 2px 4px color-mix(in srgb, var(--c-scrim) 10%, transparent)'
         }}>
           <p style={{ margin: 0, fontWeight: 'bold' }}>{label}</p>
           {payload.map((entry: any, index: number) => (
@@ -282,8 +284,8 @@ export default function Recurring() {
             onClick={() => setShowAnomalies(!showAnomalies)}
             style={{
               padding: '0.5rem 1rem',
-              backgroundColor: showAnomalies ? '#e53e3e' : '#4CAF50',
-              color: 'white',
+              backgroundColor: showAnomalies ? 'var(--c-negative)' : 'var(--c-green)',
+              color: 'var(--c-on-accent)',
               border: 'none',
               borderRadius: '4px',
               cursor: 'pointer',
@@ -300,7 +302,7 @@ export default function Recurring() {
         <div className="stat-card">
           <h3>Recurring Patterns</h3>
           <div className="value">{recurringPatterns.length}</div>
-          <div style={{ fontSize: '0.85rem', color: '#666', marginTop: '0.5rem' }}>
+          <div style={{ fontSize: '0.85rem', color: 'var(--c-text-2)', marginTop: '0.5rem' }}>
             Detected patterns
           </div>
         </div>
@@ -308,7 +310,7 @@ export default function Recurring() {
         <div className="stat-card">
           <h3>Monthly Recurring</h3>
           <div className="value">${formatCurrency(patternStats.totalMonthly)}</div>
-          <div style={{ fontSize: '0.85rem', color: '#666', marginTop: '0.5rem' }}>
+          <div style={{ fontSize: '0.85rem', color: 'var(--c-text-2)', marginTop: '0.5rem' }}>
             Fixed monthly costs
           </div>
         </div>
@@ -316,24 +318,24 @@ export default function Recurring() {
         <div className="stat-card">
           <h3>Weekly Recurring</h3>
           <div className="value">${formatCurrency(patternStats.totalWeekly)}</div>
-          <div style={{ fontSize: '0.85rem', color: '#666', marginTop: '0.5rem' }}>
+          <div style={{ fontSize: '0.85rem', color: 'var(--c-text-2)', marginTop: '0.5rem' }}>
             Weekly costs (monthly avg)
           </div>
         </div>
 
         <div className="stat-card" style={{
-          backgroundColor: anomalies.length > 0 ? '#fff5f5' : '#f8f9fa',
-          borderLeft: anomalies.length > 0 ? '4px solid #e53e3e' : '4px solid #ddd'
+          backgroundColor: anomalies.length > 0 ? 'color-mix(in srgb, var(--c-negative) 10%, transparent)' : 'var(--c-surface-2)',
+          borderLeft: anomalies.length > 0 ? '4px solid var(--c-negative)' : '4px solid var(--c-hairline)'
         }}>
-          <h3 style={{ color: anomalies.length > 0 ? '#c53030' : '#333' }}>
+          <h3 style={{ color: anomalies.length > 0 ? 'var(--c-negative)' : 'var(--c-text)' }}>
             Anomalies Detected
           </h3>
           <div className="value" style={{
-            color: anomalies.length > 0 ? '#e53e3e' : '#333'
+            color: anomalies.length > 0 ? 'var(--c-negative)' : 'var(--c-text)'
           }}>
             {anomalies.length}
           </div>
-          <div style={{ fontSize: '0.85rem', color: '#666', marginTop: '0.5rem' }}>
+          <div style={{ fontSize: '0.85rem', color: 'var(--c-text-2)', marginTop: '0.5rem' }}>
             Unusual patterns
           </div>
         </div>
@@ -341,31 +343,31 @@ export default function Recurring() {
 
       {/* Anomalies Alert */}
       {showAnomalies && anomalies.length > 0 && (
-        <div className="card" style={{ marginBottom: '1.5rem', backgroundColor: '#fff5f5', borderLeft: '4px solid #e53e3e' }}>
-          <h2 style={{ color: '#c53030' }}>⚠️ Detected Anomalies</h2>
+        <div className="card" style={{ marginBottom: '1.5rem', backgroundColor: 'color-mix(in srgb, var(--c-negative) 10%, transparent)', borderLeft: '4px solid var(--c-negative)' }}>
+          <h2 style={{ color: 'var(--c-negative)' }}>⚠️ Detected Anomalies</h2>
           <div style={{ display: 'grid', gap: '0.5rem' }}>
             {anomalies.map((anomaly, index) => (
               <div
                 key={index}
                 style={{
                   padding: '1rem',
-                  backgroundColor: 'white',
+                  backgroundColor: 'var(--c-surface)',
                   borderRadius: '8px',
-                  border: '1px solid #fed7d7'
+                  border: '1px solid color-mix(in srgb, var(--c-negative) 30%, transparent)'
                 }}
               >
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                   <div>
                     <strong>{recurringPatterns.find(p => p.id === anomaly.patternId)?.merchant}</strong>
-                    <span style={{ marginLeft: '1rem', color: anomaly.type === 'price_increase' ? '#e53e3e' : '#38a169' }}>
+                    <span style={{ marginLeft: '1rem', color: anomaly.type === 'price_increase' ? 'var(--c-negative)' : 'var(--c-green)' }}>
                       {anomaly.type === 'price_increase' ? 'Price Increase' : 'Price Decrease'}
                     </span>
                   </div>
                   <div style={{ textAlign: 'right' }}>
-                    <div style={{ fontSize: '1.2rem', fontWeight: 'bold', color: anomaly.type === 'price_increase' ? '#e53e3e' : '#38a169' }}>
+                    <div style={{ fontSize: '1.2rem', fontWeight: 'bold', color: anomaly.type === 'price_increase' ? 'var(--c-negative)' : 'var(--c-green)' }}>
                       {anomaly.changePercent > 0 ? '+' : ''}{anomaly.changePercent.toFixed(1)}%
                     </div>
-                    <div style={{ fontSize: '0.8rem', color: '#666' }}>
+                    <div style={{ fontSize: '0.8rem', color: 'var(--c-text-2)' }}>
                       ${formatCurrency(anomaly.oldAmount)} → ${formatCurrency(anomaly.newAmount)}
                     </div>
                   </div>
@@ -379,16 +381,16 @@ export default function Recurring() {
       {/* Pattern Predictability */}
       <div className="card" style={{ marginBottom: '1.5rem' }}>
         <h2>Pattern Predictability</h2>
-        <p style={{ fontSize: '0.9rem', color: '#666', marginBottom: '1rem' }}>
+        <p style={{ fontSize: '0.9rem', color: 'var(--c-text-2)', marginBottom: '1rem' }}>
           How predictable are your recurring expenses? (Higher = more regular)
         </p>
         <ResponsiveContainer width="100%" height={300}>
           <BarChart data={predictabilityData}>
-            <CartesianGrid strokeDasharray="3 3" />
-            <XAxis dataKey="merchant" angle={-45} textAnchor="end" height={80} />
-            <YAxis label={{ value: 'Predictability %', angle: -90, position: 'insideLeft' }} />
+            <CartesianGrid strokeDasharray="3 3" stroke={chart.grid} />
+            <XAxis tick={{ fill: chart.text }} dataKey="merchant" angle={-45} textAnchor="end" height={80} />
+            <YAxis tick={{ fill: chart.text }} label={{ value: 'Predictability %', angle: -90, position: 'insideLeft' }} />
             <Tooltip content={<CustomTooltip />} />
-            <Bar dataKey="predictability" fill="#8884d8" name="Predictability %" />
+            <Bar dataKey="predictability" fill="var(--c-violet)" name="Predictability %" />
           </BarChart>
         </ResponsiveContainer>
       </div>
@@ -409,7 +411,7 @@ export default function Recurring() {
               labelLine={false}
               label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
               outerRadius={80}
-              fill="#8884d8"
+              fill="var(--c-violet)"
               dataKey="value"
             >
               {Object.entries(patternStats.frequencyCount).map(([frequency, count], index) => (
@@ -448,7 +450,7 @@ export default function Recurring() {
                     borderRadius: '4px',
                     fontSize: '0.8rem',
                     fontWeight: '500',
-                    backgroundColor: FREQUENCY_COLORS[pattern.frequency] + '20',
+                    backgroundColor: `color-mix(in srgb, ${FREQUENCY_COLORS[pattern.frequency]} 12%, transparent)`,
                     color: FREQUENCY_COLORS[pattern.frequency]
                   }}>
                     {pattern.frequency.charAt(0).toUpperCase() + pattern.frequency.slice(1)}
@@ -459,14 +461,14 @@ export default function Recurring() {
                     <div style={{
                       width: '60px',
                       height: '8px',
-                      backgroundColor: '#e0e0e0',
+                      backgroundColor: 'var(--c-hairline)',
                       borderRadius: '4px',
                       overflow: 'hidden'
                     }}>
                       <div style={{
                         width: `${pattern.confidence * 100}%`,
                         height: '100%',
-                        backgroundColor: pattern.confidence > 0.8 ? '#38a169' : pattern.confidence > 0.6 ? '#d69e2e' : '#e53e3e'
+                        backgroundColor: pattern.confidence > 0.8 ? 'var(--c-green)' : pattern.confidence > 0.6 ? 'var(--c-warning)' : 'var(--c-negative)'
                       }} />
                     </div>
                     <span style={{ fontSize: '0.8rem' }}>{(pattern.confidence * 100).toFixed(0)}%</span>
@@ -482,8 +484,8 @@ export default function Recurring() {
                     onClick={() => setSelectedPattern(pattern)}
                     style={{
                       padding: '0.25rem 0.5rem',
-                      backgroundColor: '#3182ce',
-                      color: 'white',
+                      backgroundColor: 'var(--c-primary)',
+                      color: 'var(--c-on-accent)',
                       border: 'none',
                       borderRadius: '3px',
                       cursor: 'pointer',
@@ -508,8 +510,8 @@ export default function Recurring() {
               onClick={() => setSelectedPattern(null)}
               style={{
                 padding: '0.25rem 0.5rem',
-                border: '1px solid #ddd',
-                backgroundColor: 'white',
+                border: '1px solid var(--c-hairline)',
+                backgroundColor: 'var(--c-surface)',
                 borderRadius: '4px',
                 cursor: 'pointer'
               }}
@@ -519,29 +521,29 @@ export default function Recurring() {
           </div>
 
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem', marginBottom: '1.5rem' }}>
-            <div style={{ padding: '1rem', backgroundColor: '#f8f9fa', borderRadius: '8px' }}>
-              <div style={{ fontSize: '0.9rem', color: '#666', marginBottom: '0.25rem' }}>Pattern Amount</div>
+            <div style={{ padding: '1rem', backgroundColor: 'var(--c-surface-2)', borderRadius: '8px' }}>
+              <div style={{ fontSize: '0.9rem', color: 'var(--c-text-2)', marginBottom: '0.25rem' }}>Pattern Amount</div>
               <div style={{ fontSize: '1.5rem', fontWeight: 'bold' }}>
                 ${formatCurrency(selectedPattern.amount)}
               </div>
             </div>
 
-            <div style={{ padding: '1rem', backgroundColor: '#f8f9fa', borderRadius: '8px' }}>
-              <div style={{ fontSize: '0.9rem', color: '#666', marginBottom: '0.25rem' }}>Frequency</div>
+            <div style={{ padding: '1rem', backgroundColor: 'var(--c-surface-2)', borderRadius: '8px' }}>
+              <div style={{ fontSize: '0.9rem', color: 'var(--c-text-2)', marginBottom: '0.25rem' }}>Frequency</div>
               <div style={{ fontSize: '1.5rem', fontWeight: 'bold', textTransform: 'capitalize' }}>
                 {selectedPattern.frequency}
               </div>
             </div>
 
-            <div style={{ padding: '1rem', backgroundColor: '#f8f9fa', borderRadius: '8px' }}>
-              <div style={{ fontSize: '0.9rem', color: '#666', marginBottom: '0.25rem' }}>Confidence</div>
-              <div style={{ fontSize: '1.5rem', fontWeight: 'bold', color: selectedPattern.confidence > 0.8 ? '#38a169' : selectedPattern.confidence > 0.6 ? '#d69e2e' : '#e53e3e' }}>
+            <div style={{ padding: '1rem', backgroundColor: 'var(--c-surface-2)', borderRadius: '8px' }}>
+              <div style={{ fontSize: '0.9rem', color: 'var(--c-text-2)', marginBottom: '0.25rem' }}>Confidence</div>
+              <div style={{ fontSize: '1.5rem', fontWeight: 'bold', color: selectedPattern.confidence > 0.8 ? 'var(--c-green)' : selectedPattern.confidence > 0.6 ? 'var(--c-warning)' : 'var(--c-negative)' }}>
                 {(selectedPattern.confidence * 100).toFixed(0)}%
               </div>
             </div>
 
-            <div style={{ padding: '1rem', backgroundColor: '#f8f9fa', borderRadius: '8px' }}>
-              <div style={{ fontSize: '0.9rem', color: '#666', marginBottom: '0.25rem' }}>Next Expected</div>
+            <div style={{ padding: '1rem', backgroundColor: 'var(--c-surface-2)', borderRadius: '8px' }}>
+              <div style={{ fontSize: '0.9rem', color: 'var(--c-text-2)', marginBottom: '0.25rem' }}>Next Expected</div>
               <div style={{ fontSize: '1.2rem', fontWeight: 'bold' }}>
                 {format(parseISO(selectedPattern.nextPredicted), 'MMM dd, yyyy')}
               </div>
@@ -553,22 +555,22 @@ export default function Recurring() {
             <h3>Transaction Timeline</h3>
             <ResponsiveContainer width="100%" height={300}>
               <LineChart data={patternTimeline}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="date" />
-                <YAxis />
+                <CartesianGrid strokeDasharray="3 3" stroke={chart.grid} />
+                <XAxis tick={{ fill: chart.text }} dataKey="date" />
+                <YAxis tick={{ fill: chart.text }} />
                 <Tooltip content={<CustomTooltip />} />
                 <Legend />
                 <Line
                   type="monotone"
                   dataKey="amount"
-                  stroke="#8884d8"
+                  stroke="var(--c-violet)"
                   strokeWidth={3}
                   name="Actual Amount"
                 />
                 <Line
                   type="monotone"
                   dataKey="expected"
-                  stroke="#82ca9d"
+                  stroke="var(--c-green)"
                   strokeWidth={2}
                   strokeDasharray="5 5"
                   name="Expected Amount"
@@ -600,7 +602,7 @@ export default function Recurring() {
                           <td>{format(parseISO(txn.txn_date), 'MMM dd, yyyy')}</td>
                           <td style={{ color: amountColor(txn.txn_type) }}>{formatSignedAmount(txn.txn_type, txn.amount)}</td>
                           <td style={{
-                            color: Math.abs(deviation) > 10 ? '#e53e3e' : Math.abs(deviation) > 5 ? '#d69e2e' : '#38a169',
+                            color: Math.abs(deviation) > 10 ? 'var(--c-negative)' : Math.abs(deviation) > 5 ? 'var(--c-warning)' : 'var(--c-green)',
                             fontWeight: Math.abs(deviation) > 5 ? 'bold' : 'normal'
                           }}>
                             {deviation > 0 ? '+' : ''}{deviation.toFixed(1)}%
