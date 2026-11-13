@@ -9,6 +9,7 @@ import androidx.compose.ui.unit.sp
 import androidx.glance.GlanceId
 import androidx.glance.GlanceModifier
 import androidx.glance.GlanceTheme
+import androidx.glance.LocalContext
 import androidx.glance.action.ActionParameters
 import androidx.glance.action.actionStartActivity
 import androidx.glance.action.clickable
@@ -40,9 +41,9 @@ import java.time.LocalDate
 class PaymentsWidget : GlanceAppWidget() {
 
     override suspend fun provideGlance(context: Context, id: GlanceId) {
-        val colors = widgetColors(context, WidgetKind.PAYMENTS)
         if (!widgetIsOwner(context)) {
             provideContent {
+                val colors = widgetColors(LocalContext.current, WidgetKind.PAYMENTS)
                 CompositionLocalProvider(LocalWidgetColors provides colors) {
                     GlanceTheme { WidgetNotAvailable() }
                 }
@@ -65,6 +66,7 @@ class PaymentsWidget : GlanceAppWidget() {
         }
 
         provideContent {
+            val colors = widgetColors(LocalContext.current, WidgetKind.PAYMENTS)
             CompositionLocalProvider(LocalWidgetColors provides colors) {
                 GlanceTheme {
                     PaymentsWidgetContent(data = data)

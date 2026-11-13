@@ -10,6 +10,7 @@ import androidx.compose.ui.unit.sp
 import androidx.glance.GlanceId
 import androidx.glance.GlanceModifier
 import androidx.glance.GlanceTheme
+import androidx.glance.LocalContext
 import androidx.glance.action.ActionParameters
 import androidx.glance.action.actionParametersOf
 import androidx.glance.action.actionStartActivity
@@ -48,9 +49,9 @@ private val CATEGORY_EMOJI_KEY = ActionParameters.Key<String>("categoryEmoji")
 class FinanceWidget : GlanceAppWidget() {
 
     override suspend fun provideGlance(context: Context, id: GlanceId) {
-        val colors = widgetColors(context, WidgetKind.FINANCE)
         if (!widgetIsOwner(context)) {
             provideContent {
+                val colors = widgetColors(LocalContext.current, WidgetKind.FINANCE)
                 CompositionLocalProvider(LocalWidgetColors provides colors) {
                     GlanceTheme { WidgetNotAvailable() }
                 }
@@ -73,6 +74,7 @@ class FinanceWidget : GlanceAppWidget() {
         }
 
         provideContent {
+            val colors = widgetColors(LocalContext.current, WidgetKind.FINANCE)
             CompositionLocalProvider(LocalWidgetColors provides colors) {
                 GlanceTheme {
                     FinanceWidgetContent(data = data)

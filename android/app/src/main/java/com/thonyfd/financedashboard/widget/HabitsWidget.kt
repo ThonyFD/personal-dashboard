@@ -75,12 +75,12 @@ class HabitsWidget : GlanceAppWidget() {
         if (HabitsWidgetStateStore.loadWidgetData(context).isStale) {
             launch { HabitsWidgetRefresher.refresh(context) }
         }
-        val colors = widgetColors(context, WidgetKind.HABITS)
 
         provideContent {
             // Lectura reactiva: cualquier escritura en el store recompone el widget
             val flow = remember { HabitsWidgetStateStore.observe(context) }
             val data by flow.collectAsState(initial = HabitsWidgetData(isRefreshing = true))
+            val colors = widgetColors(LocalContext.current, WidgetKind.HABITS)
             CompositionLocalProvider(LocalWidgetColors provides colors) {
                 GlanceTheme {
                     HabitsWidgetContent(data = data)
