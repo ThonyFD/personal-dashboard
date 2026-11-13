@@ -90,12 +90,12 @@ val BrandLight = SkinTokens(
     textPassive = Color(0xFF5E677A),
     accent = Color(0xFF007C99),
     onAccent = Color(0xFFFFFFFF),
-    positive = Color(0xFF2A8C0F),
+    positive = Color(0xFF237A0C),
     negative = Color(0xFFC8304A),
     warning = Color(0xFF9A5B00),
     depth = Color(0xFF5B3FE0),
     chart = listOf(
-        Color(0xFF007C99), Color(0xFF2A8C0F), Color(0xFF5B3FE0), Color(0xFFC8304A),
+        Color(0xFF007C99), Color(0xFF237A0C), Color(0xFF5B3FE0), Color(0xFFC8304A),
         Color(0xFF9A5B00), Color(0xFF081022), Color(0xFF5E677A), Color(0xFF00A3BF)
     ),
     isDark = false

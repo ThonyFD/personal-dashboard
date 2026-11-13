@@ -50,6 +50,10 @@ class SkinTest {
         check("negative/bg", t.negative, t.bg, 3.0)
         check("warning/bg", t.warning, t.bg, 3.0)
         check("onAccent/accent", t.onAccent, t.accent, 4.5)
+        check("onAccent/positive", t.onAccent, t.positive, 4.5)
+        check("onAccent/negative", t.onAccent, t.negative, 4.5)
+        check("positive/bg text", t.positive, t.bg, 4.5)
+        check("positive/surface text", t.positive, t.surface, 4.5)
         assertTrue("$name chart size", t.chart.size >= 8)
     }
 
