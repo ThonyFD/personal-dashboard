@@ -3,7 +3,19 @@ package com.thonyfd.financedashboard.ui.theme
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Shapes
 import androidx.compose.material3.Typography
+import androidx.compose.material3.ColorScheme
 import androidx.compose.material3.darkColorScheme
+import androidx.compose.material3.lightColorScheme
+import android.app.Activity
+import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.ReadOnlyComposable
+import androidx.compose.runtime.SideEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.staticCompositionLocalOf
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalView
+import androidx.core.view.WindowCompat
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
@@ -86,37 +98,96 @@ private val AppShapes = Shapes(
     extraLarge = RoundedCornerShape(28.dp)
 )
 
-private val DarkColorScheme = darkColorScheme(
-    primary = AppColors.Cyan,
-    onPrimary = AppColors.Night,
-    primaryContainer = AppColors.PanelHigh,
-    onPrimaryContainer = AppColors.Ice,
-    secondary = AppColors.Violet,
-    onSecondary = AppColors.Ice,
-    tertiary = AppColors.Lime,
-    onTertiary = AppColors.Night,
-    background = AppColors.Night,
-    onBackground = AppColors.Ice,
-    surface = AppColors.Night,
-    onSurface = AppColors.Ice,
-    surfaceVariant = AppColors.Panel,
-    onSurfaceVariant = AppColors.Mist,
-    surfaceContainer = AppColors.Panel,
-    surfaceContainerHigh = AppColors.PanelHigh,
-    surfaceContainerHighest = AppColors.PanelHigh,
-    surfaceContainerLow = AppColors.Deep,
-    outline = AppColors.Hairline,
-    outlineVariant = AppColors.Hairline,
-    error = AppColors.Coral,
-    onError = AppColors.Night
-)
+/** Tokens del skin activo. Brand oscuro por defecto (pantallas publicas como LoginScreen). */
+val LocalSkinTokens = staticCompositionLocalOf { BrandDark }
+
+object AppTheme {
+    val colors: SkinTokens
+        @Composable
+        @ReadOnlyComposable
+        get() = LocalSkinTokens.current
+}
+
+private fun colorSchemeFor(t: SkinTokens): ColorScheme {
+    return if (t.isDark) {
+        darkColorScheme(
+            primary = t.accent,
+            onPrimary = t.onAccent,
+            primaryContainer = t.surfaceRaised,
+            onPrimaryContainer = t.text,
+            secondary = t.depth,
+            onSecondary = t.text,
+            tertiary = t.positive,
+            onTertiary = t.onAccent,
+            background = t.bg,
+            onBackground = t.text,
+            surface = t.bg,
+            onSurface = t.text,
+            surfaceVariant = t.surface,
+            onSurfaceVariant = t.textSecondary,
+            surfaceContainer = t.surface,
+            surfaceContainerHigh = t.surfaceRaised,
+            surfaceContainerHighest = t.surfaceRaised,
+            surfaceContainerLow = t.surfaceLow,
+            outline = t.hairline,
+            outlineVariant = t.hairline,
+            error = t.negative,
+            onError = t.onAccent
+        )
+    } else {
+        lightColorScheme(
+            primary = t.accent,
+            onPrimary = t.onAccent,
+            primaryContainer = t.surfaceRaised,
+            onPrimaryContainer = t.text,
+            secondary = t.depth,
+            onSecondary = t.surface,
+            tertiary = t.positive,
+            onTertiary = t.surface,
+            background = t.bg,
+            onBackground = t.text,
+            surface = t.bg,
+            onSurface = t.text,
+            surfaceVariant = t.surface,
+            onSurfaceVariant = t.textSecondary,
+            surfaceContainer = t.surface,
+            surfaceContainerHigh = t.surfaceRaised,
+            surfaceContainerHighest = t.surfaceRaised,
+            surfaceContainerLow = t.surfaceLow,
+            outline = t.hairline,
+            outlineVariant = t.hairline,
+            error = t.negative,
+            onError = t.surface
+        )
+    }
+}
 
 @Composable
-fun FinanceDashboardTheme(content: @Composable () -> Unit) {
-    MaterialTheme(
-        colorScheme = DarkColorScheme,
-        typography = AppTypography,
-        shapes = AppShapes,
-        content = content
-    )
+fun FinanceDashboardTheme(tokens: SkinTokens = BrandDark, content: @Composable () -> Unit) {
+    CompositionLocalProvider(LocalSkinTokens provides tokens) {
+        MaterialTheme(
+            colorScheme = colorSchemeFor(tokens),
+            typography = AppTypography,
+            shapes = AppShapes,
+            content = content
+        )
+    }
+}
+
+/** Tema segun la preferencia guardada (skin y modo); tambien ajusta los iconos de las barras del sistema. */
+@Composable
+fun AppearanceTheme(content: @Composable () -> Unit) {
+    val context = LocalContext.current
+    val (skin, mode) = AppearancePreferences.state(context).collectAsState().value
+    val tokens = tokensFor(skin, resolveDark(mode, isSystemInDarkTheme()))
+    val view = LocalView.current
+    if (!view.isInEditMode) {
+        SideEffect {
+            val window = (view.context as? Activity)?.window ?: return@SideEffect
+            val controller = WindowCompat.getInsetsController(window, view)
+            controller.isAppearanceLightStatusBars = !tokens.isDark
+            controller.isAppearanceLightNavigationBars = !tokens.isDark
+        }
+    }
+    FinanceDashboardTheme(tokens = tokens, content = content)
 }

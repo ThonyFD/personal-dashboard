@@ -39,6 +39,7 @@ import com.thonyfd.financedashboard.data.models.Transaction
 import com.thonyfd.financedashboard.data.models.UpcomingPayment
 import com.thonyfd.financedashboard.data.models.WidgetData
 import com.thonyfd.financedashboard.data.repository.FinanceRepository
+import com.thonyfd.financedashboard.ui.theme.AppearanceTheme
 import com.thonyfd.financedashboard.ui.theme.FinanceDashboardTheme
 import com.thonyfd.financedashboard.widget.FinanceWidgetWorker
 import com.thonyfd.financedashboard.widget.HabitsDayRolloverReceiver
@@ -70,13 +71,15 @@ class MainActivity : ComponentActivity() {
         setContent {
             FinanceDashboardTheme {
                 LoginGate { isOwner ->
-                    AppRoot(
-                        isOwner = isOwner,
-                        externalNav = categoryNav,
-                        onExternalConsumed = { categoryNav = null },
-                        externalTab = externalTab,
-                        onExternalTabConsumed = { externalTab = null }
-                    )
+                    AppearanceTheme {
+                        AppRoot(
+                            isOwner = isOwner,
+                            externalNav = categoryNav,
+                            onExternalConsumed = { categoryNav = null },
+                            externalTab = externalTab,
+                            onExternalTabConsumed = { externalTab = null }
+                        )
+                    }
                 }
             }
         }
