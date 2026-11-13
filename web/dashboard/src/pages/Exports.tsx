@@ -207,7 +207,7 @@ export default function Exports() {
               style={{
                 width: '100%',
                 padding: '0.5rem',
-                border: '1px solid #ddd',
+                border: '1px solid var(--c-hairline)',
                 borderRadius: '4px',
                 fontSize: '0.9rem'
               }}
@@ -218,7 +218,7 @@ export default function Exports() {
                 </option>
               ))}
             </select>
-            <p style={{ fontSize: '0.8rem', color: '#666', marginTop: '0.25rem' }}>
+            <p style={{ fontSize: '0.8rem', color: 'var(--c-text-2)', marginTop: '0.25rem' }}>
               {REPORT_TEMPLATES[selectedTemplate].description}
             </p>
           </div>
@@ -235,7 +235,7 @@ export default function Exports() {
               style={{
                 width: '100%',
                 padding: '0.5rem',
-                border: '1px solid #ddd',
+                border: '1px solid var(--c-hairline)',
                 borderRadius: '4px',
                 fontSize: '0.9rem'
               }}
@@ -253,7 +253,7 @@ export default function Exports() {
               style={{
                 width: '100%',
                 padding: '0.5rem',
-                border: '1px solid #ddd',
+                border: '1px solid var(--c-hairline)',
                 borderRadius: '4px',
                 fontSize: '0.9rem'
               }}
@@ -271,8 +271,8 @@ export default function Exports() {
             disabled={isExporting || !reportData}
             style={{
               padding: '0.75rem 2rem',
-              backgroundColor: '#4CAF50',
-              color: 'white',
+              backgroundColor: 'var(--c-green)',
+              color: 'var(--c-on-accent)',
               border: 'none',
               borderRadius: '8px',
               fontSize: '1rem',
@@ -289,7 +289,7 @@ export default function Exports() {
                 <div style={{
                   width: '16px',
                   height: '16px',
-                  border: '2px solid #ffffff',
+                  border: '2px solid var(--c-on-accent)',
                   borderTop: '2px solid transparent',
                   borderRadius: '50%',
                   animation: 'spin 1s linear infinite'
@@ -308,34 +308,34 @@ export default function Exports() {
       {/* Report Preview */}
       <div className="card">
         <h2>Report Preview - {REPORT_TEMPLATES[selectedTemplate].name}</h2>
-        <p style={{ fontSize: '0.9rem', color: '#666', marginBottom: '1rem' }}>
+        <p style={{ fontSize: '0.9rem', color: 'var(--c-text-2)', marginBottom: '1rem' }}>
           Preview of the report that will be exported for {reportData?.period}
         </p>
 
         <div
           ref={reportRef}
           style={{
-            backgroundColor: 'white',
+            backgroundColor: 'var(--c-surface)',
             padding: '2rem',
             borderRadius: '8px',
-            border: '1px solid #e0e0e0',
+            border: '1px solid var(--c-hairline)',
             fontFamily: 'Arial, sans-serif'
           }}
         >
           {/* Report Header */}
           <div style={{
             textAlign: 'center',
-            borderBottom: '2px solid #333',
+            borderBottom: '2px solid var(--c-text)',
             paddingBottom: '1rem',
             marginBottom: '2rem'
           }}>
-            <h1 style={{ margin: '0 0 0.5rem 0', color: '#333', fontSize: '2rem' }}>
+            <h1 style={{ margin: '0 0 0.5rem 0', color: 'var(--c-text)', fontSize: '2rem' }}>
               {REPORT_TEMPLATES[selectedTemplate].icon} {REPORT_TEMPLATES[selectedTemplate].name}
             </h1>
-            <h2 style={{ margin: '0', color: '#666', fontSize: '1.2rem', fontWeight: 'normal' }}>
+            <h2 style={{ margin: '0', color: 'var(--c-text-2)', fontSize: '1.2rem', fontWeight: 'normal' }}>
               {reportData?.period}
             </h2>
-            <p style={{ margin: '0.5rem 0 0 0', color: '#888', fontSize: '0.9rem' }}>
+            <p style={{ margin: '0.5rem 0 0 0', color: 'var(--c-text-3)', fontSize: '0.9rem' }}>
               Generated on {format(new Date(), 'PPP')}
             </p>
           </div>
@@ -351,42 +351,42 @@ export default function Exports() {
               }}>
                 <div style={{
                   padding: '1rem',
-                  backgroundColor: '#f8f9fa',
+                  backgroundColor: 'var(--c-surface-2)',
                   borderRadius: '8px',
                   textAlign: 'center',
-                  border: '1px solid #e0e0e0'
+                  border: '1px solid var(--c-hairline)'
                 }}>
-                  <div style={{ fontSize: '0.9rem', color: '#666', marginBottom: '0.5rem' }}>Total Income</div>
-                  <div style={{ fontSize: '1.5rem', fontWeight: 'bold', color: '#38a169' }}>
+                  <div style={{ fontSize: '0.9rem', color: 'var(--c-text-2)', marginBottom: '0.5rem' }}>Total Income</div>
+                  <div style={{ fontSize: '1.5rem', fontWeight: 'bold', color: 'var(--c-green)' }}>
                     ${formatCurrency(reportData.income)}
                   </div>
                 </div>
 
                 <div style={{
                   padding: '1rem',
-                  backgroundColor: '#f8f9fa',
+                  backgroundColor: 'var(--c-surface-2)',
                   borderRadius: '8px',
                   textAlign: 'center',
-                  border: '1px solid #e0e0e0'
+                  border: '1px solid var(--c-hairline)'
                 }}>
-                  <div style={{ fontSize: '0.9rem', color: '#666', marginBottom: '0.5rem' }}>Total Expenses</div>
-                  <div style={{ fontSize: '1.5rem', fontWeight: 'bold', color: '#e53e3e' }}>
+                  <div style={{ fontSize: '0.9rem', color: 'var(--c-text-2)', marginBottom: '0.5rem' }}>Total Expenses</div>
+                  <div style={{ fontSize: '1.5rem', fontWeight: 'bold', color: 'var(--c-negative)' }}>
                     ${formatCurrency(reportData.expenses)}
                   </div>
                 </div>
 
                 <div style={{
                   padding: '1rem',
-                  backgroundColor: '#f8f9fa',
+                  backgroundColor: 'var(--c-surface-2)',
                   borderRadius: '8px',
                   textAlign: 'center',
-                  border: '1px solid #e0e0e0'
+                  border: '1px solid var(--c-hairline)'
                 }}>
-                  <div style={{ fontSize: '0.9rem', color: '#666', marginBottom: '0.5rem' }}>Net Cash Flow</div>
+                  <div style={{ fontSize: '0.9rem', color: 'var(--c-text-2)', marginBottom: '0.5rem' }}>Net Cash Flow</div>
                   <div style={{
                     fontSize: '1.5rem',
                     fontWeight: 'bold',
-                    color: reportData.netCashFlow >= 0 ? '#38a169' : '#e53e3e'
+                    color: reportData.netCashFlow >= 0 ? 'var(--c-green)' : 'var(--c-negative)'
                   }}>
                     ${formatCurrency(reportData.netCashFlow)}
                   </div>
@@ -394,13 +394,13 @@ export default function Exports() {
 
                 <div style={{
                   padding: '1rem',
-                  backgroundColor: '#f8f9fa',
+                  backgroundColor: 'var(--c-surface-2)',
                   borderRadius: '8px',
                   textAlign: 'center',
-                  border: '1px solid #e0e0e0'
+                  border: '1px solid var(--c-hairline)'
                 }}>
-                  <div style={{ fontSize: '0.9rem', color: '#666', marginBottom: '0.5rem' }}>Transactions</div>
-                  <div style={{ fontSize: '1.5rem', fontWeight: 'bold', color: '#3182ce' }}>
+                  <div style={{ fontSize: '0.9rem', color: 'var(--c-text-2)', marginBottom: '0.5rem' }}>Transactions</div>
+                  <div style={{ fontSize: '1.5rem', fontWeight: 'bold', color: 'var(--c-primary)' }}>
                     {reportData.totalTransactions}
                   </div>
                 </div>
@@ -408,7 +408,7 @@ export default function Exports() {
 
               {/* Expenses by Category Table */}
               <div style={{ marginBottom: '2rem' }}>
-                <h3 style={{ marginBottom: '1rem', color: '#333', borderBottom: '1px solid #e0e0e0', paddingBottom: '0.5rem' }}>
+                <h3 style={{ marginBottom: '1rem', color: 'var(--c-text)', borderBottom: '1px solid var(--c-hairline)', paddingBottom: '0.5rem' }}>
                   Expenses by Category
                 </h3>
                 <table style={{
@@ -417,10 +417,10 @@ export default function Exports() {
                   fontSize: '0.9rem'
                 }}>
                   <thead>
-                    <tr style={{ backgroundColor: '#f8f9fa' }}>
-                      <th style={{ padding: '0.75rem', textAlign: 'left', border: '1px solid #e0e0e0' }}>Category</th>
-                      <th style={{ padding: '0.75rem', textAlign: 'right', border: '1px solid #e0e0e0' }}>Amount</th>
-                      <th style={{ padding: '0.75rem', textAlign: 'right', border: '1px solid #e0e0e0' }}>% of Total</th>
+                    <tr style={{ backgroundColor: 'var(--c-surface-2)' }}>
+                      <th style={{ padding: '0.75rem', textAlign: 'left', border: '1px solid var(--c-hairline)' }}>Category</th>
+                      <th style={{ padding: '0.75rem', textAlign: 'right', border: '1px solid var(--c-hairline)' }}>Amount</th>
+                      <th style={{ padding: '0.75rem', textAlign: 'right', border: '1px solid var(--c-hairline)' }}>% of Total</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -428,23 +428,23 @@ export default function Exports() {
                       .sort(([,a], [,b]) => (b as number) - (a as number))
                       .map(([category, amount]) => (
                         <tr key={category}>
-                          <td style={{ padding: '0.75rem', border: '1px solid #e0e0e0' }}>{category}</td>
-                          <td style={{ padding: '0.75rem', textAlign: 'right', border: '1px solid #e0e0e0' }}>
+                          <td style={{ padding: '0.75rem', border: '1px solid var(--c-hairline)' }}>{category}</td>
+                          <td style={{ padding: '0.75rem', textAlign: 'right', border: '1px solid var(--c-hairline)' }}>
                             ${formatCurrency(amount as number)}
                           </td>
-                          <td style={{ padding: '0.75rem', textAlign: 'right', border: '1px solid #e0e0e0' }}>
+                          <td style={{ padding: '0.75rem', textAlign: 'right', border: '1px solid var(--c-hairline)' }}>
                             {((amount as number) / reportData.expenses * 100).toFixed(1)}%
                           </td>
                         </tr>
                       ))}
                   </tbody>
                   <tfoot>
-                    <tr style={{ backgroundColor: '#f8f9fa', fontWeight: 'bold' }}>
-                      <td style={{ padding: '0.75rem', border: '1px solid #e0e0e0' }}>Total</td>
-                      <td style={{ padding: '0.75rem', textAlign: 'right', border: '1px solid #e0e0e0' }}>
+                    <tr style={{ backgroundColor: 'var(--c-surface-2)', fontWeight: 'bold' }}>
+                      <td style={{ padding: '0.75rem', border: '1px solid var(--c-hairline)' }}>Total</td>
+                      <td style={{ padding: '0.75rem', textAlign: 'right', border: '1px solid var(--c-hairline)' }}>
                         ${formatCurrency(reportData.expenses)}
                       </td>
-                      <td style={{ padding: '0.75rem', textAlign: 'right', border: '1px solid #e0e0e0' }}>100%</td>
+                      <td style={{ padding: '0.75rem', textAlign: 'right', border: '1px solid var(--c-hairline)' }}>100%</td>
                     </tr>
                   </tfoot>
                 </table>
@@ -452,12 +452,12 @@ export default function Exports() {
 
               {/* Key Insights */}
               <div style={{
-                backgroundColor: '#f8f9fa',
+                backgroundColor: 'var(--c-surface-2)',
                 padding: '1.5rem',
                 borderRadius: '8px',
-                border: '1px solid #e0e0e0'
+                border: '1px solid var(--c-hairline)'
               }}>
-                <h3 style={{ margin: '0 0 1rem 0', color: '#333' }}>Key Insights</h3>
+                <h3 style={{ margin: '0 0 1rem 0', color: 'var(--c-text)' }}>Key Insights</h3>
                 <ul style={{ margin: 0, paddingLeft: '1.5rem', lineHeight: '1.6' }}>
                   <li>Your largest expense category this month was <strong>{reportData.topExpenseCategory}</strong></li>
                   <li>You had <strong>{reportData.totalTransactions}</strong> total transactions this month</li>
@@ -473,20 +473,20 @@ export default function Exports() {
       {/* Scheduled Reports Section */}
       <div className="card" style={{ marginTop: '1.5rem' }}>
         <h2>📅 Scheduled Reports (Coming Soon)</h2>
-        <p style={{ fontSize: '0.9rem', color: '#666', marginBottom: '1rem' }}>
+        <p style={{ fontSize: '0.9rem', color: 'var(--c-text-2)', marginBottom: '1rem' }}>
           Set up automatic report generation and email delivery
         </p>
 
         <div style={{
           padding: '2rem',
           textAlign: 'center',
-          backgroundColor: '#f8f9fa',
+          backgroundColor: 'var(--c-surface-2)',
           borderRadius: '8px',
-          border: '2px dashed #ddd'
+          border: '2px dashed var(--c-hairline)'
         }}>
           <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>⏰</div>
-          <h3 style={{ margin: '0 0 0.5rem 0', color: '#666' }}>Automated Reports</h3>
-          <p style={{ margin: '0', color: '#888' }}>
+          <h3 style={{ margin: '0 0 0.5rem 0', color: 'var(--c-text-2)' }}>Automated Reports</h3>
+          <p style={{ margin: '0', color: 'var(--c-text-3)' }}>
             Schedule monthly reports to be automatically generated and sent to your email.
             <br />
             <em>This feature will be available in a future update.</em>

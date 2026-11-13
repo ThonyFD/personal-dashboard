@@ -201,8 +201,8 @@ export default function Transactions() {
             style={{
               padding: '0.5rem 1rem',
               cursor: 'pointer',
-              backgroundColor: showIncomeForm ? '#718096' : '#2b6cb0',
-              color: 'white',
+              backgroundColor: showIncomeForm ? 'var(--c-muted)' : 'var(--c-primary)',
+              color: 'var(--c-on-accent)',
               border: 'none',
               borderRadius: '4px',
               fontSize: '0.9rem',
@@ -217,8 +217,8 @@ export default function Transactions() {
             style={{
               padding: '0.5rem 1rem',
               cursor: isExporting ? 'not-allowed' : 'pointer',
-              backgroundColor: isExporting ? '#a0aec0' : '#38a169',
-              color: 'white',
+              backgroundColor: isExporting ? 'var(--c-muted)' : 'var(--c-green)',
+              color: 'var(--c-on-accent)',
               border: 'none',
               borderRadius: '4px',
               fontSize: '0.9rem',
@@ -234,12 +234,12 @@ export default function Transactions() {
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '0.75rem', flexWrap: 'wrap' }}>
           <div>
             <h2 style={{ margin: 0, fontSize: '1.1rem' }}>Registrar ingreso manual</h2>
-            <div style={{ color: '#666', fontSize: '0.85rem', marginTop: '0.35rem' }}>
+            <div style={{ color: 'var(--c-text-2)', fontSize: '0.85rem', marginTop: '0.35rem' }}>
               Guarda el ingreso en la base de datos para el mes que selecciones.
             </div>
           </div>
           {!showIncomeForm && incomeFeedback && (
-            <div style={{ color: '#2f855a', fontSize: '0.85rem', fontWeight: 500 }}>
+            <div style={{ color: 'var(--c-green)', fontSize: '0.85rem', fontWeight: 500 }}>
               {incomeFeedback}
             </div>
           )}
@@ -256,7 +256,7 @@ export default function Transactions() {
                   type="month"
                   value={incomeForm.period}
                   onChange={(e) => setIncomeForm(current => ({ ...current, period: e.target.value }))}
-                  style={{ width: '100%', padding: '0.5rem', border: '1px solid #ddd', borderRadius: '4px', fontSize: '0.9rem' }}
+                  style={{ width: '100%', padding: '0.5rem', border: '1px solid var(--c-hairline)', borderRadius: '4px', fontSize: '0.9rem' }}
                   required
                 />
               </div>
@@ -270,7 +270,7 @@ export default function Transactions() {
                   placeholder="Salario, freelance, bono..."
                   value={incomeForm.source}
                   onChange={(e) => setIncomeForm(current => ({ ...current, source: e.target.value }))}
-                  style={{ width: '100%', padding: '0.5rem', border: '1px solid #ddd', borderRadius: '4px', fontSize: '0.9rem' }}
+                  style={{ width: '100%', padding: '0.5rem', border: '1px solid var(--c-hairline)', borderRadius: '4px', fontSize: '0.9rem' }}
                   required
                 />
               </div>
@@ -286,7 +286,7 @@ export default function Transactions() {
                   placeholder="0.00"
                   value={incomeForm.amount}
                   onChange={(e) => setIncomeForm(current => ({ ...current, amount: e.target.value }))}
-                  style={{ width: '100%', padding: '0.5rem', border: '1px solid #ddd', borderRadius: '4px', fontSize: '0.9rem' }}
+                  style={{ width: '100%', padding: '0.5rem', border: '1px solid var(--c-hairline)', borderRadius: '4px', fontSize: '0.9rem' }}
                   required
                 />
               </div>
@@ -300,7 +300,7 @@ export default function Transactions() {
                   placeholder="Opcional"
                   value={incomeForm.notes}
                   onChange={(e) => setIncomeForm(current => ({ ...current, notes: e.target.value }))}
-                  style={{ width: '100%', padding: '0.5rem', border: '1px solid #ddd', borderRadius: '4px', fontSize: '0.9rem' }}
+                  style={{ width: '100%', padding: '0.5rem', border: '1px solid var(--c-hairline)', borderRadius: '4px', fontSize: '0.9rem' }}
                 />
               </div>
             </div>
@@ -308,7 +308,7 @@ export default function Transactions() {
             {(incomeError || incomeFeedback) && (
               <div style={{
                 marginTop: '0.75rem',
-                color: incomeError ? '#c53030' : '#2f855a',
+                color: incomeError ? 'var(--c-negative)' : 'var(--c-green)',
                 fontSize: '0.85rem',
               }}>
                 {incomeError ?? incomeFeedback}
@@ -322,8 +322,8 @@ export default function Transactions() {
                 style={{
                   padding: '0.5rem 1rem',
                   cursor: createIncomeMutation.isPending ? 'not-allowed' : 'pointer',
-                  backgroundColor: createIncomeMutation.isPending ? '#a0aec0' : '#2b6cb0',
-                  color: 'white',
+                  backgroundColor: createIncomeMutation.isPending ? 'var(--c-muted)' : 'var(--c-primary)',
+                  color: 'var(--c-on-accent)',
                   border: 'none',
                   borderRadius: '4px',
                   fontSize: '0.9rem',
@@ -341,9 +341,9 @@ export default function Transactions() {
                 style={{
                   padding: '0.5rem 1rem',
                   cursor: 'pointer',
-                  backgroundColor: 'white',
-                  color: '#4a5568',
-                  border: '1px solid #cbd5e0',
+                  backgroundColor: 'var(--c-surface)',
+                  color: 'var(--c-text-2)',
+                  border: '1px solid var(--c-hairline)',
                   borderRadius: '4px',
                   fontSize: '0.9rem',
                 }}
@@ -367,7 +367,7 @@ export default function Transactions() {
                 value={startDate}
                 max={endDate}
                 onChange={(e) => handleStartDateChange(e.target.value)}
-                style={{ width: '100%', padding: '0.5rem', border: '1px solid #ddd', borderRadius: '4px', fontSize: '0.9rem' }}
+                style={{ width: '100%', padding: '0.5rem', border: '1px solid var(--c-hairline)', borderRadius: '4px', fontSize: '0.9rem' }}
               />
             </div>
 
@@ -381,7 +381,7 @@ export default function Transactions() {
                 min={startDate}
                 max={DEFAULT_END_DATE}
                 onChange={(e) => handleEndDateChange(e.target.value)}
-                style={{ width: '100%', padding: '0.5rem', border: '1px solid #ddd', borderRadius: '4px', fontSize: '0.9rem' }}
+                style={{ width: '100%', padding: '0.5rem', border: '1px solid var(--c-hairline)', borderRadius: '4px', fontSize: '0.9rem' }}
               />
             </div>
 
@@ -394,9 +394,9 @@ export default function Transactions() {
                   width: '100%',
                   padding: '0.5rem 1rem',
                   cursor: startDate === DEFAULT_START_DATE && endDate === DEFAULT_END_DATE ? 'not-allowed' : 'pointer',
-                  backgroundColor: startDate === DEFAULT_START_DATE && endDate === DEFAULT_END_DATE ? '#edf2f7' : 'white',
-                  color: '#2d3748',
-                  border: '1px solid #cbd5e0',
+                  backgroundColor: startDate === DEFAULT_START_DATE && endDate === DEFAULT_END_DATE ? 'var(--c-surface-2)' : 'var(--c-surface)',
+                  color: 'var(--c-text-2)',
+                  border: '1px solid var(--c-hairline)',
                   borderRadius: '4px',
                   fontSize: '0.9rem',
                 }}
@@ -418,7 +418,7 @@ export default function Transactions() {
                 setSearchTerm(e.target.value)
                 setCurrentPage(1)
               }}
-              style={{ width: '100%', padding: '0.5rem', border: '1px solid #ddd', borderRadius: '4px', fontSize: '0.9rem' }}
+              style={{ width: '100%', padding: '0.5rem', border: '1px solid var(--c-hairline)', borderRadius: '4px', fontSize: '0.9rem' }}
             />
           </div>
 
@@ -433,7 +433,7 @@ export default function Transactions() {
                   setTypeFilter(e.target.value)
                   setCurrentPage(1)
                 }}
-                style={{ width: '100%', padding: '0.5rem', border: '1px solid #ddd', borderRadius: '4px', fontSize: '0.9rem' }}
+                style={{ width: '100%', padding: '0.5rem', border: '1px solid var(--c-hairline)', borderRadius: '4px', fontSize: '0.9rem' }}
               >
                 <option value="all">All Types</option>
                 {(filterOptions?.types ?? []).map(type => (
@@ -452,7 +452,7 @@ export default function Transactions() {
                   setChannelFilter(e.target.value)
                   setCurrentPage(1)
                 }}
-                style={{ width: '100%', padding: '0.5rem', border: '1px solid #ddd', borderRadius: '4px', fontSize: '0.9rem' }}
+                style={{ width: '100%', padding: '0.5rem', border: '1px solid var(--c-hairline)', borderRadius: '4px', fontSize: '0.9rem' }}
               >
                 <option value="all">All Channels</option>
                 {(filterOptions?.channels ?? []).map(channel => (
@@ -473,7 +473,7 @@ export default function Transactions() {
                   setProviderFilter(e.target.value)
                   setCurrentPage(1)
                 }}
-                style={{ width: '100%', padding: '0.5rem', border: '1px solid #ddd', borderRadius: '4px', fontSize: '0.9rem' }}
+                style={{ width: '100%', padding: '0.5rem', border: '1px solid var(--c-hairline)', borderRadius: '4px', fontSize: '0.9rem' }}
               >
                 <option value="all">All Providers</option>
                 {(filterOptions?.providers ?? []).map(provider => (
@@ -484,7 +484,7 @@ export default function Transactions() {
           </div>
         </div>
 
-        <div style={{ marginTop: '0.75rem', color: '#666', fontSize: '0.85rem', textAlign: 'center' }}>
+        <div style={{ marginTop: '0.75rem', color: 'var(--c-text-2)', fontSize: '0.85rem', textAlign: 'center' }}>
           {isFetching || isSummaryFetching || isMonthlyIncomesFetching
             ? 'Updating filtered results...'
             : `Showing ${transactions.length} of ${totalCount} transactions and ${visibleMonthlyIncomes.length} manual incomes from ${startDate} to ${endDate}`}
@@ -495,13 +495,13 @@ export default function Transactions() {
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.75rem', flexWrap: 'wrap', marginBottom: '1rem' }}>
           <div>
             <h2 style={{ margin: 0 }}>Ingresos manuales</h2>
-            <div style={{ fontSize: '0.85rem', color: '#666', marginTop: '0.35rem' }}>
+            <div style={{ fontSize: '0.85rem', color: 'var(--c-text-2)', marginTop: '0.35rem' }}>
               Los ingresos cargados en `monthly_incomes` se muestran aquí para el rango activo.
             </div>
           </div>
           <div style={{ textAlign: 'right' }}>
-            <div style={{ fontSize: '0.8rem', color: '#666' }}>Total ingresos</div>
-            <div style={{ fontSize: '1.1rem', fontWeight: 700, color: '#2f855a' }}>
+            <div style={{ fontSize: '0.8rem', color: 'var(--c-text-2)' }}>Total ingresos</div>
+            <div style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--c-green)' }}>
               $ {formatCurrency(monthlyIncomeTotal)}
             </div>
           </div>
@@ -519,7 +519,7 @@ export default function Transactions() {
           <tbody>
             {visibleMonthlyIncomes.length === 0 ? (
               <tr>
-                <td colSpan={4} style={{ textAlign: 'center', color: '#666', padding: '1rem' }}>
+                <td colSpan={4} style={{ textAlign: 'center', color: 'var(--c-text-2)', padding: '1rem' }}>
                   No manual incomes found for the current date range.
                 </td>
               </tr>
@@ -528,7 +528,7 @@ export default function Transactions() {
                 <tr key={income.id}>
                   <td>{format(new Date(income.year, income.month - 1, 1), 'MMM yyyy')}</td>
                   <td>{income.source}</td>
-                  <td style={{ fontWeight: 'bold', color: '#2f855a' }}>$ {formatCurrency(income.amount)}</td>
+                  <td style={{ fontWeight: 'bold', color: 'var(--c-green)' }}>$ {formatCurrency(income.amount)}</td>
                   <td>{income.notes || '-'}</td>
                 </tr>
               ))
@@ -541,12 +541,12 @@ export default function Transactions() {
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.75rem', flexWrap: 'wrap', marginBottom: '1rem' }}>
           <div>
             <h2 style={{ margin: 0 }}>Transactions</h2>
-            <div style={{ fontSize: '0.85rem', color: '#666', marginTop: '0.35rem' }}>
+            <div style={{ fontSize: '0.85rem', color: 'var(--c-text-2)', marginTop: '0.35rem' }}>
               Resumen del filtro activo
             </div>
           </div>
           {(isFetching || isSummaryFetching) && (
-            <div style={{ fontSize: '0.8rem', color: '#666' }}>
+            <div style={{ fontSize: '0.8rem', color: 'var(--c-text-2)' }}>
               Refreshing...
             </div>
           )}
@@ -556,7 +556,7 @@ export default function Transactions() {
           <div className="stat-card">
             <h3>Total Amount</h3>
             <div className="value">${formatCurrency(summaryData?.totalAmount ?? 0)}</div>
-            <div style={{ fontSize: '0.85rem', color: '#666', marginTop: '0.5rem' }}>
+            <div style={{ fontSize: '0.85rem', color: 'var(--c-text-2)', marginTop: '0.5rem' }}>
               Suma de montos para el filtro actual
             </div>
           </div>
@@ -564,7 +564,7 @@ export default function Transactions() {
           <div className="stat-card">
             <h3>Transactions</h3>
             <div className="value">{summaryData?.totalCount ?? 0}</div>
-            <div style={{ fontSize: '0.85rem', color: '#666', marginTop: '0.5rem' }}>
+            <div style={{ fontSize: '0.85rem', color: 'var(--c-text-2)', marginTop: '0.5rem' }}>
               Total de filas encontradas
             </div>
           </div>
@@ -574,7 +574,7 @@ export default function Transactions() {
             <div className="value" style={{ fontSize: '1.25rem' }}>
               {summaryData?.topMerchant || 'N/A'}
             </div>
-            <div style={{ fontSize: '0.85rem', color: '#666', marginTop: '0.5rem' }}>
+            <div style={{ fontSize: '0.85rem', color: 'var(--c-text-2)', marginTop: '0.5rem' }}>
               {summaryData?.topMerchant
                 ? `${summaryData.topMerchantCount} tx · $${formatCurrency(summaryData.topMerchantAmount)}`
                 : 'Sin resultados para el filtro'}
@@ -598,7 +598,7 @@ export default function Transactions() {
           <tbody>
             {transactions.length === 0 ? (
               <tr>
-                <td colSpan={8} style={{ textAlign: 'center', color: '#666', padding: '1rem' }}>
+                <td colSpan={8} style={{ textAlign: 'center', color: 'var(--c-text-2)', padding: '1rem' }}>
                   No transactions found for the current filters.
                 </td>
               </tr>
@@ -617,8 +617,8 @@ export default function Transactions() {
                       padding: '0.25rem 0.5rem',
                       borderRadius: '4px',
                       fontSize: '0.85rem',
-                      backgroundColor: '#e8f5e9',
-                      color: '#2e7d32'
+                      backgroundColor: 'color-mix(in srgb, var(--c-green) 10%, transparent)',
+                      color: 'var(--c-green)'
                     }}>
                       {txn.merchant?.categoryRef?.name || 'Uncategorized'}
                     </span>
@@ -639,13 +639,13 @@ export default function Transactions() {
         <div style={{
           marginTop: '0.75rem',
           padding: '0.75rem',
-          borderTop: '1px solid #e0e0e0',
+          borderTop: '1px solid var(--c-hairline)',
           display: 'flex',
           flexDirection: 'column',
           gap: '0.75rem'
         }}>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', alignItems: 'center' }}>
-            <div style={{ color: '#666', fontSize: '0.8rem', textAlign: 'center' }}>
+            <div style={{ color: 'var(--c-text-2)', fontSize: '0.8rem', textAlign: 'center' }}>
               {totalCount > 0 ? (
                 <>
                   Showing {((currentPage - 1) * itemsPerPage) + 1} to {Math.min(currentPage * itemsPerPage, totalCount)} of {totalCount}
@@ -655,7 +655,7 @@ export default function Transactions() {
               )}
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-              <label style={{ fontSize: '0.8rem', color: '#666' }}>Per page:</label>
+              <label style={{ fontSize: '0.8rem', color: 'var(--c-text-2)' }}>Per page:</label>
               <select
                 value={itemsPerPage}
                 onChange={(e) => {
@@ -664,7 +664,7 @@ export default function Transactions() {
                 }}
                 style={{
                   padding: '0.25rem 0.5rem',
-                  border: '1px solid #ddd',
+                  border: '1px solid var(--c-hairline)',
                   borderRadius: '4px',
                   fontSize: '0.8rem'
                 }}
@@ -692,9 +692,9 @@ export default function Transactions() {
                   padding: '0.4rem 0.6rem',
                   cursor: currentPage === 1 ? 'not-allowed' : 'pointer',
                   opacity: currentPage === 1 ? 0.5 : 1,
-                  border: '1px solid #ddd',
+                  border: '1px solid var(--c-hairline)',
                   borderRadius: '4px',
-                  backgroundColor: currentPage === 1 ? '#f5f5f5' : 'white',
+                  backgroundColor: currentPage === 1 ? 'var(--c-surface-2)' : 'var(--c-surface)',
                   fontSize: '0.8rem'
                 }}
               >
@@ -707,9 +707,9 @@ export default function Transactions() {
                   padding: '0.4rem 0.6rem',
                   cursor: currentPage === 1 ? 'not-allowed' : 'pointer',
                   opacity: currentPage === 1 ? 0.5 : 1,
-                  border: '1px solid #ddd',
+                  border: '1px solid var(--c-hairline)',
                   borderRadius: '4px',
-                  backgroundColor: currentPage === 1 ? '#f5f5f5' : 'white',
+                  backgroundColor: currentPage === 1 ? 'var(--c-surface-2)' : 'var(--c-surface)',
                   fontSize: '0.8rem'
                 }}
               >
@@ -725,9 +725,9 @@ export default function Transactions() {
                   padding: '0.4rem 0.6rem',
                   cursor: currentPage === totalPages ? 'not-allowed' : 'pointer',
                   opacity: currentPage === totalPages ? 0.5 : 1,
-                  border: '1px solid #ddd',
+                  border: '1px solid var(--c-hairline)',
                   borderRadius: '4px',
-                  backgroundColor: currentPage === totalPages ? '#f5f5f5' : 'white',
+                  backgroundColor: currentPage === totalPages ? 'var(--c-surface-2)' : 'var(--c-surface)',
                   fontSize: '0.8rem'
                 }}
               >
@@ -740,9 +740,9 @@ export default function Transactions() {
                   padding: '0.4rem 0.6rem',
                   cursor: currentPage === totalPages ? 'not-allowed' : 'pointer',
                   opacity: currentPage === totalPages ? 0.5 : 1,
-                  border: '1px solid #ddd',
+                  border: '1px solid var(--c-hairline)',
                   borderRadius: '4px',
-                  backgroundColor: currentPage === totalPages ? '#f5f5f5' : 'white',
+                  backgroundColor: currentPage === totalPages ? 'var(--c-surface-2)' : 'var(--c-surface)',
                   fontSize: '0.8rem'
                 }}
               >

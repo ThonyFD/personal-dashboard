@@ -17,21 +17,21 @@
 }
 
 .alert-banner--warning {
-  background: #140e00;
-  border: 1px solid rgba(245, 158, 11, 0.4);
-  color: #fbbf24;
+  background: color-mix(in srgb, var(--c-warning) 8%, var(--c-bg));
+  border: 1px solid color-mix(in srgb, var(--c-warning) 40%, transparent);
+  color: var(--c-warning);
 }
 
 .alert-banner--error {
-  background: #140404;
-  border: 1px solid rgba(239, 68, 68, 0.4);
-  color: #f87171;
+  background: color-mix(in srgb, var(--c-negative) 8%, var(--c-bg));
+  border: 1px solid color-mix(in srgb, var(--c-negative) 40%, transparent);
+  color: var(--c-negative);
 }
 
 .alert-banner--info {
-  background: #001a1f;
-  border: 1px solid rgba(0, 217, 255, 0.3);
-  color: #00D9FF;
+  background: color-mix(in srgb, var(--c-primary) 8%, var(--c-bg));
+  border: 1px solid color-mix(in srgb, var(--c-primary) 30%, transparent);
+  color: var(--c-primary);
 }
 
 .alert-banner__icon {
