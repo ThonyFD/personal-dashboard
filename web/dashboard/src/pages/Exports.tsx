@@ -124,7 +124,12 @@ export default function Exports() {
         scale: 2,
         useCORS: true,
         allowTaint: true,
-        backgroundColor: '#ffffff'
+        backgroundColor: '#ffffff',
+        // The PDF must stay light regardless of the user's theme: force Brand light on the cloned root only.
+        onclone: (doc) => {
+          doc.documentElement.dataset.skin = 'brand'
+          doc.documentElement.dataset.variant = 'light'
+        }
       })
 
       const imgData = canvas.toDataURL('image/png')
