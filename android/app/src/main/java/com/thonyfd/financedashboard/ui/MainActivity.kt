@@ -1,6 +1,6 @@
 package com.thonyfd.financedashboard.ui
 
-import com.thonyfd.financedashboard.ui.theme.AppColors
+import com.thonyfd.financedashboard.ui.theme.AppTheme
 import kotlinx.coroutines.CancellationException
 import android.content.Intent
 import android.os.Bundle
@@ -163,9 +163,9 @@ fun AppRoot(
     val drawerState = rememberDrawerState(DrawerValue.Closed)
     val scope = rememberCoroutineScope()
 
-    AppMenuDrawer(drawerState) {
+    AppMenuDrawer(drawerState, isOwner) {
         Scaffold(
-            containerColor = AppColors.Night,
+            containerColor = AppTheme.colors.bg,
             bottomBar = { AppNavigationBar(visibleTabs(isOwner), selectedTab) { selectedTab = it } }
         ) { innerPadding ->
             val openMenu = { scope.launch { drawerState.open() }; Unit }
@@ -230,11 +230,11 @@ fun DashboardTab(padding: PaddingValues, onOpenMenu: () -> Unit = {}, onCategory
             navigationIcon = { AppIconButton(Icons.Outlined.Menu, "Menú", onClick = onOpenMenu) },
             title = {
                 Column {
-                    Text("Finanzas", style = MaterialTheme.typography.titleLarge, color = AppColors.Ice)
+                    Text("Finanzas", style = MaterialTheme.typography.titleLarge, color = AppTheme.colors.text)
                     Text(
                         data?.let { "Actualizado ${it.lastUpdated}" } ?: "Cargando",
                         style = MaterialTheme.typography.bodySmall,
-                        color = AppColors.Mist
+                        color = AppTheme.colors.textSecondary
                     )
                 }
             },
@@ -243,21 +243,21 @@ fun DashboardTab(padding: PaddingValues, onOpenMenu: () -> Unit = {}, onCategory
                 AppIconButton(Icons.Outlined.Refresh, "Actualizar", onClick = { load(showResult = true) }, loading = refreshing && data != null)
             },
             colors = TopAppBarDefaults.topAppBarColors(
-                containerColor = AppColors.Night,
-                titleContentColor = AppColors.Ice,
-                actionIconContentColor = AppColors.Mist
+                containerColor = AppTheme.colors.bg,
+                titleContentColor = AppTheme.colors.text,
+                actionIconContentColor = AppTheme.colors.textSecondary
             )
         )
 
         when {
             isLoading -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                CircularProgressIndicator(color = AppColors.Cyan, strokeWidth = 2.dp, modifier = Modifier.size(32.dp))
+                CircularProgressIndicator(color = AppTheme.colors.accent, strokeWidth = 2.dp, modifier = Modifier.size(32.dp))
             }
             error != null && data == null -> Box(Modifier.fillMaxSize().padding(32.dp), contentAlignment = Alignment.Center) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Text("No se pudo cargar el dashboard", color = AppColors.Ice, style = MaterialTheme.typography.titleMedium)
+                    Text("No se pudo cargar el dashboard", color = AppTheme.colors.text, style = MaterialTheme.typography.titleMedium)
                     Spacer(Modifier.height(6.dp))
-                    Text(error!!, color = AppColors.Mist, style = MaterialTheme.typography.bodySmall, textAlign = TextAlign.Center)
+                    Text(error!!, color = AppTheme.colors.textSecondary, style = MaterialTheme.typography.bodySmall, textAlign = TextAlign.Center)
                     Spacer(Modifier.height(16.dp))
                     AppButton("Reintentar", onClick = { load(showResult = true) }, style = AppButtonStyle.Secondary, loading = refreshing)
                 }
@@ -297,10 +297,10 @@ private fun WidgetAppearanceDialog(
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        containerColor = AppColors.Panel,
-        titleContentColor = AppColors.Ice,
-        textContentColor = AppColors.Mist,
-        icon = { Icon(Icons.Default.Widgets, null, tint = AppColors.Cyan) },
+        containerColor = AppTheme.colors.surface,
+        titleContentColor = AppTheme.colors.text,
+        textContentColor = AppTheme.colors.textSecondary,
+        icon = { Icon(Icons.Default.Widgets, null, tint = AppTheme.colors.accent) },
         title = { Text("Apariencia de widgets", fontWeight = FontWeight.Bold) },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(14.dp)) {
@@ -341,8 +341,8 @@ private fun WidgetAppearanceDialog(
 private fun WidgetOpacitySlider(label: String, value: Float, onValueChange: (Float) -> Unit) {
     Column {
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-            Text(label, color = AppColors.Ice, fontWeight = FontWeight.Medium)
-            Text("${(value * 100).roundToInt()}%", color = AppColors.Cyan, fontWeight = FontWeight.Bold)
+            Text(label, color = AppTheme.colors.text, fontWeight = FontWeight.Medium)
+            Text("${(value * 100).roundToInt()}%", color = AppTheme.colors.accent, fontWeight = FontWeight.Bold)
         }
         Slider(
             value = value,
@@ -350,9 +350,9 @@ private fun WidgetOpacitySlider(label: String, value: Float, onValueChange: (Flo
             valueRange = WidgetAppearancePreferences.MIN_OPACITY..1f,
             steps = 7,
             colors = SliderDefaults.colors(
-                thumbColor = AppColors.Cyan,
-                activeTrackColor = AppColors.Violet,
-                inactiveTrackColor = AppColors.Hairline
+                thumbColor = AppTheme.colors.accent,
+                activeTrackColor = AppTheme.colors.depth,
+                inactiveTrackColor = AppTheme.colors.hairline
             )
         )
     }
@@ -419,12 +419,12 @@ private fun SpendHero(data: WidgetData) {
     val cents = formatted.substringAfterLast('.', "00")
 
     Column(Modifier.fillMaxWidth().padding(top = 8.dp, bottom = 8.dp)) {
-        Text("Gastado en ${data.monthLabel.lowercase()}", color = AppColors.Mist, style = MaterialTheme.typography.bodyMedium)
+        Text("Gastado en ${data.monthLabel.lowercase()}", color = AppTheme.colors.textSecondary, style = MaterialTheme.typography.bodyMedium)
         Spacer(Modifier.height(4.dp))
         Row(verticalAlignment = Alignment.Bottom) {
-            Text("$", color = AppColors.Mist, style = MoneyStyle, fontSize = 28.sp, modifier = Modifier.padding(bottom = 8.dp, end = 2.dp))
-            Text(whole, color = AppColors.Ice, style = MoneyStyle, fontSize = 52.sp, fontWeight = FontWeight.SemiBold, letterSpacing = (-1.5).sp)
-            Text(".$cents", color = AppColors.Mist, style = MoneyStyle, fontSize = 24.sp, modifier = Modifier.padding(bottom = 9.dp))
+            Text("$", color = AppTheme.colors.textSecondary, style = MoneyStyle, fontSize = 28.sp, modifier = Modifier.padding(bottom = 8.dp, end = 2.dp))
+            Text(whole, color = AppTheme.colors.text, style = MoneyStyle, fontSize = 52.sp, fontWeight = FontWeight.SemiBold, letterSpacing = (-1.5).sp)
+            Text(".$cents", color = AppTheme.colors.textSecondary, style = MoneyStyle, fontSize = 24.sp, modifier = Modifier.padding(bottom = 9.dp))
         }
 
         if (data.topCategories.isNotEmpty()) {
@@ -434,11 +434,11 @@ private fun SpendHero(data: WidgetData) {
 
         Spacer(Modifier.height(14.dp))
         Row(horizontalArrangement = Arrangement.spacedBy(20.dp), verticalAlignment = Alignment.CenterVertically) {
-            HeroStat("${data.txnCount}", "movimientos", AppColors.Ice)
+            HeroStat("${data.txnCount}", "movimientos", AppTheme.colors.text)
             HeroStat(
                 "${data.pendingCount}",
                 if (data.pendingCount == 1) "pendiente" else "pendientes",
-                if (data.pendingCount > 0) AppColors.Amber else AppColors.Ice
+                if (data.pendingCount > 0) AppTheme.colors.warning else AppTheme.colors.text
             )
         }
     }
@@ -449,7 +449,7 @@ private fun HeroStat(value: String, label: String, valueColor: Color) {
     Row(verticalAlignment = Alignment.Bottom) {
         Text(value, color = valueColor, style = MoneyStyle, fontSize = 17.sp, fontWeight = FontWeight.SemiBold)
         Spacer(Modifier.width(5.dp))
-        Text(label, color = AppColors.Mist, style = MaterialTheme.typography.bodySmall, modifier = Modifier.padding(bottom = 2.dp))
+        Text(label, color = AppTheme.colors.textSecondary, style = MaterialTheme.typography.bodySmall, modifier = Modifier.padding(bottom = 2.dp))
     }
 }
 
@@ -458,7 +458,7 @@ private fun HeroStat(value: String, label: String, valueColor: Color) {
 private fun CategoryBar(categories: List<CategorySpend>) {
     val total = categories.sumOf { it.percentage }.coerceAtLeast(1)
     Row(
-        Modifier.fillMaxWidth().height(6.dp).clip(RoundedCornerShape(3.dp)).background(AppColors.Panel),
+        Modifier.fillMaxWidth().height(6.dp).clip(RoundedCornerShape(3.dp)).background(AppTheme.colors.surface),
         horizontalArrangement = Arrangement.spacedBy(2.dp)
     ) {
         categories.forEachIndexed { index, cat ->
@@ -469,12 +469,13 @@ private fun CategoryBar(categories: List<CategorySpend>) {
     }
 }
 
+@Composable
 private fun categoryColor(index: Int): Color = when (index) {
-    0 -> AppColors.Cyan
-    1 -> AppColors.Violet
-    2 -> AppColors.Amber
-    3 -> Color(0xFF4FD1C5)
-    else -> AppColors.Mist
+    0 -> AppTheme.colors.accent
+    1 -> AppTheme.colors.depth
+    2 -> AppTheme.colors.warning
+    3 -> AppTheme.colors.chart[7]
+    else -> AppTheme.colors.textSecondary
 }
 
 // ---------------------------------------------------------------------------
@@ -483,9 +484,9 @@ private fun categoryColor(index: Int): Color = when (index) {
 @Composable
 private fun UpcomingPaymentRow(payment: UpcomingPayment) {
     val urgencyColor = when {
-        payment.daysUntil <= 3 -> AppColors.Coral
-        payment.daysUntil <= 7 -> AppColors.Amber
-        else                   -> AppColors.Mist
+        payment.daysUntil <= 3 -> AppTheme.colors.negative
+        payment.daysUntil <= 7 -> AppTheme.colors.warning
+        else                   -> AppTheme.colors.textSecondary
     }
     val daysLabel = when {
         payment.daysUntil < 0  -> "Vencido · día ${payment.day ?: "?"}"
@@ -512,12 +513,12 @@ private fun TransactionRow(txn: Transaction) {
     PanelRow(
         leading = {
             Box(
-                Modifier.size(36.dp).clip(RoundedCornerShape(12.dp)).background(AppColors.PanelHigh),
+                Modifier.size(36.dp).clip(RoundedCornerShape(12.dp)).background(AppTheme.colors.surfaceRaised),
                 contentAlignment = Alignment.Center
             ) {
                 Text(
                     name.firstOrNull { it.isLetterOrDigit() }?.uppercase() ?: "·",
-                    color = AppColors.Cyan,
+                    color = AppTheme.colors.accent,
                     style = MaterialTheme.typography.titleSmall
                 )
             }
@@ -526,7 +527,7 @@ private fun TransactionRow(txn: Transaction) {
         subtitle = shortDate(txn.txnDate),
         amount = "−$${String.format("%,.2f", txn.amount)}",
         detail = null,
-        detailColor = AppColors.Mist
+        detailColor = AppTheme.colors.textSecondary
     )
 }
 
@@ -539,14 +540,14 @@ private fun CategoryRow(cat: CategorySpend, color: Color, onClick: () -> Unit) {
         Text(cat.emoji, fontSize = 20.sp)
         Spacer(Modifier.width(14.dp))
         Column(Modifier.weight(1f)) {
-            Text(cat.name, color = AppColors.Ice, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            Text(cat.name, color = AppTheme.colors.text, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold, maxLines = 1, overflow = TextOverflow.Ellipsis)
             Spacer(Modifier.height(7.dp))
-            Box(Modifier.fillMaxWidth().height(4.dp).clip(RoundedCornerShape(2.dp)).background(AppColors.PanelHigh)) {
+            Box(Modifier.fillMaxWidth().height(4.dp).clip(RoundedCornerShape(2.dp)).background(AppTheme.colors.surfaceRaised)) {
                 Box(Modifier.fillMaxWidth(cat.percentage.coerceIn(0, 100) / 100f).fillMaxHeight().background(color))
             }
         }
         Spacer(Modifier.width(16.dp))
-        Text("${cat.percentage}%", color = AppColors.Ice, style = MoneyStyle, fontSize = 15.sp, fontWeight = FontWeight.Medium)
+        Text("${cat.percentage}%", color = AppTheme.colors.text, style = MoneyStyle, fontSize = 15.sp, fontWeight = FontWeight.Medium)
     }
 }
 
@@ -566,13 +567,13 @@ private fun PanelRow(
         leading()
         Spacer(Modifier.width(14.dp))
         Column(Modifier.weight(1f)) {
-            Text(title, color = AppColors.Ice, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            Text(title, color = AppTheme.colors.text, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold, maxLines = 1, overflow = TextOverflow.Ellipsis)
             Spacer(Modifier.height(2.dp))
-            Text(subtitle, color = AppColors.Mist, style = MaterialTheme.typography.bodySmall, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            Text(subtitle, color = AppTheme.colors.textSecondary, style = MaterialTheme.typography.bodySmall, maxLines = 1, overflow = TextOverflow.Ellipsis)
         }
         Spacer(Modifier.width(12.dp))
         Column(horizontalAlignment = Alignment.End) {
-            Text(amount, color = AppColors.Ice, style = MoneyStyle, fontSize = 15.sp, fontWeight = FontWeight.Medium)
+            Text(amount, color = AppTheme.colors.text, style = MoneyStyle, fontSize = 15.sp, fontWeight = FontWeight.Medium)
             if (detail != null) {
                 Spacer(Modifier.height(2.dp))
                 Text(detail, color = detailColor, style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.Medium)
@@ -594,8 +595,8 @@ private fun shortDate(raw: String): String = runCatching {
 @Composable
 private fun AppNavigationBar(tabs: List<AppTab>, selectedTab: AppTab, onSelect: (AppTab) -> Unit) {
     Column {
-        HorizontalDivider(thickness = 1.dp, color = AppColors.Hairline)
-        NavigationBar(containerColor = AppColors.Deep, tonalElevation = 0.dp) {
+        HorizontalDivider(thickness = 1.dp, color = AppTheme.colors.hairline)
+        NavigationBar(containerColor = AppTheme.colors.surfaceLow, tonalElevation = 0.dp) {
             tabs.forEach { destination ->
                 NavigationBarItem(
                     selected = selectedTab == destination,
@@ -603,11 +604,11 @@ private fun AppNavigationBar(tabs: List<AppTab>, selectedTab: AppTab, onSelect: 
                     icon = { Icon(destination.icon, destination.label) },
                     label = { Text(destination.label, style = MaterialTheme.typography.labelSmall) },
                     colors = NavigationBarItemDefaults.colors(
-                        selectedIconColor = AppColors.Cyan,
-                        selectedTextColor = AppColors.Ice,
-                        unselectedIconColor = AppColors.Dim,
-                        unselectedTextColor = AppColors.Dim,
-                        indicatorColor = AppColors.Cyan.copy(alpha = 0.12f)
+                        selectedIconColor = AppTheme.colors.accent,
+                        selectedTextColor = AppTheme.colors.text,
+                        unselectedIconColor = AppTheme.colors.textPassive,
+                        unselectedTextColor = AppTheme.colors.textPassive,
+                        indicatorColor = AppTheme.colors.accent.copy(alpha = 0.12f)
                     )
                 )
             }

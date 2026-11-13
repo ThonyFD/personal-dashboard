@@ -37,7 +37,7 @@ import com.thonyfd.financedashboard.data.auth.OwnerCache
 import com.thonyfd.financedashboard.data.auth.shouldClearAccountCaches
 import com.thonyfd.financedashboard.data.auth.signInErrorMessage
 import com.thonyfd.financedashboard.data.auth.toGateState
-import com.thonyfd.financedashboard.ui.theme.AppColors
+import com.thonyfd.financedashboard.ui.theme.AppTheme
 import com.thonyfd.financedashboard.widget.clearAllAccountCaches
 import com.thonyfd.financedashboard.widget.refreshWidgetsForAccount
 import io.github.jan.supabase.auth.auth
@@ -86,9 +86,9 @@ fun LoginGate(content: @Composable (isOwner: Boolean) -> Unit) {
 @Composable
 private fun GateSpinner() {
     Box(
-        Modifier.fillMaxSize().background(AppColors.Night),
+        Modifier.fillMaxSize().background(AppTheme.colors.bg),
         contentAlignment = Alignment.Center
-    ) { CircularProgressIndicator(color = AppColors.Cyan) }
+    ) { CircularProgressIndicator(color = AppTheme.colors.accent) }
 }
 
 @Composable
@@ -112,17 +112,17 @@ private fun LoginScreen() {
     )
 
     Column(
-        Modifier.fillMaxSize().background(AppColors.Night).padding(horizontal = 28.dp),
+        Modifier.fillMaxSize().background(AppTheme.colors.bg).padding(horizontal = 28.dp),
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Text("BIENVENIDO", color = AppColors.Cyan, fontSize = 11.sp, fontWeight = FontWeight.Bold)
+        Text("BIENVENIDO", color = AppTheme.colors.accent, fontSize = 11.sp, fontWeight = FontWeight.Bold)
         Spacer(Modifier.height(8.dp))
-        Text("Entra a tu dashboard", color = AppColors.Ice, fontSize = 26.sp, fontWeight = FontWeight.Bold, textAlign = TextAlign.Center)
+        Text("Entra a tu dashboard", color = AppTheme.colors.text, fontSize = 26.sp, fontWeight = FontWeight.Bold, textAlign = TextAlign.Center)
         Spacer(Modifier.height(8.dp))
         Text(
             "Usa tu cuenta de Google para sincronizar finanzas, hábitos y proyectos con la web.",
-            color = AppColors.Mist, fontSize = 14.sp, textAlign = TextAlign.Center
+            color = AppTheme.colors.textSecondary, fontSize = 14.sp, textAlign = TextAlign.Center
         )
         Spacer(Modifier.height(28.dp))
         AppButton(
@@ -133,7 +133,7 @@ private fun LoginScreen() {
         )
         message?.let {
             Spacer(Modifier.height(12.dp))
-            Text(it, color = AppColors.Mist, fontSize = 13.sp, textAlign = TextAlign.Center)
+            Text(it, color = AppTheme.colors.textSecondary, fontSize = 13.sp, textAlign = TextAlign.Center)
         }
     }
 }

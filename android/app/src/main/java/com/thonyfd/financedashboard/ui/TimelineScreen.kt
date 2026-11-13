@@ -1,6 +1,6 @@
 package com.thonyfd.financedashboard.ui
 
-import com.thonyfd.financedashboard.ui.theme.AppColors
+import com.thonyfd.financedashboard.ui.theme.AppTheme
 import com.thonyfd.financedashboard.data.models.HabitIcons
 import com.thonyfd.financedashboard.ui.theme.MoneyStyle
 import androidx.compose.material3.TextButton
@@ -117,7 +117,7 @@ fun TimelineScreen(padding: PaddingValues = PaddingValues(), onOpenMenu: (() -> 
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(TimelineBg)
+            .background(AppTheme.colors.bg)
             .padding(padding)
     ) {
         TopAppBar(
@@ -125,7 +125,7 @@ fun TimelineScreen(padding: PaddingValues = PaddingValues(), onOpenMenu: (() -> 
             title = {
                 Column {
                     Text("Timeline", style = MaterialTheme.typography.titleLarge)
-                    Text("Tu día por bloques", color = TimelineMuted, style = MaterialTheme.typography.bodySmall)
+                    Text("Tu día por bloques", color = AppTheme.colors.textSecondary, style = MaterialTheme.typography.bodySmall)
                 }
             },
             actions = {
@@ -136,13 +136,13 @@ fun TimelineScreen(padding: PaddingValues = PaddingValues(), onOpenMenu: (() -> 
 
         when {
             isLoading -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                CircularProgressIndicator(color = TimelinePrimary, strokeWidth = 2.dp, modifier = Modifier.size(32.dp))
+                CircularProgressIndicator(color = AppTheme.colors.accent, strokeWidth = 2.dp, modifier = Modifier.size(32.dp))
             }
             error != null && !hasLoaded -> Box(Modifier.fillMaxSize().padding(32.dp), contentAlignment = Alignment.Center) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Text("No se pudo cargar el timeline", color = TimelineText, style = MaterialTheme.typography.titleMedium)
+                    Text("No se pudo cargar el timeline", color = AppTheme.colors.text, style = MaterialTheme.typography.titleMedium)
                     Spacer(Modifier.height(6.dp))
-                    Text(error ?: "", color = TimelineMuted, style = MaterialTheme.typography.bodySmall)
+                    Text(error ?: "", color = AppTheme.colors.textSecondary, style = MaterialTheme.typography.bodySmall)
                     Spacer(Modifier.height(16.dp))
                     AppButton("Reintentar", onClick = { load(showResult = true) }, style = AppButtonStyle.Secondary, loading = refreshing)
                 }
@@ -154,23 +154,23 @@ fun TimelineScreen(padding: PaddingValues = PaddingValues(), onOpenMenu: (() -> 
             ) {
                 item {
                     Column(Modifier.padding(top = 8.dp, start = 2.dp, bottom = 4.dp)) {
-                        Text("Racha", color = TimelineMuted, style = MaterialTheme.typography.bodyMedium)
+                        Text("Racha", color = AppTheme.colors.textSecondary, style = MaterialTheme.typography.bodyMedium)
                         Row(verticalAlignment = Alignment.Bottom) {
-                            Text("$streak", color = TimelineText, style = MoneyStyle, fontSize = 52.sp, fontWeight = FontWeight.SemiBold, letterSpacing = (-1.5).sp)
+                            Text("$streak", color = AppTheme.colors.text, style = MoneyStyle, fontSize = 52.sp, fontWeight = FontWeight.SemiBold, letterSpacing = (-1.5).sp)
                             Spacer(Modifier.width(8.dp))
-                            Text(if (streak == 1) "día" else "días", color = TimelineMuted, style = MaterialTheme.typography.titleMedium, modifier = Modifier.padding(bottom = 10.dp))
+                            Text(if (streak == 1) "día" else "días", color = AppTheme.colors.textSecondary, style = MaterialTheme.typography.titleMedium, modifier = Modifier.padding(bottom = 10.dp))
                         }
                         Spacer(Modifier.height(10.dp))
                         LinearProgressIndicator(
                             progress = { progress },
                             modifier = Modifier.fillMaxWidth().height(6.dp).clip(RoundedCornerShape(3.dp)),
-                            color = if (progress >= 1f) TimelineGreen else TimelinePrimary,
-                            trackColor = AppColors.Panel,
+                            color = if (progress >= 1f) AppTheme.colors.positive else AppTheme.colors.accent,
+                            trackColor = AppTheme.colors.surface,
                             gapSize = 0.dp,
                             drawStopIndicator = {}
                         )
                         Spacer(Modifier.height(8.dp))
-                        Text("$completedCount de ${habits.size} completados hoy", color = TimelineMuted, style = MaterialTheme.typography.bodySmall)
+                        Text("$completedCount de ${habits.size} completados hoy", color = AppTheme.colors.textSecondary, style = MaterialTheme.typography.bodySmall)
                     }
                 }
 
@@ -220,12 +220,12 @@ fun TimelineScreen(padding: PaddingValues = PaddingValues(), onOpenMenu: (() -> 
                                     Column(Modifier.weight(1f)) {
                                         Text(
                                             "${HabitIcons.resolve(habit.iconIdentifier)}  ${habit.name}",
-                                            color = if (completed) TimelineMuted else TimelineText,
+                                            color = if (completed) AppTheme.colors.textSecondary else AppTheme.colors.text,
                                             style = MaterialTheme.typography.bodyMedium,
                                             fontWeight = FontWeight.SemiBold,
                                             maxLines = 1
                                         )
-                                        Text("${habit.targetDurationMinutes} min", color = TimelineMuted, style = MaterialTheme.typography.bodySmall)
+                                        Text("${habit.targetDurationMinutes} min", color = AppTheme.colors.textSecondary, style = MaterialTheme.typography.bodySmall)
                                     }
                                     AppButton("Enfoque", onClick = { focusHabit = habit }, style = AppButtonStyle.Text, leadingIcon = Icons.Default.PlayArrow)
                                 }
@@ -276,16 +276,16 @@ private fun FocusTimerDialog(
     }
 
     Dialog(onDismissRequest = onDismiss) {
-        Card(colors = CardDefaults.cardColors(containerColor = AppColors.Panel), shape = RoundedCornerShape(28.dp)) {
+        Card(colors = CardDefaults.cardColors(containerColor = AppTheme.colors.surface), shape = RoundedCornerShape(28.dp)) {
             Column(
                 Modifier.padding(20.dp),
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                Text(habit.name, color = TimelineText, style = MaterialTheme.typography.headlineSmall)
+                Text(habit.name, color = AppTheme.colors.text, style = MaterialTheme.typography.headlineSmall)
                 Text(
                     text = "%02d:%02d".format(remaining / 60, remaining % 60),
-                    color = TimelineText,
+                    color = AppTheme.colors.text,
                     style = MoneyStyle,
                     fontSize = 56.sp,
                     fontWeight = FontWeight.Medium

@@ -10,7 +10,7 @@ import android.app.Activity
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.ReadOnlyComposable
-import androidx.compose.runtime.SideEffect
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.platform.LocalContext
@@ -28,23 +28,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.thonyfd.financedashboard.R
-
-/** Tokens de color del Brand Book. Usar siempre estos en lugar de hex sueltos. */
-object AppColors {
-    val Night = Color(0xFF081022)      // fondo maestro
-    val Deep = Color(0xFF0C1730)       // barras y superficies de fondo
-    val Panel = Color(0xFF111A2E)      // tarjetas y paneles
-    val PanelHigh = Color(0xFF17223A)  // elementos elevados dentro de un panel
-    val Hairline = Color(0xFF1F2B45)   // divisores y bordes finos
-    val Ice = Color(0xFFE8FFFF)        // texto principal
-    val Mist = Color(0xFF8A94A8)       // texto secundario
-    val Dim = Color(0xFF5E677A)        // texto pasivo
-    val Cyan = Color(0xFF00D9FF)       // identidad y acción principal
-    val Lime = Color(0xFF39FF14)       // solo progreso y estados positivos
-    val Violet = Color(0xFF7A5CFF)     // acento de profundidad
-    val Coral = Color(0xFFFF6B81)      // gastos y errores
-    val Amber = Color(0xFFFFC069)      // advertencias y pendientes
-}
 
 @OptIn(ExperimentalTextApi::class)
 private fun variable(res: Int, weight: FontWeight) = Font(
@@ -182,11 +165,16 @@ fun AppearanceTheme(content: @Composable () -> Unit) {
     val tokens = tokensFor(skin, resolveDark(mode, isSystemInDarkTheme()))
     val view = LocalView.current
     if (!view.isInEditMode) {
-        SideEffect {
-            val window = (view.context as? Activity)?.window ?: return@SideEffect
-            val controller = WindowCompat.getInsetsController(window, view)
-            controller.isAppearanceLightStatusBars = !tokens.isDark
-            controller.isAppearanceLightNavigationBars = !tokens.isDark
+        DisposableEffect(tokens.isDark) {
+            val window = (view.context as? Activity)?.window
+            val controller = window?.let { WindowCompat.getInsetsController(it, view) }
+            controller?.isAppearanceLightStatusBars = !tokens.isDark
+            controller?.isAppearanceLightNavigationBars = !tokens.isDark
+            onDispose {
+                // Pantallas publicas (LoginScreen) vuelven a Brand oscuro: iconos claros.
+                controller?.isAppearanceLightStatusBars = false
+                controller?.isAppearanceLightNavigationBars = false
+            }
         }
     }
     FinanceDashboardTheme(tokens = tokens, content = content)

@@ -1,6 +1,6 @@
 package com.thonyfd.financedashboard.ui
 
-import com.thonyfd.financedashboard.ui.theme.AppColors
+import com.thonyfd.financedashboard.ui.theme.AppTheme
 import com.thonyfd.financedashboard.ui.theme.MoneyStyle
 import androidx.compose.foundation.lazy.itemsIndexed
 import kotlinx.coroutines.CancellationException
@@ -81,7 +81,7 @@ fun CategoryDetailScreen(
     val total = transactions.sumOf { it.amount }
 
     Scaffold(
-        containerColor = AppColors.Night,
+        containerColor = AppTheme.colors.bg,
         topBar = {
             TopAppBar(
                 title = {
@@ -107,9 +107,9 @@ fun CategoryDetailScreen(
             // Hero: total de la categoría con navegación de mes
             Column(Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 8.dp)) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text(monthLabel, color = AppColors.Mist, style = MaterialTheme.typography.bodyMedium, modifier = Modifier.weight(1f))
+                    Text(monthLabel, color = AppTheme.colors.textSecondary, style = MaterialTheme.typography.bodyMedium, modifier = Modifier.weight(1f))
                     IconButton(onClick = { yearMonth = yearMonth.minusMonths(1) }, modifier = Modifier.size(36.dp)) {
-                        Icon(Icons.Default.KeyboardArrowLeft, contentDescription = "Mes anterior", tint = AppColors.Ice)
+                        Icon(Icons.Default.KeyboardArrowLeft, contentDescription = "Mes anterior", tint = AppTheme.colors.text)
                     }
                     IconButton(
                         onClick = { if (canGoNext) yearMonth = yearMonth.plusMonths(1) },
@@ -119,13 +119,13 @@ fun CategoryDetailScreen(
                         Icon(
                             Icons.Default.KeyboardArrowRight,
                             contentDescription = "Mes siguiente",
-                            tint = if (canGoNext) AppColors.Ice else AppColors.Hairline
+                            tint = if (canGoNext) AppTheme.colors.text else AppTheme.colors.hairline
                         )
                     }
                 }
                 Text(
                     if (isLoading) "—" else money(total),
-                    color = AppColors.Ice,
+                    color = AppTheme.colors.text,
                     style = MoneyStyle,
                     fontSize = 40.sp,
                     fontWeight = FontWeight.SemiBold,
@@ -134,7 +134,7 @@ fun CategoryDetailScreen(
                 if (!isLoading) {
                     Text(
                         "${transactions.size} ${if (transactions.size == 1) "movimiento" else "movimientos"}",
-                        color = AppColors.Mist,
+                        color = AppTheme.colors.textSecondary,
                         style = MaterialTheme.typography.bodySmall
                     )
                 }
@@ -142,13 +142,13 @@ fun CategoryDetailScreen(
 
             when {
                 isLoading -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    CircularProgressIndicator(color = AppColors.Cyan, strokeWidth = 2.dp, modifier = Modifier.size(32.dp))
+                    CircularProgressIndicator(color = AppTheme.colors.accent, strokeWidth = 2.dp, modifier = Modifier.size(32.dp))
                 }
                 error != null && !hasLoaded -> Box(Modifier.fillMaxSize().padding(32.dp), contentAlignment = Alignment.Center) {
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        Text("No se pudieron cargar los movimientos", color = AppColors.Ice, style = MaterialTheme.typography.titleMedium)
+                        Text("No se pudieron cargar los movimientos", color = AppTheme.colors.text, style = MaterialTheme.typography.titleMedium)
                         Spacer(Modifier.height(6.dp))
-                        Text(error!!, color = AppColors.Mist, style = MaterialTheme.typography.bodySmall)
+                        Text(error!!, color = AppTheme.colors.textSecondary, style = MaterialTheme.typography.bodySmall)
                     }
                 }
                 else -> LazyColumn(
@@ -179,7 +179,7 @@ private fun CategoryTransactionCard(txn: Transaction) {
         Column(modifier = Modifier.weight(1f)) {
             Text(
                 txn.merchantName ?: txn.provider,
-                color = AppColors.Ice,
+                color = AppTheme.colors.text,
                 style = MaterialTheme.typography.bodyMedium,
                 fontWeight = FontWeight.SemiBold,
                 maxLines = 1
@@ -188,7 +188,7 @@ private fun CategoryTransactionCard(txn: Transaction) {
             Text(
                 listOfNotNull(txn.txnDate.take(10), txn.cardLast4?.let { "•••$it" }, txn.description?.takeIf { it.isNotBlank() })
                     .joinToString(" · "),
-                color = AppColors.Mist,
+                color = AppTheme.colors.textSecondary,
                 style = MaterialTheme.typography.bodySmall,
                 maxLines = 1
             )

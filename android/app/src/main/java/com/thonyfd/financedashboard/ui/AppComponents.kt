@@ -57,7 +57,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.thonyfd.financedashboard.ui.theme.AppColors
+import com.thonyfd.financedashboard.ui.theme.AppTheme
 import com.thonyfd.financedashboard.ui.theme.MoneyStyle
 
 // Lenguaje visual compartido: paneles agrupados sobre fondo Night, divisores finos,
@@ -74,8 +74,8 @@ fun GroupedPanel(modifier: Modifier = Modifier, content: @Composable ColumnScope
         modifier
             .fillMaxWidth()
             .clip(PanelShape)
-            .background(AppColors.Panel)
-            .border(1.dp, AppColors.Hairline, PanelShape),
+            .background(AppTheme.colors.surface)
+            .border(1.dp, AppTheme.colors.hairline, PanelShape),
         content = content
     )
 }
@@ -84,16 +84,17 @@ fun GroupedPanel(modifier: Modifier = Modifier, content: @Composable ColumnScope
  * Para filas de una LazyColumn que deben verse como un solo panel:
  * redondea arriba en la primera y abajo en la última.
  */
+@Composable
 fun Modifier.panelSegment(index: Int, count: Int): Modifier {
     val top = if (index == 0) PanelRadius else 0.dp
     val bottom = if (index == count - 1) PanelRadius else 0.dp
     val shape = RoundedCornerShape(topStart = top, topEnd = top, bottomStart = bottom, bottomEnd = bottom)
-    return this.fillMaxWidth().clip(shape).background(AppColors.Panel)
+    return this.fillMaxWidth().clip(shape).background(AppTheme.colors.surface)
 }
 
 @Composable
 fun PanelDivider(startIndent: Dp = 66.dp) {
-    HorizontalDivider(Modifier.padding(start = startIndent), thickness = 1.dp, color = AppColors.Hairline)
+    HorizontalDivider(Modifier.padding(start = startIndent), thickness = 1.dp, color = AppTheme.colors.hairline)
 }
 
 @Composable
@@ -102,8 +103,8 @@ fun SectionHeader(title: String, modifier: Modifier = Modifier, trailing: String
         modifier.fillMaxWidth().padding(top = 14.dp, start = 4.dp, end = 4.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Text(title, color = AppColors.Ice, style = MaterialTheme.typography.titleMedium, modifier = Modifier.weight(1f))
-        if (trailing != null) Text(trailing, color = AppColors.Mist, style = MaterialTheme.typography.bodySmall)
+        Text(title, color = AppTheme.colors.text, style = MaterialTheme.typography.titleMedium, modifier = Modifier.weight(1f))
+        if (trailing != null) Text(trailing, color = AppTheme.colors.textSecondary, style = MaterialTheme.typography.bodySmall)
     }
 }
 
@@ -111,7 +112,7 @@ fun SectionHeader(title: String, modifier: Modifier = Modifier, trailing: String
 fun EmptyRow(message: String) {
     Text(
         message,
-        color = AppColors.Mist,
+        color = AppTheme.colors.textSecondary,
         style = MaterialTheme.typography.bodyMedium,
         modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 20.dp)
     )
@@ -122,7 +123,7 @@ fun EmptyRow(message: String) {
 fun CheckCircle(
     checked: Boolean,
     onClick: () -> Unit,
-    accent: Color = AppColors.Lime,
+    accent: Color = AppTheme.colors.positive,
     size: Dp = 30.dp,
     loading: Boolean = false
 ) {
@@ -143,12 +144,12 @@ fun CheckCircle(
                 onClick()
             }
             .background(fill, CircleShape)
-            .border(1.5.dp, if (checked) accent else AppColors.Dim, CircleShape),
+            .border(1.5.dp, if (checked) accent else AppTheme.colors.textPassive, CircleShape),
         contentAlignment = Alignment.Center
     ) {
         when {
-            loading -> LoadingDots(color = if (checked) AppColors.Night else AppColors.Ice, dotSize = size * 0.12f)
-            checked -> Icon(Icons.Default.Check, null, tint = AppColors.Night, modifier = Modifier.size(size * 0.6f))
+            loading -> LoadingDots(color = if (checked) AppTheme.colors.bg else AppTheme.colors.text, dotSize = size * 0.12f)
+            checked -> Icon(Icons.Default.Check, null, tint = AppTheme.colors.bg, modifier = Modifier.size(size * 0.6f))
         }
     }
 }
@@ -164,7 +165,7 @@ fun CheckCircle(
 @Composable
 fun LoadingDots(
     modifier: Modifier = Modifier,
-    color: Color = AppColors.Ice,
+    color: Color = AppTheme.colors.text,
     dotSize: Dp = 6.dp
 ) {
     val transition = rememberInfiniteTransition(label = "loadingDots")
@@ -226,10 +227,10 @@ fun AppButton(
     val active = enabled && !loading
     val shape = RoundedCornerShape(14.dp)
     val (container, content, border) = when (style) {
-        AppButtonStyle.Primary -> Triple(AppColors.Cyan, AppColors.Night, Color.Transparent)
-        AppButtonStyle.Secondary -> Triple(Color.Transparent, AppColors.Ice, AppColors.Hairline)
-        AppButtonStyle.Text -> Triple(Color.Transparent, AppColors.Cyan, Color.Transparent)
-        AppButtonStyle.Danger -> Triple(Color.Transparent, AppColors.Coral, Color.Transparent)
+        AppButtonStyle.Primary -> Triple(AppTheme.colors.accent, AppTheme.colors.bg, Color.Transparent)
+        AppButtonStyle.Secondary -> Triple(Color.Transparent, AppTheme.colors.text, AppTheme.colors.hairline)
+        AppButtonStyle.Text -> Triple(Color.Transparent, AppTheme.colors.accent, Color.Transparent)
+        AppButtonStyle.Danger -> Triple(Color.Transparent, AppTheme.colors.negative, Color.Transparent)
     }
     val alpha = if (enabled || loading) 1f else 0.4f
 
@@ -269,7 +270,7 @@ fun AppIconButton(
     contentDescription: String?,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
-    tint: Color = AppColors.Mist,
+    tint: Color = AppTheme.colors.textSecondary,
     loading: Boolean = false,
     enabled: Boolean = true,
     size: Dp = 44.dp
@@ -294,37 +295,37 @@ fun AppIconButton(
         if (loading) {
             LoadingDots(color = tint, dotSize = 4.dp)
         } else {
-            Icon(icon, contentDescription, tint = if (enabled) tint else AppColors.Hairline, modifier = Modifier.size(22.dp))
+            Icon(icon, contentDescription, tint = if (enabled) tint else AppTheme.colors.hairline, modifier = Modifier.size(22.dp))
         }
     }
 }
 
 @Composable
-fun MoneyText(amount: Double, color: Color = AppColors.Ice, fontSize: Int = 15, prefix: String = "") {
+fun MoneyText(amount: Double, color: Color = AppTheme.colors.text, fontSize: Int = 15, prefix: String = "") {
     Text(prefix + money(amount), color = color, style = MoneyStyle, fontSize = fontSize.sp)
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun appTopBarColors(): TopAppBarColors = TopAppBarDefaults.topAppBarColors(
-    containerColor = AppColors.Night,
-    scrolledContainerColor = AppColors.Night,
-    titleContentColor = AppColors.Ice,
-    navigationIconContentColor = AppColors.Ice,
-    actionIconContentColor = AppColors.Mist
+    containerColor = AppTheme.colors.bg,
+    scrolledContainerColor = AppTheme.colors.bg,
+    titleContentColor = AppTheme.colors.text,
+    navigationIconContentColor = AppTheme.colors.text,
+    actionIconContentColor = AppTheme.colors.textSecondary
 )
 
 @Composable
 fun appFieldColors(): TextFieldColors = OutlinedTextFieldDefaults.colors(
-    focusedBorderColor = AppColors.Cyan,
-    unfocusedBorderColor = AppColors.Hairline,
-    cursorColor = AppColors.Cyan,
-    focusedTextColor = AppColors.Ice,
-    unfocusedTextColor = AppColors.Ice,
-    focusedContainerColor = AppColors.Panel,
-    unfocusedContainerColor = AppColors.Panel,
-    focusedLabelColor = AppColors.Cyan,
-    unfocusedLabelColor = AppColors.Mist,
-    focusedPlaceholderColor = AppColors.Dim,
-    unfocusedPlaceholderColor = AppColors.Dim
+    focusedBorderColor = AppTheme.colors.accent,
+    unfocusedBorderColor = AppTheme.colors.hairline,
+    cursorColor = AppTheme.colors.accent,
+    focusedTextColor = AppTheme.colors.text,
+    unfocusedTextColor = AppTheme.colors.text,
+    focusedContainerColor = AppTheme.colors.surface,
+    unfocusedContainerColor = AppTheme.colors.surface,
+    focusedLabelColor = AppTheme.colors.accent,
+    unfocusedLabelColor = AppTheme.colors.textSecondary,
+    focusedPlaceholderColor = AppTheme.colors.textPassive,
+    unfocusedPlaceholderColor = AppTheme.colors.textPassive
 )

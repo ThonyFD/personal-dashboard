@@ -1,6 +1,6 @@
 package com.thonyfd.financedashboard.ui
 
-import com.thonyfd.financedashboard.ui.theme.AppColors
+import com.thonyfd.financedashboard.ui.theme.AppTheme
 import androidx.compose.runtime.key
 import com.thonyfd.financedashboard.ui.theme.MoneyStyle
 import androidx.compose.ui.text.style.TextOverflow
@@ -45,16 +45,17 @@ import android.widget.Toast
 // ---------------------------------------------------------------------------
 // Colours
 // ---------------------------------------------------------------------------
-private val BG           = AppColors.Night
-private val SURFACE      = AppColors.Panel
-private val TEAL         = AppColors.Cyan
-private val MUTED        = AppColors.Mist
-private val RED          = AppColors.Coral
-private val ORANGE       = AppColors.Amber
-private val GREEN        = AppColors.Lime
-private val WHITE        = AppColors.Ice
-private val PURPLE       = AppColors.Violet
+private val BG           : Color@Composable get() = AppTheme.colors.bg
+private val SURFACE      : Color@Composable get() = AppTheme.colors.surface
+private val TEAL         : Color@Composable get() = AppTheme.colors.accent
+private val MUTED        : Color@Composable get() = AppTheme.colors.textSecondary
+private val RED          : Color@Composable get() = AppTheme.colors.negative
+private val ORANGE       : Color@Composable get() = AppTheme.colors.warning
+private val GREEN        : Color@Composable get() = AppTheme.colors.positive
+private val WHITE        : Color@Composable get() = AppTheme.colors.text
+private val PURPLE       : Color@Composable get() = AppTheme.colors.depth
 
+@Composable
 fun typeColor(type: String?) = when (type) {
     "Inversión" -> GREEN
     "Deuda"     -> RED
@@ -158,7 +159,7 @@ fun MonthlyControlScreen(padding: PaddingValues = PaddingValues()) {
                         ) {
                             Icon(
                                 Icons.Default.ChevronRight, null,
-                                tint = if (isCurrentMonth) AppColors.Hairline else TEAL
+                                tint = if (isCurrentMonth) AppTheme.colors.hairline else TEAL
                             )
                         }
                     }
@@ -174,7 +175,7 @@ fun MonthlyControlScreen(padding: PaddingValues = PaddingValues()) {
             FloatingActionButton(
                 onClick = { showAddTxn = true },
                 containerColor = TEAL,
-                contentColor = AppColors.Night,
+                contentColor = AppTheme.colors.bg,
                 shape = CircleShape
             ) {
                 Icon(Icons.Default.Add, "Agregar transacción")
@@ -492,7 +493,7 @@ private fun IncomeSection(
                     Text(income.source, color = WHITE, style = MaterialTheme.typography.bodyMedium, modifier = Modifier.weight(1f))
                     MoneyText(income.amount, color = WHITE, fontSize = 14)
                     IconButton(onClick = { onDeleteIncome(income) }, modifier = Modifier.size(36.dp)) {
-                        Icon(Icons.Default.Close, "Eliminar ingreso", tint = AppColors.Dim, modifier = Modifier.size(16.dp))
+                        Icon(Icons.Default.Close, "Eliminar ingreso", tint = AppTheme.colors.textPassive, modifier = Modifier.size(16.dp))
                     }
                 }
             }
@@ -589,7 +590,7 @@ private fun SummaryCards(state: MonthlyControlState) {
 
 @Composable
 private fun VerticalHairline() {
-    Box(Modifier.width(1.dp).height(64.dp).background(AppColors.Hairline))
+    Box(Modifier.width(1.dp).height(64.dp).background(AppTheme.colors.hairline))
 }
 
 @Composable
@@ -950,7 +951,7 @@ private fun IncomeDialog(
 @Composable
 private fun inputColors() = OutlinedTextFieldDefaults.colors(
     focusedBorderColor = TEAL,
-    unfocusedBorderColor = AppColors.Hairline,
+    unfocusedBorderColor = AppTheme.colors.hairline,
     focusedLabelColor = TEAL,
     cursorColor = TEAL,
     focusedTextColor = WHITE,

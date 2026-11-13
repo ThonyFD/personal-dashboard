@@ -102,6 +102,7 @@ val BrandLight = SkinTokens(
 )
 
 /** Paleta del skin; en esta fase solo BRAND tiene paletas. */
+// NOTHING y GLASS caen a Brand a proposito hasta su fase.
 fun tokensFor(skin: Skin, dark: Boolean): SkinTokens = when (skin) {
     Skin.BRAND, Skin.NOTHING, Skin.GLASS -> if (dark) BrandDark else BrandLight
 }

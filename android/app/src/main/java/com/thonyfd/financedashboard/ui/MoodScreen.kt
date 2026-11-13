@@ -1,6 +1,7 @@
 package com.thonyfd.financedashboard.ui
 
-import com.thonyfd.financedashboard.ui.theme.AppColors
+import com.thonyfd.financedashboard.ui.theme.AppTheme
+import com.thonyfd.financedashboard.ui.theme.SkinTokens
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
@@ -168,7 +169,7 @@ fun MoodScreen(padding: PaddingValues = PaddingValues(), onOpenMenu: (() -> Unit
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(TimelineBg)
+            .background(AppTheme.colors.bg)
             .padding(padding)
     ) {
         TopAppBar(
@@ -176,7 +177,7 @@ fun MoodScreen(padding: PaddingValues = PaddingValues(), onOpenMenu: (() -> Unit
             title = {
                 Column {
                     Text("Mood", style = MaterialTheme.typography.titleLarge)
-                    Text("Registro diario", color = TimelineMuted, style = MaterialTheme.typography.bodySmall)
+                    Text("Registro diario", color = AppTheme.colors.textSecondary, style = MaterialTheme.typography.bodySmall)
                 }
             },
             actions = {
@@ -187,7 +188,7 @@ fun MoodScreen(padding: PaddingValues = PaddingValues(), onOpenMenu: (() -> Unit
 
         if (isLoading) {
             androidx.compose.foundation.layout.Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                CircularProgressIndicator(color = TimelinePrimary, strokeWidth = 2.dp, modifier = Modifier.size(32.dp))
+                CircularProgressIndicator(color = AppTheme.colors.accent, strokeWidth = 2.dp, modifier = Modifier.size(32.dp))
             }
         } else {
             LazyColumn(
@@ -207,7 +208,7 @@ fun MoodScreen(padding: PaddingValues = PaddingValues(), onOpenMenu: (() -> Unit
                         ) {
                             Text(
                                 if (savingCheckin) "Guardando…" else "¿Cómo estás ahora?",
-                                color = TimelineMuted,
+                                color = AppTheme.colors.textSecondary,
                                 style = MaterialTheme.typography.bodySmall,
                                 modifier = Modifier.weight(1f).padding(start = 4.dp)
                             )
@@ -228,7 +229,7 @@ fun MoodScreen(padding: PaddingValues = PaddingValues(), onOpenMenu: (() -> Unit
                                         },
                                     contentAlignment = Alignment.Center
                                 ) {
-                                    if (savingScore == value) LoadingDots(color = TimelinePrimary, dotSize = 4.dp)
+                                    if (savingScore == value) LoadingDots(color = AppTheme.colors.accent, dotSize = 4.dp)
                                     else Text(MoodScale.emoji(value), fontSize = 22.sp, modifier = Modifier.graphicsLayer { alpha = if (savingCheckin) 0.4f else 1f })
                                 }
                             }
@@ -248,8 +249,8 @@ fun MoodScreen(padding: PaddingValues = PaddingValues(), onOpenMenu: (() -> Unit
                                 Modifier
                                     .weight(1f)
                                     .clip(RoundedCornerShape(18.dp))
-                                    .background(if (selected) TimelinePrimary.copy(alpha = 0.14f) else Color.Transparent)
-                                    .border(1.dp, if (selected) TimelinePrimary else Color.Transparent, RoundedCornerShape(18.dp))
+                                    .background(if (selected) AppTheme.colors.accent.copy(alpha = 0.14f) else Color.Transparent)
+                                    .border(1.dp, if (selected) AppTheme.colors.accent else Color.Transparent, RoundedCornerShape(18.dp))
                                     .clickable { score = value }
                                     .padding(vertical = 10.dp),
                                 horizontalAlignment = Alignment.CenterHorizontally
@@ -258,7 +259,7 @@ fun MoodScreen(padding: PaddingValues = PaddingValues(), onOpenMenu: (() -> Unit
                                 Spacer(Modifier.height(4.dp))
                                 Text(
                                     moodLabel(value),
-                                    color = if (selected) TimelineText else TimelineMuted,
+                                    color = if (selected) AppTheme.colors.text else AppTheme.colors.textSecondary,
                                     style = MaterialTheme.typography.labelSmall
                                 )
                             }
@@ -273,7 +274,7 @@ fun MoodScreen(padding: PaddingValues = PaddingValues(), onOpenMenu: (() -> Unit
                         modifier = Modifier.fillMaxWidth(),
                         minLines = 3,
                         placeholder = { Text("Una línea sobre tu día") },
-                        supportingText = { Text("${journal.length}/280", color = AppColors.Dim) },
+                        supportingText = { Text("${journal.length}/280", color = AppTheme.colors.textPassive) },
                         colors = appFieldColors(),
                         shape = RoundedCornerShape(16.dp)
                     )
@@ -290,13 +291,13 @@ fun MoodScreen(padding: PaddingValues = PaddingValues(), onOpenMenu: (() -> Unit
                                 tag.name,
                                 Modifier
                                     .clip(RoundedCornerShape(50))
-                                    .background(if (selected) TimelineText else Color.Transparent)
-                                    .border(1.dp, if (selected) TimelineText else AppColors.Hairline, RoundedCornerShape(50))
+                                    .background(if (selected) AppTheme.colors.text else Color.Transparent)
+                                    .border(1.dp, if (selected) AppTheme.colors.text else AppTheme.colors.hairline, RoundedCornerShape(50))
                                     .clickable {
                                         if (selected) selectedTags.remove(tag.id) else selectedTags.add(tag.id)
                                     }
                                     .padding(horizontal = 14.dp, vertical = 7.dp),
-                                color = if (selected) AppColors.Night else TimelineMuted,
+                                color = if (selected) AppTheme.colors.bg else AppTheme.colors.textSecondary,
                                 style = MaterialTheme.typography.labelLarge
                             )
                         }
@@ -341,7 +342,7 @@ fun MoodScreen(padding: PaddingValues = PaddingValues(), onOpenMenu: (() -> Unit
                                             .weight(1f)
                                             .fillMaxHeight(day.moodScore.coerceIn(1, 5) / 5f)
                                             .clip(RoundedCornerShape(topStart = 4.dp, topEnd = 4.dp, bottomStart = 2.dp, bottomEnd = 2.dp))
-                                            .background(moodColor(day.moodScore))
+                                            .background(moodColor(day.moodScore, AppTheme.colors))
                                     )
                                 }
                             }
@@ -361,17 +362,17 @@ fun MoodScreen(padding: PaddingValues = PaddingValues(), onOpenMenu: (() -> Unit
                                     Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
                                         Text(
                                             "${moodShortDate(entry.logDate)} · ${moodLabel(entry.moodScore)}",
-                                            color = TimelineText,
+                                            color = AppTheme.colors.text,
                                             style = MaterialTheme.typography.bodyMedium,
                                             fontWeight = FontWeight.SemiBold
                                         )
                                         if (!entry.journalText.isNullOrBlank()) {
-                                            Text(entry.journalText.orEmpty(), color = TimelineMuted, style = MaterialTheme.typography.bodySmall)
+                                            Text(entry.journalText.orEmpty(), color = AppTheme.colors.textSecondary, style = MaterialTheme.typography.bodySmall)
                                         }
                                         if (entry.tagIds.isNotEmpty()) {
                                             Text(
                                                 entry.tagIds.mapNotNull { id -> tags.find { tag -> tag.id == id }?.name }.joinToString(" · "),
-                                                color = TimelinePrimary,
+                                                color = AppTheme.colors.accent,
                                                 style = MaterialTheme.typography.labelSmall
                                             )
                                         }
@@ -390,12 +391,12 @@ private fun moodEmoji(score: Int): String = MoodScale.emoji(score)
 
 private fun moodLabel(score: Int): String = MoodScale.label(score)
 
-private fun moodColor(score: Int): Color = when (score) {
-    1 -> AppColors.Coral
-    2 -> AppColors.Amber
-    3 -> AppColors.Mist
-    4 -> AppColors.Cyan
-    else -> AppColors.Lime
+private fun moodColor(score: Int, t: SkinTokens): Color = when (score) {
+    1 -> t.negative
+    2 -> t.warning
+    3 -> t.textSecondary
+    4 -> t.accent
+    else -> t.positive
 }
 
 private fun moodShortDate(raw: String): String = runCatching {
@@ -420,6 +421,7 @@ private fun MoodDayChart(checkins: List<MoodCheckinRow>, modifier: Modifier = Mo
         }
     }
     val nowHour = LocalTime.now().let { it.hour + it.minute / 60f }
+    val tokens = AppTheme.colors
 
     Column(modifier) {
         Row(Modifier.fillMaxWidth().height(132.dp)) {
@@ -435,28 +437,28 @@ private fun MoodDayChart(checkins: List<MoodCheckinRow>, modifier: Modifier = Mo
 
                 // Guías horizontales por score y verticales cada 6 h
                 for (score in 1..5) {
-                    drawLine(AppColors.Hairline, Offset(0f, y(score)), Offset(w, y(score)), strokeWidth = 1.dp.toPx())
+                    drawLine(tokens.hairline, Offset(0f, y(score)), Offset(w, y(score)), strokeWidth = 1.dp.toPx())
                 }
                 for (hour in listOf(6f, 12f, 18f)) {
                     drawLine(
-                        AppColors.Hairline, Offset(x(hour), 0f), Offset(x(hour), h),
+                        tokens.hairline, Offset(x(hour), 0f), Offset(x(hour), h),
                         strokeWidth = 1.dp.toPx(),
                         pathEffect = PathEffect.dashPathEffect(floatArrayOf(4.dp.toPx(), 4.dp.toPx()))
                     )
                 }
                 // Hora actual
-                drawLine(TimelinePrimary.copy(alpha = 0.35f), Offset(x(nowHour), 0f), Offset(x(nowHour), h), strokeWidth = 1.dp.toPx())
+                drawLine(tokens.accent.copy(alpha = 0.35f), Offset(x(nowHour), 0f), Offset(x(nowHour), h), strokeWidth = 1.dp.toPx())
 
                 if (points.size > 1) {
                     val path = Path().apply {
                         moveTo(x(points.first().first), y(points.first().second))
                         points.drop(1).forEach { (hour, score) -> lineTo(x(hour), y(score)) }
                     }
-                    drawPath(path, TimelinePrimary.copy(alpha = 0.7f), style = Stroke(width = 2.dp.toPx(), cap = StrokeCap.Round, join = StrokeJoin.Round))
+                    drawPath(path, tokens.accent.copy(alpha = 0.7f), style = Stroke(width = 2.dp.toPx(), cap = StrokeCap.Round, join = StrokeJoin.Round))
                 }
                 points.forEach { (hour, score) ->
-                    drawCircle(AppColors.Panel, radius = 6.dp.toPx(), center = Offset(x(hour), y(score)))
-                    drawCircle(moodColor(score), radius = 4.dp.toPx(), center = Offset(x(hour), y(score)))
+                    drawCircle(tokens.surface, radius = 6.dp.toPx(), center = Offset(x(hour), y(score)))
+                    drawCircle(moodColor(score, tokens), radius = 4.dp.toPx(), center = Offset(x(hour), y(score)))
                 }
             }
         }
@@ -465,7 +467,7 @@ private fun MoodDayChart(checkins: List<MoodCheckinRow>, modifier: Modifier = Mo
             listOf("0h", "6h", "12h", "18h", "24h").forEachIndexed { index, label ->
                 Text(
                     label,
-                    color = AppColors.Dim,
+                    color = AppTheme.colors.textPassive,
                     style = MaterialTheme.typography.labelSmall,
                     modifier = Modifier.weight(1f),
                     textAlign = when (index) {
@@ -479,7 +481,7 @@ private fun MoodDayChart(checkins: List<MoodCheckinRow>, modifier: Modifier = Mo
         if (points.isEmpty()) {
             Text(
                 "Aún no registras tu mood hoy. Toca una cara para empezar.",
-                color = TimelineMuted,
+                color = AppTheme.colors.textSecondary,
                 style = MaterialTheme.typography.bodySmall,
                 modifier = Modifier.padding(start = 28.dp, top = 8.dp)
             )

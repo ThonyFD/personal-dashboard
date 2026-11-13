@@ -1,6 +1,6 @@
 package com.thonyfd.financedashboard.ui
 
-import com.thonyfd.financedashboard.ui.theme.AppColors
+import com.thonyfd.financedashboard.ui.theme.AppTheme
 import com.thonyfd.financedashboard.ui.theme.MoneyStyle
 import androidx.compose.material.icons.outlined.Refresh
 import androidx.compose.material.icons.outlined.Menu
@@ -155,7 +155,7 @@ fun HabitsScreen(padding: PaddingValues = PaddingValues(), onOpenMenu: (() -> Un
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(TimelineBg)
+            .background(AppTheme.colors.bg)
             .padding(padding)
     ) {
         TopAppBar(
@@ -168,21 +168,21 @@ fun HabitsScreen(padding: PaddingValues = PaddingValues(), onOpenMenu: (() -> Un
                     )
                     Text(
                         if (selectedDate == LocalDate.now()) "Tu rutina diaria" else "Historial de hábitos",
-                        color = TimelineMuted,
+                        color = AppTheme.colors.textSecondary,
                         style = MaterialTheme.typography.bodySmall
                     )
                 }
             },
             actions = {
                 AppIconButton(Icons.Outlined.Refresh, "Actualizar", onClick = { if (!refreshing) load(showResult = true) }, loading = refreshing)
-                AppIconButton(Icons.Default.Add, "Nuevo hábito", onClick = { showCreate = true }, tint = TimelinePrimary)
+                AppIconButton(Icons.Default.Add, "Nuevo hábito", onClick = { showCreate = true }, tint = AppTheme.colors.accent)
             },
             colors = appTopBarColors()
         )
 
         if (isLoading) {
             Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                CircularProgressIndicator(color = TimelinePrimary, strokeWidth = 2.dp, modifier = Modifier.size(32.dp))
+                CircularProgressIndicator(color = AppTheme.colors.accent, strokeWidth = 2.dp, modifier = Modifier.size(32.dp))
             }
         } else {
             val visibleHabits = habits
@@ -210,23 +210,23 @@ fun HabitsScreen(padding: PaddingValues = PaddingValues(), onOpenMenu: (() -> Un
                                 Modifier
                                     .width(44.dp)
                                     .clip(RoundedCornerShape(16.dp))
-                                    .background(if (selected) TimelinePrimary else Color.Transparent)
+                                    .background(if (selected) AppTheme.colors.accent else Color.Transparent)
                                     .clickable { selectedDate = date }
                                     .padding(vertical = 8.dp),
                                 horizontalAlignment = Alignment.CenterHorizontally
                             ) {
                                 Text(
                                     date.dayOfWeek.getDisplayName(TextStyle.SHORT, Locale("es")).trimEnd('.'),
-                                    color = if (selected) AppColors.Night else TimelineMuted,
+                                    color = if (selected) AppTheme.colors.bg else AppTheme.colors.textSecondary,
                                     style = MaterialTheme.typography.labelSmall
                                 )
                                 Spacer(Modifier.height(4.dp))
                                 Text(
                                     date.dayOfMonth.toString(),
                                     color = when {
-                                        selected -> AppColors.Night
-                                        date > today -> AppColors.Dim
-                                        else -> TimelineText
+                                        selected -> AppTheme.colors.bg
+                                        date > today -> AppTheme.colors.textPassive
+                                        else -> AppTheme.colors.text
                                     },
                                     style = MoneyStyle,
                                     fontSize = 17.sp,
@@ -253,18 +253,18 @@ fun HabitsScreen(padding: PaddingValues = PaddingValues(), onOpenMenu: (() -> Un
                                 CircularProgressIndicator(
                                     progress = { 1f },
                                     modifier = Modifier.fillMaxSize(),
-                                    color = AppColors.PanelHigh,
+                                    color = AppTheme.colors.surfaceRaised,
                                     strokeWidth = 6.dp
                                 )
                                 CircularProgressIndicator(
                                     progress = { progress },
                                     modifier = Modifier.fillMaxSize(),
-                                    color = if (progress >= 1f) AppColors.Lime else TimelinePrimary,
+                                    color = if (progress >= 1f) AppTheme.colors.positive else AppTheme.colors.accent,
                                     strokeWidth = 6.dp,
                                     trackColor = Color.Transparent,
                                     strokeCap = StrokeCap.Round
                                 )
-                                Text("${(progress * 100).toInt()}%", color = TimelineText, style = MoneyStyle, fontSize = 18.sp, fontWeight = FontWeight.SemiBold)
+                                Text("${(progress * 100).toInt()}%", color = AppTheme.colors.text, style = MoneyStyle, fontSize = 18.sp, fontWeight = FontWeight.SemiBold)
                             }
                             Column(Modifier.padding(start = 18.dp).weight(1f)) {
                                 Text(
@@ -274,11 +274,11 @@ fun HabitsScreen(padding: PaddingValues = PaddingValues(), onOpenMenu: (() -> Un
                                         completed == 0 -> "Empieza por uno"
                                         else -> "Vas bien"
                                     },
-                                    color = TimelineText,
+                                    color = AppTheme.colors.text,
                                     style = MaterialTheme.typography.titleMedium
                                 )
                                 Spacer(Modifier.height(2.dp))
-                                Text("$completed de ${habits.size} completados", color = TimelineMuted, style = MaterialTheme.typography.bodySmall)
+                                Text("$completed de ${habits.size} completados", color = AppTheme.colors.textSecondary, style = MaterialTheme.typography.bodySmall)
                                 if (habits.isNotEmpty()) {
                                     Spacer(Modifier.height(8.dp))
                                     LevelLine(
@@ -300,11 +300,11 @@ fun HabitsScreen(padding: PaddingValues = PaddingValues(), onOpenMenu: (() -> Un
                                 label,
                                 Modifier
                                     .clip(RoundedCornerShape(50))
-                                    .background(if (selected) TimelineText else Color.Transparent)
-                                    .border(1.dp, if (selected) TimelineText else AppColors.Hairline, RoundedCornerShape(50))
+                                    .background(if (selected) AppTheme.colors.text else Color.Transparent)
+                                    .border(1.dp, if (selected) AppTheme.colors.text else AppTheme.colors.hairline, RoundedCornerShape(50))
                                     .clickable { selectedBlock = value }
                                     .padding(horizontal = 14.dp, vertical = 7.dp),
-                                color = if (selected) AppColors.Night else TimelineMuted,
+                                color = if (selected) AppTheme.colors.bg else AppTheme.colors.textSecondary,
                                 style = MaterialTheme.typography.labelLarge
                             )
                         }
@@ -341,7 +341,7 @@ fun HabitsScreen(padding: PaddingValues = PaddingValues(), onOpenMenu: (() -> Un
                             Column(Modifier.weight(1f)) {
                                 Text(
                                     habit.name,
-                                    color = if (done) TimelineMuted else TimelineText,
+                                    color = if (done) AppTheme.colors.textSecondary else AppTheme.colors.text,
                                     style = MaterialTheme.typography.bodyLarge,
                                     fontWeight = FontWeight.SemiBold,
                                     textDecoration = if (done) TextDecoration.LineThrough else null,
@@ -351,7 +351,7 @@ fun HabitsScreen(padding: PaddingValues = PaddingValues(), onOpenMenu: (() -> Un
                                 Text(
                                     if (doneInPeriod != null) periodRemainingLabel(habit, doneInPeriod)
                                     else "${blockLabel(habit.dayBlock)} · ${habit.targetDurationMinutes} min · ${frequencyLabel(habit.frequencyType)}",
-                                    color = TimelineMuted,
+                                    color = AppTheme.colors.textSecondary,
                                     style = MaterialTheme.typography.bodySmall,
                                     maxLines = 1
                                 )
@@ -363,7 +363,7 @@ fun HabitsScreen(padding: PaddingValues = PaddingValues(), onOpenMenu: (() -> Un
                             Spacer(Modifier.width(10.dp))
                             CheckCircle(
                                 checked = done,
-                                accent = AppColors.Lime,
+                                accent = AppTheme.colors.positive,
                                 loading = habit.id in pendingIds,
                                 onClick = {
                                     scope.launch {
@@ -463,9 +463,9 @@ private fun PeriodCounter(done: Int, target: Int, accent: Color) {
     Text(
         "${done.coerceAtMost(target)}/$target",
         Modifier
-            .background((if (reached) AppColors.Lime else accent).copy(alpha = 0.16f), RoundedCornerShape(50))
+            .background((if (reached) AppTheme.colors.positive else accent).copy(alpha = 0.16f), RoundedCornerShape(50))
             .padding(horizontal = 9.dp, vertical = 4.dp),
-        color = if (reached) AppColors.Lime else TimelineText,
+        color = if (reached) AppTheme.colors.positive else AppTheme.colors.text,
         style = MoneyStyle,
         fontSize = 12.sp,
         fontWeight = FontWeight.SemiBold
@@ -481,11 +481,11 @@ private fun DayLevelMarker(summary: HabitDaySummary?, isToday: Boolean, selected
         level != null -> Box(
             modifier
                 .background(Color(level.colorHex), CircleShape)
-                .then(if (selected) Modifier.border(1.dp, AppColors.Night, CircleShape) else Modifier)
+                .then(if (selected) Modifier.border(1.dp, AppTheme.colors.bg, CircleShape) else Modifier)
         )
-        isToday -> Box(modifier.background(if (selected) Color.Transparent else TimelinePrimary, CircleShape))
+        isToday -> Box(modifier.background(if (selected) Color.Transparent else AppTheme.colors.accent, CircleShape))
         summary != null && summary.due > 0 -> Box(
-            modifier.border(1.dp, if (selected) AppColors.Night.copy(alpha = 0.5f) else AppColors.Dim, CircleShape)
+            modifier.border(1.dp, if (selected) AppTheme.colors.bg.copy(alpha = 0.5f) else AppTheme.colors.textPassive, CircleShape)
         )
         else -> Spacer(modifier)
     }
@@ -505,9 +505,9 @@ private fun LevelLine(completed: Int, due: Int, streak: Int?) {
         Text(
             level?.let { "${it.emoji} ${it.label}" } ?: "Sin nivel",
             Modifier
-                .background((level?.let { Color(it.colorHex) } ?: AppColors.Dim).copy(alpha = 0.16f), RoundedCornerShape(50))
+                .background((level?.let { Color(it.colorHex) } ?: AppTheme.colors.textPassive).copy(alpha = 0.16f), RoundedCornerShape(50))
                 .padding(horizontal = 9.dp, vertical = 3.dp),
-            color = level?.let { Color(it.colorHex) } ?: TimelineMuted,
+            color = level?.let { Color(it.colorHex) } ?: AppTheme.colors.textSecondary,
             style = MaterialTheme.typography.labelMedium,
             fontWeight = FontWeight.SemiBold
         )
@@ -517,13 +517,14 @@ private fun LevelLine(completed: Int, due: Int, streak: Int?) {
         }
         val parts = listOfNotNull(hint, streak?.let { "🔥 $it ${if (it == 1) "día" else "días"}" })
         if (parts.isNotEmpty()) {
-            Text(parts.joinToString(" · "), color = TimelineMuted, style = MaterialTheme.typography.bodySmall, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            Text(parts.joinToString(" · "), color = AppTheme.colors.textSecondary, style = MaterialTheme.typography.bodySmall, maxLines = 1, overflow = TextOverflow.Ellipsis)
         }
     }
 }
 
+@Composable
 private fun habitAccent(colorHex: String?): Color =
-    colorHex?.let { runCatching { Color(android.graphics.Color.parseColor(it)) }.getOrNull() } ?: TimelinePrimary
+    colorHex?.let { runCatching { Color(android.graphics.Color.parseColor(it)) }.getOrNull() } ?: AppTheme.colors.accent
 
 private fun blockLabel(block: String) = when (block) { "MORNING" -> "Mañana"; "AFTERNOON" -> "Tarde"; "EVENING" -> "Noche"; else -> "En cualquier momento" }
 private fun frequencyLabel(value: String) = when (value) { "DAILY" -> "Diario"; "WEEKDAYS" -> "Lunes a viernes"; "WEEKLY" -> "Semanal"; "MONTHLY" -> "Mensual"; else -> "Personalizado" }
@@ -561,7 +562,7 @@ private fun HabitEditorDialog(
         onDismissRequest = onDismiss,
         properties = DialogProperties(usePlatformDefaultWidth = false, decorFitsSystemWindows = false)
     ) {
-        Surface(modifier = Modifier.fillMaxSize(), color = AppColors.Night) {
+        Surface(modifier = Modifier.fillMaxSize(), color = AppTheme.colors.bg) {
             LazyColumn(
                 modifier = Modifier.fillMaxSize(),
                 contentPadding = PaddingValues(start = 20.dp, end = 20.dp, top = 28.dp, bottom = 32.dp),
@@ -569,8 +570,8 @@ private fun HabitEditorDialog(
             ) {
                 item {
                     Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-                        IconButton(onClick = onDismiss) { Icon(Icons.Default.Close, "Cerrar", tint = TimelineText) }
-                        Text(title, Modifier.weight(1f), color = TimelineText, fontWeight = FontWeight.Bold, textAlign = TextAlign.Center)
+                        IconButton(onClick = onDismiss) { Icon(Icons.Default.Close, "Cerrar", tint = AppTheme.colors.text) }
+                        Text(title, Modifier.weight(1f), color = AppTheme.colors.text, fontWeight = FontWeight.Bold, textAlign = TextAlign.Center)
                         AppButton(
                             if (initial.name.isBlank()) "Crear" else "Guardar",
                             style = AppButtonStyle.Text,
@@ -597,9 +598,9 @@ private fun HabitEditorDialog(
 
                 item {
                     Column(verticalArrangement = Arrangement.spacedBy(5.dp)) {
-                        Text(if (initial.name.isBlank()) "NUEVO HÁBITO" else "EDITAR HÁBITO", color = TimelinePrimary, fontSize = 11.sp, fontWeight = FontWeight.Bold)
-                        Text(if (initial.name.isBlank()) "Crea una rutina" else "Actualiza la rutina", color = TimelineText, fontSize = 24.sp, fontWeight = FontWeight.Bold)
-                        Text("También puedes crear hábitos semanales o mensuales para mantenerlos visibles hasta completarlos dentro del periodo.", color = TimelineMuted, fontSize = 14.sp)
+                        Text(if (initial.name.isBlank()) "NUEVO HÁBITO" else "EDITAR HÁBITO", color = AppTheme.colors.accent, fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                        Text(if (initial.name.isBlank()) "Crea una rutina" else "Actualiza la rutina", color = AppTheme.colors.text, fontSize = 24.sp, fontWeight = FontWeight.Bold)
+                        Text("También puedes crear hábitos semanales o mensuales para mantenerlos visibles hasta completarlos dentro del periodo.", color = AppTheme.colors.textSecondary, fontSize = 14.sp)
                     }
                 }
 
@@ -643,15 +644,15 @@ private fun HabitEditorDialog(
 
                 if (frequency == "CUSTOM") item {
                     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                        Text("Días específicos", color = TimelineMuted, fontSize = 12.sp)
+                        Text("Días específicos", color = AppTheme.colors.textSecondary, fontSize = 12.sp)
                         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                             listOf("L", "M", "X", "J", "V", "S", "D").forEachIndexed { index, day ->
                                 val selected = ((customDaysMask shr index) and 1) == 1
                                 Box(
                                     Modifier.size(38.dp).clickable { customDaysMask = customDaysMask xor (1 shl index) }
-                                        .background(if (selected) AppColors.Violet else TimelineSurface, CircleShape),
+                                        .background(if (selected) AppTheme.colors.depth else AppTheme.colors.surface, CircleShape),
                                     contentAlignment = Alignment.Center
-                                ) { Text(day, color = TimelineText, fontWeight = FontWeight.Bold) }
+                                ) { Text(day, color = AppTheme.colors.text, fontWeight = FontWeight.Bold) }
                             }
                         }
                     }
@@ -664,23 +665,23 @@ private fun HabitEditorDialog(
                 item {
                     HabitIconPicker(
                         selectedId = iconIdentifier,
-                        accent = runCatching { Color(android.graphics.Color.parseColor(selectedColor)) }.getOrDefault(TimelinePrimary),
+                        accent = runCatching { Color(android.graphics.Color.parseColor(selectedColor)) }.getOrDefault(AppTheme.colors.accent),
                         onSelect = { iconIdentifier = it }
                     )
                 }
 
                 item {
                     Column(verticalArrangement = Arrangement.spacedBy(9.dp)) {
-                        Text("Color", color = TimelineMuted, fontSize = 12.sp)
+                        Text("Color", color = AppTheme.colors.textSecondary, fontSize = 12.sp)
                         LazyRow(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                             items(colors) { hex ->
                                 val selected = selectedColor.equals(hex, true)
                                 Box(
                                     Modifier.size(44.dp).clickable { selectedColor = hex }
                                         .background(Color(android.graphics.Color.parseColor(hex)), CircleShape)
-                                        .border(if (selected) 4.dp else 1.dp, if (selected) TimelineText else Color.Transparent, CircleShape),
+                                        .border(if (selected) 4.dp else 1.dp, if (selected) AppTheme.colors.text else Color.Transparent, CircleShape),
                                     contentAlignment = Alignment.Center
-                                ) { if (selected) Icon(Icons.Default.Check, null, tint = AppColors.Night) }
+                                ) { if (selected) Icon(Icons.Default.Check, null, tint = AppTheme.colors.bg) }
                             }
                         }
                     }
@@ -691,7 +692,7 @@ private fun HabitEditorDialog(
                 item {
                     Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
                         Switch(checked = isActive, onCheckedChange = { isActive = it })
-                        Text("Activo", Modifier.padding(start = 10.dp), color = TimelineText)
+                        Text("Activo", Modifier.padding(start = 10.dp), color = AppTheme.colors.text)
                     }
                 }
             }
@@ -711,7 +712,7 @@ private fun HabitIconPicker(selectedId: String, accent: Color, onSelect: (String
 
     Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
         Row(verticalAlignment = Alignment.CenterVertically) {
-            Text("Icono", Modifier.weight(1f), color = TimelineMuted, fontSize = 12.sp)
+            Text("Icono", Modifier.weight(1f), color = AppTheme.colors.textSecondary, fontSize = 12.sp)
             Box(
                 Modifier.size(44.dp).background(accent.copy(alpha = 0.22f), RoundedCornerShape(14.dp))
                     .border(1.dp, accent, RoundedCornerShape(14.dp)),
@@ -724,17 +725,17 @@ private fun HabitIconPicker(selectedId: String, accent: Color, onSelect: (String
                 Text(
                     HabitIcons.categories[index].name,
                     Modifier
-                        .background(if (selected) TimelinePrimary else TimelineSurface, RoundedCornerShape(20.dp))
+                        .background(if (selected) AppTheme.colors.accent else AppTheme.colors.surface, RoundedCornerShape(20.dp))
                         .clickable { categoryIndex = index }
                         .padding(horizontal = 14.dp, vertical = 8.dp),
-                    color = if (selected) AppColors.Night else TimelineText,
+                    color = if (selected) AppTheme.colors.bg else AppTheme.colors.text,
                     fontSize = 12.sp,
                     fontWeight = FontWeight.SemiBold
                 )
             }
         }
         Column(
-            Modifier.fillMaxWidth().background(AppColors.Panel, RoundedCornerShape(20.dp)).padding(10.dp),
+            Modifier.fillMaxWidth().background(AppTheme.colors.surface, RoundedCornerShape(20.dp)).padding(10.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             category.icons.chunked(5).forEach { row ->
@@ -745,13 +746,13 @@ private fun HabitIconPicker(selectedId: String, accent: Color, onSelect: (String
                             Modifier
                                 .weight(1f)
                                 .background(if (selected) accent.copy(alpha = 0.25f) else Color.Transparent, RoundedCornerShape(14.dp))
-                                .border(if (selected) 2.dp else 1.dp, if (selected) accent else TimelineSurface, RoundedCornerShape(14.dp))
+                                .border(if (selected) 2.dp else 1.dp, if (selected) accent else AppTheme.colors.surface, RoundedCornerShape(14.dp))
                                 .clickable { onSelect(icon.id); customEmoji = "" }
                                 .padding(vertical = 8.dp),
                             horizontalAlignment = Alignment.CenterHorizontally
                         ) {
                             Text(icon.emoji, fontSize = 24.sp)
-                            Text(icon.label, color = if (selected) TimelineText else TimelineMuted, fontSize = 9.sp, maxLines = 1)
+                            Text(icon.label, color = if (selected) AppTheme.colors.text else AppTheme.colors.textSecondary, fontSize = 9.sp, maxLines = 1)
                         }
                     }
                     repeat(5 - row.size) { Spacer(Modifier.weight(1f)) }
@@ -784,7 +785,7 @@ private fun HabitSelectField(
 ) {
     var expanded by remember { mutableStateOf(false) }
     Column(modifier) {
-        Text(label, color = TimelineMuted, fontSize = 12.sp, modifier = Modifier.padding(bottom = 6.dp))
+        Text(label, color = AppTheme.colors.textSecondary, fontSize = 12.sp, modifier = Modifier.padding(bottom = 6.dp))
         ExposedDropdownMenuBox(expanded = expanded, onExpandedChange = { expanded = !expanded }) {
             OutlinedTextField(
                 value = value,
@@ -808,7 +809,7 @@ private fun HabitSelectField(
 @Composable
 private fun HabitTextField(label: String, value: String, modifier: Modifier = Modifier, onValueChange: (String) -> Unit) {
     Column(modifier) {
-        Text(label, color = TimelineMuted, fontSize = 12.sp, modifier = Modifier.padding(bottom = 6.dp))
+        Text(label, color = AppTheme.colors.textSecondary, fontSize = 12.sp, modifier = Modifier.padding(bottom = 6.dp))
         OutlinedTextField(value = value, onValueChange = onValueChange, modifier = Modifier.fillMaxWidth(), singleLine = true, shape = RoundedCornerShape(8.dp), colors = appFieldColors())
     }
 }
@@ -819,7 +820,7 @@ private fun HabitNumberField(label: String, value: Int, range: IntRange, modifie
     var text by remember { mutableStateOf(value.toString()) }
     LaunchedEffect(value) { if (text.toIntOrNull() != value) text = value.toString() }
     Column(modifier) {
-        Text(label, color = TimelineMuted, fontSize = 12.sp, modifier = Modifier.padding(bottom = 6.dp))
+        Text(label, color = AppTheme.colors.textSecondary, fontSize = 12.sp, modifier = Modifier.padding(bottom = 6.dp))
         OutlinedTextField(
             value = text,
             onValueChange = { raw ->
@@ -857,14 +858,14 @@ private fun HabitCompletionGuide(frequency: String, target: Int) {
         else -> "Se reinicia al comenzar un nuevo día."
     }
     Column(
-        Modifier.fillMaxWidth().background(AppColors.Panel, RoundedCornerShape(20.dp)).border(1.dp, AppColors.Cyan.copy(alpha = .35f), RoundedCornerShape(20.dp)).padding(16.dp),
+        Modifier.fillMaxWidth().background(AppTheme.colors.surface, RoundedCornerShape(20.dp)).border(1.dp, AppTheme.colors.accent.copy(alpha = .35f), RoundedCornerShape(20.dp)).padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(9.dp)
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
-            Text("TIPO DE COMPLETITUD", Modifier.weight(1f), color = TimelinePrimary, fontSize = 10.sp, fontWeight = FontWeight.Bold)
-            Text(chip, Modifier.background(Color(0xFF164467), RoundedCornerShape(20.dp)).padding(horizontal = 10.dp, vertical = 6.dp), color = TimelineText, fontSize = 10.sp, fontWeight = FontWeight.Bold)
+            Text("TIPO DE COMPLETITUD", Modifier.weight(1f), color = AppTheme.colors.accent, fontSize = 10.sp, fontWeight = FontWeight.Bold)
+            Text(chip, Modifier.background(AppTheme.colors.surfaceRaised, RoundedCornerShape(20.dp)).padding(horizontal = 10.dp, vertical = 6.dp), color = AppTheme.colors.text, fontSize = 10.sp, fontWeight = FontWeight.Bold)
         }
-        Text(title, color = TimelineText, fontWeight = FontWeight.Bold)
-        Text(description, color = TimelineMuted, fontSize = 14.sp)
+        Text(title, color = AppTheme.colors.text, fontWeight = FontWeight.Bold)
+        Text(description, color = AppTheme.colors.textSecondary, fontSize = 14.sp)
     }
 }

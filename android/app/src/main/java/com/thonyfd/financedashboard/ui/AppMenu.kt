@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.Logout
+import androidx.compose.material.icons.outlined.Palette
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.DrawerState
 import androidx.compose.material3.HorizontalDivider
@@ -29,30 +30,43 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.thonyfd.financedashboard.data.SupabaseConfig
 import com.thonyfd.financedashboard.data.auth.signOutWithFallback
-import com.thonyfd.financedashboard.ui.theme.AppColors
+import com.thonyfd.financedashboard.ui.theme.AppTheme
 import io.github.jan.supabase.auth.auth
 import kotlinx.coroutines.launch
 
 /** Menú lateral de la app: cuenta activa y cerrar sesión con confirmación. */
 @Composable
-fun AppMenuDrawer(drawerState: DrawerState, content: @Composable () -> Unit) {
+fun AppMenuDrawer(drawerState: DrawerState, isOwner: Boolean, content: @Composable () -> Unit) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     var confirmSignOut by remember { mutableStateOf(false) }
+    var showAppearance by remember { mutableStateOf(false) }
     var signingOut by remember { mutableStateOf(false) }
     val email = remember { SupabaseConfig.client.auth.currentUserOrNull()?.email }
 
     ModalNavigationDrawer(
         drawerState = drawerState,
         drawerContent = {
-            ModalDrawerSheet(drawerContainerColor = AppColors.Deep, drawerContentColor = AppColors.Ice) {
+            ModalDrawerSheet(drawerContainerColor = AppTheme.colors.surfaceLow, drawerContentColor = AppTheme.colors.text) {
                 Column(Modifier.padding(horizontal = 24.dp, vertical = 28.dp)) {
-                    Text("CUENTA", color = AppColors.Cyan, style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold)
+                    Text("CUENTA", color = AppTheme.colors.accent, style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold)
                     Spacer(Modifier.height(6.dp))
-                    Text(email ?: "Sin correo", color = AppColors.Ice, style = MaterialTheme.typography.titleMedium)
+                    Text(email ?: "Sin correo", color = AppTheme.colors.text, style = MaterialTheme.typography.titleMedium)
                 }
-                HorizontalDivider(color = AppColors.Hairline)
+                HorizontalDivider(color = AppTheme.colors.hairline)
                 Spacer(Modifier.height(8.dp))
+                NavigationDrawerItem(
+                    label = { Text("Apariencia") },
+                    icon = { Icon(Icons.Outlined.Palette, null) },
+                    selected = false,
+                    onClick = { showAppearance = true },
+                    modifier = Modifier.padding(horizontal = 12.dp),
+                    colors = NavigationDrawerItemDefaults.colors(
+                        unselectedContainerColor = AppTheme.colors.surfaceLow,
+                        unselectedTextColor = AppTheme.colors.text,
+                        unselectedIconColor = AppTheme.colors.accent
+                    )
+                )
                 NavigationDrawerItem(
                     label = { Text("Cerrar sesión") },
                     icon = { Icon(Icons.AutoMirrored.Outlined.Logout, null) },
@@ -60,9 +74,9 @@ fun AppMenuDrawer(drawerState: DrawerState, content: @Composable () -> Unit) {
                     onClick = { confirmSignOut = true },
                     modifier = Modifier.padding(horizontal = 12.dp),
                     colors = NavigationDrawerItemDefaults.colors(
-                        unselectedContainerColor = AppColors.Deep,
-                        unselectedTextColor = AppColors.Ice,
-                        unselectedIconColor = AppColors.Coral
+                        unselectedContainerColor = AppTheme.colors.surfaceLow,
+                        unselectedTextColor = AppTheme.colors.text,
+                        unselectedIconColor = AppTheme.colors.negative
                     )
                 )
             }
@@ -70,13 +84,15 @@ fun AppMenuDrawer(drawerState: DrawerState, content: @Composable () -> Unit) {
         content = content
     )
 
+    if (showAppearance) AppearanceDialog(onDismiss = { showAppearance = false })
+
     if (confirmSignOut) {
         AlertDialog(
             onDismissRequest = { if (!signingOut) confirmSignOut = false },
-            containerColor = AppColors.Panel,
-            titleContentColor = AppColors.Ice,
-            textContentColor = AppColors.Mist,
-            icon = { Icon(Icons.AutoMirrored.Outlined.Logout, null, tint = AppColors.Coral) },
+            containerColor = AppTheme.colors.surface,
+            titleContentColor = AppTheme.colors.text,
+            textContentColor = AppTheme.colors.textSecondary,
+            icon = { Icon(Icons.AutoMirrored.Outlined.Logout, null, tint = AppTheme.colors.negative) },
             title = { Text("Cerrar sesión", fontWeight = FontWeight.Bold) },
             text = { Text("¿Seguro que quieres salir? Tendrás que entrar con Google de nuevo.") },
             confirmButton = {
