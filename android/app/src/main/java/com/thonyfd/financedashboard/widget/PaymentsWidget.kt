@@ -3,7 +3,7 @@ package com.thonyfd.financedashboard.widget
 import com.thonyfd.financedashboard.data.SupabaseConfig
 import android.content.Context
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.graphics.Color
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.glance.GlanceId
@@ -40,9 +40,13 @@ import java.time.LocalDate
 class PaymentsWidget : GlanceAppWidget() {
 
     override suspend fun provideGlance(context: Context, id: GlanceId) {
-        val opacity = WidgetAppearancePreferences.getOpacity(context, WidgetKind.PAYMENTS)
+        val colors = widgetColors(context, WidgetKind.PAYMENTS)
         if (!widgetIsOwner(context)) {
-            provideContent { GlanceTheme { WidgetNotAvailable(opacity) } }
+            provideContent {
+                CompositionLocalProvider(LocalWidgetColors provides colors) {
+                    GlanceTheme { WidgetNotAvailable() }
+                }
+            }
             return
         }
         var data = PaymentsWidgetStateStore.loadWidgetData(context)
@@ -61,8 +65,10 @@ class PaymentsWidget : GlanceAppWidget() {
         }
 
         provideContent {
-            GlanceTheme {
-                PaymentsWidgetContent(data = data, backgroundOpacity = opacity)
+            CompositionLocalProvider(LocalWidgetColors provides colors) {
+                GlanceTheme {
+                    PaymentsWidgetContent(data = data)
+                }
             }
         }
     }
@@ -72,11 +78,11 @@ class PaymentsWidget : GlanceAppWidget() {
 // Root
 // ---------------------------------------------------------------------------
 @Composable
-private fun PaymentsWidgetContent(data: PaymentsWidgetData, backgroundOpacity: Float) {
+private fun PaymentsWidgetContent(data: PaymentsWidgetData) {
     Column(
         modifier = GlanceModifier
             .fillMaxSize()
-            .background(ColorProvider(Color(0xFF1A1A2E).copy(alpha = backgroundOpacity)))
+            .background(WidgetTheme.colors.bg)
             .padding(10.dp)
             .clickable(actionStartActivity<MainActivity>())
     ) {
@@ -89,7 +95,7 @@ private fun PaymentsWidgetContent(data: PaymentsWidgetData, backgroundOpacity: F
                 Text(
                     text = "⚠️ Error al cargar\nToca ↻ para reintentar",
                     style = TextStyle(
-                        color = ColorProvider(Color(0xFFFF6B6B)),
+                        color = WidgetTheme.colors.negative,
                         fontSize = 12.sp
                     )
                 )
@@ -108,7 +114,7 @@ private fun PaymentsWidgetContent(data: PaymentsWidgetData, backgroundOpacity: F
         Text(
             text = "PAGOS PENDIENTES",
             style = TextStyle(
-                color = ColorProvider(Color(0xFF00D4AA)),
+                color = WidgetTheme.colors.accent,
                 fontSize = 8.sp,
                 fontWeight = FontWeight.Bold
             ),
@@ -123,7 +129,7 @@ private fun PaymentsWidgetContent(data: PaymentsWidgetData, backgroundOpacity: F
                 Text(
                     text = "✅ Todo al día",
                     style = TextStyle(
-                        color = ColorProvider(Color(0xFF00D4AA)),
+                        color = WidgetTheme.colors.accent,
                         fontSize = 11.sp,
                         fontWeight = FontWeight.Bold
                     )
@@ -149,7 +155,7 @@ private fun PaymentsHeader(lastUpdated: String) {
         Text(
             text = "💳 Pagos",
             style = TextStyle(
-                color = ColorProvider(Color(0xFF00D4AA)),
+                color = WidgetTheme.colors.accent,
                 fontSize = 13.sp,
                 fontWeight = FontWeight.Bold
             )
@@ -158,14 +164,14 @@ private fun PaymentsHeader(lastUpdated: String) {
         Text(
             text = lastUpdated,
             style = TextStyle(
-                color = ColorProvider(Color(0xFF666666)),
+                color = WidgetTheme.colors.textPassive,
                 fontSize = 9.sp
             )
         )
         Spacer(modifier = GlanceModifier.width(4.dp))
         Box(
             modifier = GlanceModifier
-                .background(ColorProvider(Color(0xFF16213E)))
+                .background(WidgetTheme.colors.surface)
                 .cornerRadius(6.dp)
                 .padding(horizontal = 10.dp, vertical = 5.dp)
                 .clickable(actionRunCallback<PaymentsRefreshAction>()),
@@ -174,7 +180,7 @@ private fun PaymentsHeader(lastUpdated: String) {
             Text(
                 text = "↻",
                 style = TextStyle(
-                    color = ColorProvider(Color(0xFF00D4AA)),
+                    color = WidgetTheme.colors.accent,
                     fontSize = 14.sp,
                     fontWeight = FontWeight.Bold
                 )
@@ -191,25 +197,25 @@ private fun AccumulatedChipsRow(data: PaymentsWidgetData) {
     Row(
         modifier = GlanceModifier
             .fillMaxWidth()
-            .background(ColorProvider(Color(0xFF16213E)))
+            .background(WidgetTheme.colors.surface)
             .cornerRadius(8.dp)
             .padding(4.dp)
     ) {
-        AccumulatedChip("Gastos",  data.totalGastos,    Color(0xFFFFFFFF), GlanceModifier.defaultWeight())
-        AccumulatedChip("Inv",     data.totalInversion, Color(0xFF4CAF50), GlanceModifier.defaultWeight())
-        AccumulatedChip("Deuda",   data.totalDeuda,     Color(0xFFFF6B6B), GlanceModifier.defaultWeight())
-        AccumulatedChip("Ahorro",  data.totalAhorro,    Color(0xFF00D4AA), GlanceModifier.defaultWeight())
+        AccumulatedChip("Gastos",  data.totalGastos,    WidgetTheme.colors.text, GlanceModifier.defaultWeight())
+        AccumulatedChip("Inv",     data.totalInversion, WidgetTheme.colors.positive, GlanceModifier.defaultWeight())
+        AccumulatedChip("Deuda",   data.totalDeuda,     WidgetTheme.colors.negative, GlanceModifier.defaultWeight())
+        AccumulatedChip("Ahorro",  data.totalAhorro,    WidgetTheme.colors.accent, GlanceModifier.defaultWeight())
         AccumulatedChip(
             label  = "Saldo",
             amount = data.saldoFinal,
-            color  = if (data.saldoFinal >= 0) Color(0xFF4CAF50) else Color(0xFFFF6B6B),
+            color  = if (data.saldoFinal >= 0) WidgetTheme.colors.positive else WidgetTheme.colors.negative,
             modifier = GlanceModifier.defaultWeight()
         )
     }
 }
 
 @Composable
-private fun AccumulatedChip(label: String, amount: Double, color: Color, modifier: GlanceModifier) {
+private fun AccumulatedChip(label: String, amount: Double, color: ColorProvider, modifier: GlanceModifier) {
     Column(
         modifier = modifier.padding(3.dp),
         horizontalAlignment = Alignment.CenterHorizontally
@@ -217,14 +223,14 @@ private fun AccumulatedChip(label: String, amount: Double, color: Color, modifie
         Text(
             text = label,
             style = TextStyle(
-                color = ColorProvider(Color(0xFF888888)),
+                color = WidgetTheme.colors.textSecondary,
                 fontSize = 8.sp
             )
         )
         Text(
             text = "$${String.format("%.0f", amount)}",
             style = TextStyle(
-                color = ColorProvider(color),
+                color = color,
                 fontSize = 10.sp,
                 fontWeight = FontWeight.Bold
             )
@@ -238,10 +244,10 @@ private fun AccumulatedChip(label: String, amount: Double, color: Color, modifie
 @Composable
 private fun PaymentRow(payment: UpcomingPayment) {
     val urgencyColor = when {
-        payment.daysUntil < 0  -> Color(0xFFFF6B6B)
-        payment.daysUntil <= 1 -> Color(0xFFFF6B6B)
-        payment.daysUntil <= 3 -> Color(0xFFFFB347)
-        else                   -> Color(0xFF888888)
+        payment.daysUntil < 0  -> WidgetTheme.colors.negative
+        payment.daysUntil <= 1 -> WidgetTheme.colors.negative
+        payment.daysUntil <= 3 -> WidgetTheme.colors.warning
+        else                   -> WidgetTheme.colors.textSecondary
     }
     val daysLabel = when {
         payment.daysUntil < 0  -> "⚠ VENC"
@@ -272,7 +278,7 @@ private fun PaymentRow(payment: UpcomingPayment) {
             Text(
                 text = payment.description,
                 style = TextStyle(
-                    color = ColorProvider(Color(0xFFFFFFFF)),
+                    color = WidgetTheme.colors.text,
                     fontSize = 10.sp,
                     fontWeight = FontWeight.Bold
                 ),
@@ -283,7 +289,7 @@ private fun PaymentRow(payment: UpcomingPayment) {
                     if (!payment.paymentMethod.isNullOrBlank()) " · ${payment.paymentMethod}" else ""
                 }",
                 style = TextStyle(
-                    color = ColorProvider(Color(0xFFAAAAAA)),
+                    color = WidgetTheme.colors.textSecondary,
                     fontSize = 9.sp
                 )
             )
@@ -292,7 +298,7 @@ private fun PaymentRow(payment: UpcomingPayment) {
         Text(
             text = daysLabel,
             style = TextStyle(
-                color = ColorProvider(urgencyColor),
+                color = urgencyColor,
                 fontSize = 9.sp,
                 fontWeight = FontWeight.Bold
             )

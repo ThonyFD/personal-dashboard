@@ -15,7 +15,6 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
-import androidx.compose.material.icons.outlined.Widgets
 import androidx.compose.material.icons.outlined.Refresh
 import androidx.compose.material.icons.outlined.Menu
 import androidx.compose.foundation.border
@@ -43,11 +42,8 @@ import com.thonyfd.financedashboard.ui.theme.AppearanceTheme
 import com.thonyfd.financedashboard.ui.theme.FinanceDashboardTheme
 import com.thonyfd.financedashboard.widget.FinanceWidgetWorker
 import com.thonyfd.financedashboard.widget.HabitsDayRolloverReceiver
-import com.thonyfd.financedashboard.widget.WidgetAppearancePreferences
-import com.thonyfd.financedashboard.widget.WidgetKind
 import kotlinx.coroutines.launch
 import java.time.LocalDate
-import kotlin.math.roundToInt
 
 data class CategoryNavState(
     val name: String,
@@ -199,7 +195,6 @@ fun DashboardTab(padding: PaddingValues, onOpenMenu: () -> Unit = {}, onCategory
     var data by remember { mutableStateOf<WidgetData?>(null) }
     var isLoading by remember { mutableStateOf(true) }
     var error by remember { mutableStateOf<String?>(null) }
-    var showWidgetAppearance by remember { mutableStateOf(false) }
     var refreshing by remember { mutableStateOf(false) }
 
     fun load(showResult: Boolean = false) {
@@ -239,7 +234,6 @@ fun DashboardTab(padding: PaddingValues, onOpenMenu: () -> Unit = {}, onCategory
                 }
             },
             actions = {
-                AppIconButton(Icons.Outlined.Widgets, "Apariencia de widgets", onClick = { showWidgetAppearance = true })
                 AppIconButton(Icons.Outlined.Refresh, "Actualizar", onClick = { load(showResult = true) }, loading = refreshing && data != null)
             },
             colors = TopAppBarDefaults.topAppBarColors(
@@ -264,97 +258,6 @@ fun DashboardTab(padding: PaddingValues, onOpenMenu: () -> Unit = {}, onCategory
             }
             data != null -> DashboardContent(data!!, onCategoryClick)
         }
-    }
-
-    if (showWidgetAppearance) {
-        WidgetAppearanceDialog(
-            onDismiss = { showWidgetAppearance = false },
-            onSaved = {
-                showWidgetAppearance = false
-                Toast.makeText(context, "Apariencia de widgets actualizada", Toast.LENGTH_SHORT).show()
-            }
-        )
-    }
-}
-
-@Composable
-private fun WidgetAppearanceDialog(
-    onDismiss: () -> Unit,
-    onSaved: () -> Unit
-) {
-    val context = LocalContext.current
-    val scope = rememberCoroutineScope()
-    var financeOpacity by remember {
-        mutableFloatStateOf(WidgetAppearancePreferences.getOpacity(context, WidgetKind.FINANCE))
-    }
-    var paymentsOpacity by remember {
-        mutableFloatStateOf(WidgetAppearancePreferences.getOpacity(context, WidgetKind.PAYMENTS))
-    }
-    var applying by remember { mutableStateOf(false) }
-    var habitsOpacity by remember {
-        mutableFloatStateOf(WidgetAppearancePreferences.getOpacity(context, WidgetKind.HABITS))
-    }
-
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        containerColor = AppTheme.colors.surface,
-        titleContentColor = AppTheme.colors.text,
-        textContentColor = AppTheme.colors.textSecondary,
-        icon = { Icon(Icons.Default.Widgets, null, tint = AppTheme.colors.accent) },
-        title = { Text("Apariencia de widgets", fontWeight = FontWeight.Bold) },
-        text = {
-            Column(verticalArrangement = Arrangement.spacedBy(14.dp)) {
-                Text("Ajusta la transparencia de cada widget. El contenido permanece visible mientras cambia el fondo.")
-                WidgetOpacitySlider("Dashboard financiero", financeOpacity) { financeOpacity = it }
-                WidgetOpacitySlider("Pagos próximos", paymentsOpacity) { paymentsOpacity = it }
-                WidgetOpacitySlider("Hábitos de hoy", habitsOpacity) { habitsOpacity = it }
-            }
-        },
-        confirmButton = {
-            AppButton(
-                "Aplicar",
-                style = AppButtonStyle.Text,
-                loading = applying,
-                onClick = {
-                    WidgetAppearancePreferences.setOpacity(context, WidgetKind.FINANCE, financeOpacity)
-                    WidgetAppearancePreferences.setOpacity(context, WidgetKind.PAYMENTS, paymentsOpacity)
-                    WidgetAppearancePreferences.setOpacity(context, WidgetKind.HABITS, habitsOpacity)
-                    scope.launch {
-                        applying = true
-                        try {
-                            WidgetAppearancePreferences.refreshAll(context)
-                            onSaved()
-                        } finally {
-                            applying = false
-                        }
-                    }
-                }
-            )
-        },
-        dismissButton = {
-            AppButton("Cancelar", onClick = onDismiss, style = AppButtonStyle.Text, enabled = !applying)
-        }
-    )
-}
-
-@Composable
-private fun WidgetOpacitySlider(label: String, value: Float, onValueChange: (Float) -> Unit) {
-    Column {
-        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-            Text(label, color = AppTheme.colors.text, fontWeight = FontWeight.Medium)
-            Text("${(value * 100).roundToInt()}%", color = AppTheme.colors.accent, fontWeight = FontWeight.Bold)
-        }
-        Slider(
-            value = value,
-            onValueChange = onValueChange,
-            valueRange = WidgetAppearancePreferences.MIN_OPACITY..1f,
-            steps = 7,
-            colors = SliderDefaults.colors(
-                thumbColor = AppTheme.colors.accent,
-                activeTrackColor = AppTheme.colors.depth,
-                inactiveTrackColor = AppTheme.colors.hairline
-            )
-        )
     }
 }
 

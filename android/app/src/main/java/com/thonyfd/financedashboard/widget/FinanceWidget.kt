@@ -4,7 +4,7 @@ import com.thonyfd.financedashboard.data.SupabaseConfig
 import android.content.Context
 import android.content.Intent
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.graphics.Color
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.glance.GlanceId
@@ -48,9 +48,13 @@ private val CATEGORY_EMOJI_KEY = ActionParameters.Key<String>("categoryEmoji")
 class FinanceWidget : GlanceAppWidget() {
 
     override suspend fun provideGlance(context: Context, id: GlanceId) {
-        val opacity = WidgetAppearancePreferences.getOpacity(context, WidgetKind.FINANCE)
+        val colors = widgetColors(context, WidgetKind.FINANCE)
         if (!widgetIsOwner(context)) {
-            provideContent { GlanceTheme { WidgetNotAvailable(opacity) } }
+            provideContent {
+                CompositionLocalProvider(LocalWidgetColors provides colors) {
+                    GlanceTheme { WidgetNotAvailable() }
+                }
+            }
             return
         }
         val (year, month) = FinanceWidgetStateStore.getSelectedYearMonth(context)
@@ -69,8 +73,10 @@ class FinanceWidget : GlanceAppWidget() {
         }
 
         provideContent {
-            GlanceTheme {
-                FinanceWidgetContent(data = data, backgroundOpacity = opacity)
+            CompositionLocalProvider(LocalWidgetColors provides colors) {
+                GlanceTheme {
+                    FinanceWidgetContent(data = data)
+                }
             }
         }
     }
@@ -80,11 +86,11 @@ class FinanceWidget : GlanceAppWidget() {
 // Root
 // ---------------------------------------------------------------------------
 @Composable
-private fun FinanceWidgetContent(data: WidgetData, backgroundOpacity: Float) {
+private fun FinanceWidgetContent(data: WidgetData) {
     Column(
         modifier = GlanceModifier
             .fillMaxSize()
-            .background(ColorProvider(Color(0xFF1A1A2E).copy(alpha = backgroundOpacity)))
+            .background(WidgetTheme.colors.bg)
             .padding(10.dp)
             .clickable(actionStartActivity<MainActivity>())
     ) {
@@ -178,7 +184,7 @@ private fun WidgetHeader(lastUpdated: String) {
         Text(
             text = "💰 Finance",
             style = TextStyle(
-                color = ColorProvider(Color(0xFF00D4AA)),
+                color = WidgetTheme.colors.accent,
                 fontSize = 13.sp,
                 fontWeight = FontWeight.Bold
             )
@@ -187,14 +193,14 @@ private fun WidgetHeader(lastUpdated: String) {
         Text(
             text = lastUpdated,
             style = TextStyle(
-                color = ColorProvider(Color(0xFF666666)),
+                color = WidgetTheme.colors.textPassive,
                 fontSize = 9.sp
             )
         )
         Spacer(modifier = GlanceModifier.width(4.dp))
         Box(
             modifier = GlanceModifier
-                .background(ColorProvider(Color(0xFF16213E)))
+                .background(WidgetTheme.colors.surface)
                 .cornerRadius(6.dp)
                 .padding(horizontal = 10.dp, vertical = 5.dp)
                 .clickable(actionRunCallback<RefreshAction>()),
@@ -203,7 +209,7 @@ private fun WidgetHeader(lastUpdated: String) {
             Text(
                 text = "↻",
                 style = TextStyle(
-                    color = ColorProvider(Color(0xFF00D4AA)),
+                    color = WidgetTheme.colors.accent,
                     fontSize = 14.sp,
                     fontWeight = FontWeight.Bold
                 )
@@ -222,49 +228,49 @@ private fun SummaryRow(data: WidgetData) {
         Row(
             modifier = GlanceModifier
                 .defaultWeight()
-                .background(ColorProvider(Color(0xFF16213E)))
+                .background(WidgetTheme.colors.surface)
                 .cornerRadius(8.dp)
                 .padding(4.dp)
         ) {
-            CompactMetric("Gastos",  data.totalGastos,    Color(0xFFFFFFFF), GlanceModifier.defaultWeight())
-            CompactMetric("Inv",     data.totalInversion, Color(0xFF4CAF50), GlanceModifier.defaultWeight())
-            CompactMetric("Deuda",   data.totalDeuda,     Color(0xFFFF6B6B), GlanceModifier.defaultWeight())
-            CompactMetric("Ahorro",  data.totalAhorro,    Color(0xFF00D4AA), GlanceModifier.defaultWeight())
+            CompactMetric("Gastos",  data.totalGastos,    WidgetTheme.colors.text, GlanceModifier.defaultWeight())
+            CompactMetric("Inv",     data.totalInversion, WidgetTheme.colors.positive, GlanceModifier.defaultWeight())
+            CompactMetric("Deuda",   data.totalDeuda,     WidgetTheme.colors.negative, GlanceModifier.defaultWeight())
+            CompactMetric("Ahorro",  data.totalAhorro,    WidgetTheme.colors.accent, GlanceModifier.defaultWeight())
         }
         Spacer(modifier = GlanceModifier.width(4.dp))
         // Totals group
         Row(
             modifier = GlanceModifier
                 .defaultWeight()
-                .background(ColorProvider(Color(0xFF1E1440)))
+                .background(WidgetTheme.colors.surface)
                 .cornerRadius(8.dp)
                 .padding(4.dp)
         ) {
             CompactMetric(
                 "Saldo",
                 data.saldoFinal,
-                if (data.saldoFinal >= 0) Color(0xFF4CAF50) else Color(0xFFFF6B6B),
+                if (data.saldoFinal >= 0) WidgetTheme.colors.positive else WidgetTheme.colors.negative,
                 GlanceModifier.defaultWeight()
             )
-            CompactMetric("Total",  data.totalSpent, Color(0xFF805AD5), GlanceModifier.defaultWeight())
+            CompactMetric("Total",  data.totalSpent, WidgetTheme.colors.depth, GlanceModifier.defaultWeight())
         }
     }
 }
 
 @Composable
-private fun CompactMetric(label: String, amount: Double, color: Color, modifier: GlanceModifier) {
+private fun CompactMetric(label: String, amount: Double, color: ColorProvider, modifier: GlanceModifier) {
     Column(
         modifier = modifier.padding(3.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Text(
             text = label,
-            style = TextStyle(color = ColorProvider(Color(0xFF888888)), fontSize = 8.sp)
+            style = TextStyle(color = WidgetTheme.colors.textSecondary, fontSize = 8.sp)
         )
         Text(
             text = "$${String.format("%.0f", amount)}",
             style = TextStyle(
-                color = ColorProvider(color),
+                color = color,
                 fontSize = 10.sp,
                 fontWeight = FontWeight.Bold
             )
@@ -279,21 +285,21 @@ private fun CompactMetric(label: String, amount: Double, color: Color, modifier:
 private fun SpendCard(spend: Double, modifier: GlanceModifier) {
     Column(
         modifier = modifier
-            .background(ColorProvider(Color(0xFF16213E)))
+            .background(WidgetTheme.colors.surface)
             .cornerRadius(8.dp)
             .padding(horizontal = 10.dp, vertical = 8.dp)
     ) {
         Text(
             text = "Gasto del mes",
             style = TextStyle(
-                color = ColorProvider(Color(0xFF888888)),
+                color = WidgetTheme.colors.textSecondary,
                 fontSize = 10.sp
             )
         )
         Text(
             text = "$${String.format("%,.2f", spend)}",
             style = TextStyle(
-                color = ColorProvider(Color(0xFFFFFFFF)),
+                color = WidgetTheme.colors.text,
                 fontSize = 20.sp,
                 fontWeight = FontWeight.Bold
             )
@@ -314,7 +320,7 @@ private fun MonthNavCard(
 ) {
     Column(
         modifier = modifier
-            .background(ColorProvider(Color(0xFF16213E)))
+            .background(WidgetTheme.colors.surface)
             .cornerRadius(8.dp)
             .padding(horizontal = 10.dp, vertical = 8.dp)
     ) {
@@ -325,7 +331,7 @@ private fun MonthNavCard(
         ) {
             Box(
                 modifier = GlanceModifier
-                    .background(ColorProvider(Color(0xFF0D1826)))
+                    .background(WidgetTheme.colors.bgSolid)
                     .cornerRadius(6.dp)
                     .padding(horizontal = 12.dp, vertical = 6.dp)
                     .clickable(actionRunCallback<PrevMonthAction>()),
@@ -334,7 +340,7 @@ private fun MonthNavCard(
                 Text(
                     text = "◀",
                     style = TextStyle(
-                        color = ColorProvider(Color(0xFF00D4AA)),
+                        color = WidgetTheme.colors.accent,
                         fontSize = 16.sp,
                         fontWeight = FontWeight.Bold
                     )
@@ -346,7 +352,7 @@ private fun MonthNavCard(
                     if (parts.size >= 2) "${parts[0]} ${parts[1].takeLast(2)}" else monthLabel
                 },
                 style = TextStyle(
-                    color = ColorProvider(Color(0xFFFFFFFF)),
+                    color = WidgetTheme.colors.text,
                     fontSize = 11.sp,
                     fontWeight = FontWeight.Bold
                 )
@@ -355,7 +361,7 @@ private fun MonthNavCard(
             Box(
                 modifier = if (!isCurrentMonth)
                     GlanceModifier
-                        .background(ColorProvider(Color(0xFF0D1826)))
+                        .background(WidgetTheme.colors.bgSolid)
                         .cornerRadius(6.dp)
                         .padding(horizontal = 12.dp, vertical = 6.dp)
                         .clickable(actionRunCallback<NextMonthAction>())
@@ -366,7 +372,7 @@ private fun MonthNavCard(
                 Text(
                     text = if (isCurrentMonth) "" else "▶",
                     style = TextStyle(
-                        color = ColorProvider(Color(0xFF00D4AA)),
+                        color = WidgetTheme.colors.accent,
                         fontSize = 16.sp,
                         fontWeight = FontWeight.Bold
                     )
@@ -382,7 +388,7 @@ private fun MonthNavCard(
                 Text(
                     text = "$txnCount",
                     style = TextStyle(
-                        color = ColorProvider(Color(0xFF00D4AA)),
+                        color = WidgetTheme.colors.accent,
                         fontSize = 14.sp,
                         fontWeight = FontWeight.Bold
                     )
@@ -390,7 +396,7 @@ private fun MonthNavCard(
                 Text(
                     text = "txns",
                     style = TextStyle(
-                        color = ColorProvider(Color(0xFF888888)),
+                        color = WidgetTheme.colors.textSecondary,
                         fontSize = 9.sp
                     )
                 )
@@ -399,9 +405,7 @@ private fun MonthNavCard(
                 Text(
                     text = "$pendingCount",
                     style = TextStyle(
-                        color = ColorProvider(
-                            if (pendingCount > 0) Color(0xFFFFB347) else Color(0xFF00D4AA)
-                        ),
+                        color = if (pendingCount > 0) WidgetTheme.colors.warning else WidgetTheme.colors.accent,
                         fontSize = 14.sp,
                         fontWeight = FontWeight.Bold
                     )
@@ -409,7 +413,7 @@ private fun MonthNavCard(
                 Text(
                     text = "pendientes",
                     style = TextStyle(
-                        color = ColorProvider(Color(0xFF888888)),
+                        color = WidgetTheme.colors.textSecondary,
                         fontSize = 9.sp
                     )
                 )
@@ -424,10 +428,10 @@ private fun MonthNavCard(
 @Composable
 private fun UpcomingPaymentRow(payment: UpcomingPayment) {
     val urgencyColor = when {
-        payment.daysUntil < 0  -> Color(0xFFFF6B6B)
-        payment.daysUntil <= 3 -> Color(0xFFFF6B6B)
-        payment.daysUntil <= 7 -> Color(0xFFFFB347)
-        else                   -> Color(0xFF888888)
+        payment.daysUntil < 0  -> WidgetTheme.colors.negative
+        payment.daysUntil <= 3 -> WidgetTheme.colors.negative
+        payment.daysUntil <= 7 -> WidgetTheme.colors.warning
+        else                   -> WidgetTheme.colors.textSecondary
     }
     val daysLabel = when {
         payment.daysUntil < 0  -> "día ${payment.day ?: "?"}"
@@ -451,7 +455,7 @@ private fun UpcomingPaymentRow(payment: UpcomingPayment) {
             Text(
                 text = "$typePrefix${payment.description}",
                 style = TextStyle(
-                    color = ColorProvider(Color(0xFFFFFFFF)),
+                    color = WidgetTheme.colors.text,
                     fontSize = 10.sp,
                     fontWeight = FontWeight.Bold
                 ),
@@ -460,7 +464,7 @@ private fun UpcomingPaymentRow(payment: UpcomingPayment) {
             Text(
                 text = "$${String.format("%.2f", payment.amount)}${if (payment.paymentMethod != null) " · ${payment.paymentMethod}" else ""}",
                 style = TextStyle(
-                    color = ColorProvider(Color(0xFFAAAAAA)),
+                    color = WidgetTheme.colors.textSecondary,
                     fontSize = 9.sp
                 )
             )
@@ -468,7 +472,7 @@ private fun UpcomingPaymentRow(payment: UpcomingPayment) {
         Text(
             text = daysLabel,
             style = TextStyle(
-                color = ColorProvider(urgencyColor),
+                color = urgencyColor,
                 fontSize = 9.sp,
                 fontWeight = FontWeight.Bold
             )
@@ -488,7 +492,7 @@ private fun RecentTransactionRow(txn: Transaction) {
         Text(
             text = txn.merchantName?.split(" ")?.take(2)?.joinToString(" ") ?: txn.provider,
             style = TextStyle(
-                color = ColorProvider(Color(0xFFFFFFFF)),
+                color = WidgetTheme.colors.text,
                 fontSize = 10.sp
             ),
             maxLines = 1,
@@ -497,7 +501,7 @@ private fun RecentTransactionRow(txn: Transaction) {
         Text(
             text = "-$${String.format("%.0f", txn.amount)}",
             style = TextStyle(
-                color = ColorProvider(Color(0xFFFF6B6B)),
+                color = WidgetTheme.colors.negative,
                 fontSize = 10.sp,
                 fontWeight = FontWeight.Bold
             )
@@ -512,7 +516,7 @@ private fun RecentTransactionRow(txn: Transaction) {
 private fun CategoryChip(category: CategorySpend, modifier: GlanceModifier) {
     Column(
         modifier = modifier
-            .background(ColorProvider(Color(0xFF16213E)))
+            .background(WidgetTheme.colors.surface)
             .cornerRadius(6.dp)
             .padding(5.dp)
             .clickable(
@@ -529,7 +533,7 @@ private fun CategoryChip(category: CategorySpend, modifier: GlanceModifier) {
         Text(
             text = "${category.percentage}%",
             style = TextStyle(
-                color = ColorProvider(Color(0xFF00D4AA)),
+                color = WidgetTheme.colors.accent,
                 fontSize = 10.sp,
                 fontWeight = FontWeight.Bold
             )
@@ -537,7 +541,7 @@ private fun CategoryChip(category: CategorySpend, modifier: GlanceModifier) {
         Text(
             text = category.name,
             style = TextStyle(
-                color = ColorProvider(Color(0xFF888888)),
+                color = WidgetTheme.colors.textSecondary,
                 fontSize = 8.sp
             ),
             maxLines = 1
@@ -553,7 +557,7 @@ private fun SectionTitle(text: String) {
     Text(
         text = text.uppercase(),
         style = TextStyle(
-            color = ColorProvider(Color(0xFF00D4AA)),
+            color = WidgetTheme.colors.accent,
             fontSize = 8.sp,
             fontWeight = FontWeight.Bold
         ),
@@ -566,7 +570,7 @@ private fun SmallText(text: String) {
     Text(
         text = text,
         style = TextStyle(
-            color = ColorProvider(Color(0xFF555555)),
+            color = WidgetTheme.colors.textPassive,
             fontSize = 10.sp
         )
     )
@@ -578,7 +582,7 @@ private fun ErrorState() {
         Text(
             text = "⚠️ Error al cargar\nToca ↻ para reintentar",
             style = TextStyle(
-                color = ColorProvider(Color(0xFFFF6B6B)),
+                color = WidgetTheme.colors.negative,
                 fontSize = 12.sp
             )
         )

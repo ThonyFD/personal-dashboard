@@ -6,6 +6,7 @@ import com.thonyfd.financedashboard.data.auth.sameAccount
 import android.content.Context
 import android.content.Intent
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
@@ -63,17 +64,6 @@ import java.time.LocalDate
 import java.time.LocalTime
 import java.time.format.DateTimeFormatter
 
-private object HabitsPalette {
-    val Background = Color(0xFF081022)
-    val Surface = Color(0xFF111A2E)
-    val Cyan = Color(0xFF00D9FF)
-    val Green = Color(0xFF39FF14)
-    val Violet = Color(0xFF7A5CFF)
-    val Ice = Color(0xFFE8FFFF)
-    val Muted = Color(0xFF8A94A8)
-    val Error = Color(0xFFFF5C7A)
-}
-
 private val COMPACT_WIDTH = 260.dp
 
 class HabitsWidget : GlanceAppWidget() {
@@ -85,14 +75,16 @@ class HabitsWidget : GlanceAppWidget() {
         if (HabitsWidgetStateStore.loadWidgetData(context).isStale) {
             launch { HabitsWidgetRefresher.refresh(context) }
         }
-        val opacity = WidgetAppearancePreferences.getOpacity(context, WidgetKind.HABITS)
+        val colors = widgetColors(context, WidgetKind.HABITS)
 
         provideContent {
             // Lectura reactiva: cualquier escritura en el store recompone el widget
             val flow = remember { HabitsWidgetStateStore.observe(context) }
             val data by flow.collectAsState(initial = HabitsWidgetData(isRefreshing = true))
-            GlanceTheme {
-                HabitsWidgetContent(data = data, backgroundOpacity = opacity)
+            CompositionLocalProvider(LocalWidgetColors provides colors) {
+                GlanceTheme {
+                    HabitsWidgetContent(data = data)
+                }
             }
         }
     }
@@ -116,7 +108,7 @@ object HabitsWidgetRefresher {
 }
 
 @Composable
-private fun HabitsWidgetContent(data: HabitsWidgetData, backgroundOpacity: Float) {
+private fun HabitsWidgetContent(data: HabitsWidgetData) {
     val compact = LocalSize.current.width < COMPACT_WIDTH
     val progress = if (data.dueCount == 0) 0f else data.completedCount.toFloat() / data.dueCount
     val openHabits = Intent(LocalContext.current, MainActivity::class.java).apply {
@@ -127,7 +119,7 @@ private fun HabitsWidgetContent(data: HabitsWidgetData, backgroundOpacity: Float
     Row(
         modifier = GlanceModifier
             .fillMaxSize()
-            .background(ColorProvider(HabitsPalette.Background.copy(alpha = backgroundOpacity)))
+            .background(WidgetTheme.colors.bg)
             .cornerRadius(24.dp)
             .padding(12.dp)
     ) {
@@ -157,7 +149,7 @@ private fun ProgressPanel(data: HabitsWidgetData, progress: Float, openHabits: I
         modifier = GlanceModifier
             .width(96.dp)
             .fillMaxHeight()
-            .background(ColorProvider(HabitsPalette.Surface))
+            .background(WidgetTheme.colors.surface)
             .cornerRadius(18.dp)
             .padding(horizontal = 10.dp, vertical = 12.dp)
             .clickable(actionStartActivity(openHabits)),
@@ -167,7 +159,7 @@ private fun ProgressPanel(data: HabitsWidgetData, progress: Float, openHabits: I
         Text(
             text = "${(progress * 100).toInt()}%",
             style = TextStyle(
-                color = ColorProvider(if (allDone) HabitsPalette.Green else HabitsPalette.Ice),
+                color = if (allDone) WidgetTheme.colors.positive else WidgetTheme.colors.text,
                 fontSize = 28.sp,
                 fontWeight = FontWeight.Bold
             )
@@ -176,22 +168,22 @@ private fun ProgressPanel(data: HabitsWidgetData, progress: Float, openHabits: I
         LinearProgressIndicator(
             progress = progress,
             modifier = GlanceModifier.fillMaxWidth().height(6.dp).cornerRadius(3.dp),
-            color = ColorProvider(if (allDone) HabitsPalette.Green else HabitsPalette.Cyan),
-            backgroundColor = ColorProvider(HabitsPalette.Ice.copy(alpha = 0.12f))
+            color = if (allDone) WidgetTheme.colors.positive else WidgetTheme.colors.accent,
+            backgroundColor = WidgetTheme.colors.provider(0.12f) { it.text }
         )
         Spacer(GlanceModifier.height(6.dp))
         Text(
             text = "${data.completedCount} de ${data.dueCount}",
-            style = TextStyle(color = ColorProvider(HabitsPalette.Muted), fontSize = 10.sp, fontWeight = FontWeight.Medium)
+            style = TextStyle(color = WidgetTheme.colors.textSecondary, fontSize = 10.sp, fontWeight = FontWeight.Medium)
         )
         Spacer(GlanceModifier.height(10.dp))
         Text(
             text = "🔥 ${data.streak}d" + (StreakLevel.of(data.completedCount, data.dueCount)?.let { " ${it.emoji}" } ?: ""),
             modifier = GlanceModifier
-                .background(ColorProvider(HabitsPalette.Violet.copy(alpha = 0.22f)))
+                .background(WidgetTheme.colors.provider(0.22f) { it.depth })
                 .cornerRadius(12.dp)
                 .padding(horizontal = 10.dp, vertical = 4.dp),
-            style = TextStyle(color = ColorProvider(HabitsPalette.Ice), fontSize = 11.sp, fontWeight = FontWeight.Bold)
+            style = TextStyle(color = WidgetTheme.colors.text, fontSize = 11.sp, fontWeight = FontWeight.Bold)
         )
     }
 }
@@ -203,7 +195,7 @@ private fun Header(data: HabitsWidgetData, compact: Boolean, progress: Float, op
             Column(modifier = GlanceModifier.defaultWeight().clickable(actionStartActivity(openHabits))) {
                 Text(
                     text = if (compact) "HÁBITOS  ${data.completedCount}/${data.dueCount}" else "HÁBITOS DE HOY",
-                    style = TextStyle(color = ColorProvider(HabitsPalette.Cyan), fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                    style = TextStyle(color = WidgetTheme.colors.accent, fontSize = 11.sp, fontWeight = FontWeight.Bold)
                 )
                 Text(
                     text = when {
@@ -211,20 +203,20 @@ private fun Header(data: HabitsWidgetData, compact: Boolean, progress: Float, op
                         data.lastUpdated == "--:--" -> "Sin datos"
                         else -> "Act. ${data.lastUpdated}"
                     },
-                    style = TextStyle(color = ColorProvider(HabitsPalette.Muted), fontSize = 9.sp)
+                    style = TextStyle(color = WidgetTheme.colors.textSecondary, fontSize = 9.sp)
                 )
             }
             Box(
                 modifier = GlanceModifier
                     .size(30.dp)
-                    .background(ColorProvider(HabitsPalette.Surface))
+                    .background(WidgetTheme.colors.surface)
                     .cornerRadius(15.dp)
                     .clickable(actionRunCallback<RefreshHabitsAction>()),
                 contentAlignment = Alignment.Center
             ) {
                 Text(
                     text = if (data.isRefreshing) "…" else "⟳",
-                    style = TextStyle(color = ColorProvider(HabitsPalette.Cyan), fontSize = 16.sp, fontWeight = FontWeight.Bold)
+                    style = TextStyle(color = WidgetTheme.colors.accent, fontSize = 16.sp, fontWeight = FontWeight.Bold)
                 )
             }
         }
@@ -233,8 +225,8 @@ private fun Header(data: HabitsWidgetData, compact: Boolean, progress: Float, op
             LinearProgressIndicator(
                 progress = progress,
                 modifier = GlanceModifier.fillMaxWidth().height(4.dp).cornerRadius(2.dp),
-                color = ColorProvider(HabitsPalette.Cyan),
-                backgroundColor = ColorProvider(HabitsPalette.Ice.copy(alpha = 0.12f))
+                color = WidgetTheme.colors.accent,
+                backgroundColor = WidgetTheme.colors.provider(0.12f) { it.text }
             )
         }
     }
@@ -244,15 +236,15 @@ private fun Header(data: HabitsWidgetData, compact: Boolean, progress: Float, op
 @Composable
 private fun MoodRow(mood: MoodWidgetState, compact: Boolean) {
     val (status, statusColor) = when {
-        mood.status == MoodSaveStatus.SAVING -> "Guardando…" to HabitsPalette.Muted
-        mood.status == MoodSaveStatus.ERROR -> "No se guardó, toca otra vez" to HabitsPalette.Error
-        mood.lastScore != null -> "${mood.lastTime} · ${mood.countToday} hoy" to HabitsPalette.Muted
-        else -> "¿Cómo estás?" to HabitsPalette.Muted
+        mood.status == MoodSaveStatus.SAVING -> "Guardando…" to WidgetTheme.colors.textSecondary
+        mood.status == MoodSaveStatus.ERROR -> "No se guardó, toca otra vez" to WidgetTheme.colors.negative
+        mood.lastScore != null -> "${mood.lastTime} · ${mood.countToday} hoy" to WidgetTheme.colors.textSecondary
+        else -> "¿Cómo estás?" to WidgetTheme.colors.textSecondary
     }
     Row(
         modifier = GlanceModifier
             .fillMaxWidth()
-            .background(ColorProvider(HabitsPalette.Surface))
+            .background(WidgetTheme.colors.surface)
             .cornerRadius(14.dp)
             .padding(horizontal = 8.dp, vertical = 4.dp),
         verticalAlignment = Alignment.CenterVertically
@@ -262,7 +254,7 @@ private fun MoodRow(mood: MoodWidgetState, compact: Boolean) {
                 text = status,
                 modifier = GlanceModifier.defaultWeight(),
                 maxLines = 1,
-                style = TextStyle(color = ColorProvider(statusColor), fontSize = 10.sp, fontWeight = FontWeight.Medium)
+                style = TextStyle(color = statusColor, fontSize = 10.sp, fontWeight = FontWeight.Medium)
             )
         }
         MoodScale.scores.forEach { score ->
@@ -270,7 +262,7 @@ private fun MoodRow(mood: MoodWidgetState, compact: Boolean) {
             Box(
                 modifier = GlanceModifier
                     .size(30.dp)
-                    .background(ColorProvider(if (selected) HabitsPalette.Cyan.copy(alpha = 0.22f) else Color.Transparent))
+                    .background(if (selected) WidgetTheme.colors.provider(0.22f) { it.accent } else ColorProvider(Color.Transparent))
                     .cornerRadius(15.dp)
                     .clickable(
                         actionRunCallback<LogMoodAction>(actionParametersOf(LogMoodAction.scoreKey to score))
@@ -289,7 +281,7 @@ private fun ErrorBanner(lastUpdated: String) {
     Row(
         modifier = GlanceModifier
             .fillMaxWidth()
-            .background(ColorProvider(HabitsPalette.Error.copy(alpha = 0.16f)))
+            .background(WidgetTheme.colors.provider(0.16f) { it.negative })
             .cornerRadius(10.dp)
             .padding(horizontal = 8.dp, vertical = 4.dp)
             .clickable(actionRunCallback<RefreshHabitsAction>()),
@@ -297,7 +289,7 @@ private fun ErrorBanner(lastUpdated: String) {
     ) {
         Text(
             text = if (lastUpdated == "--:--") "Sin conexión · toca para reintentar" else "Sin conexión · datos de las $lastUpdated",
-            style = TextStyle(color = ColorProvider(HabitsPalette.Error), fontSize = 10.sp, fontWeight = FontWeight.Medium)
+            style = TextStyle(color = WidgetTheme.colors.negative, fontSize = 10.sp, fontWeight = FontWeight.Medium)
         )
     }
 }
@@ -320,7 +312,7 @@ private fun HabitList(data: HabitsWidgetData) {
                         else -> "Sin hábitos pendientes hoy ✨"
                     },
                     modifier = GlanceModifier.padding(vertical = 16.dp),
-                    style = TextStyle(color = ColorProvider(HabitsPalette.Muted), fontSize = 12.sp)
+                    style = TextStyle(color = WidgetTheme.colors.textSecondary, fontSize = 12.sp)
                 )
             }
         }
@@ -329,12 +321,16 @@ private fun HabitList(data: HabitsWidgetData) {
 
 @Composable
 private fun HabitRow(item: HabitsWidgetItem) {
-    val accent = parseAccent(item.colorHex)
+    val userColor = parseAccent(item.colorHex)
+    val colors = WidgetTheme.colors
+    // Color del habito si lo tiene; si no, el acento del skin
+    fun tint(alpha: Float) = userColor?.let { ColorProvider(it.copy(alpha = alpha)) }
+        ?: colors.provider(alpha) { it.accent }
     Row(
         modifier = GlanceModifier
             .fillMaxWidth()
             .height(46.dp)
-            .background(ColorProvider(if (item.completed) HabitsPalette.Surface.copy(alpha = 0.6f) else accent.copy(alpha = 0.14f)))
+            .background(if (item.completed) WidgetTheme.colors.provider(0.6f) { it.surface } else tint(0.14f))
             .cornerRadius(14.dp)
             .padding(start = 6.dp, end = 6.dp)
             .clickable(
@@ -347,7 +343,7 @@ private fun HabitRow(item: HabitsWidgetItem) {
         Box(
             modifier = GlanceModifier
                 .size(34.dp)
-                .background(ColorProvider(accent.copy(alpha = if (item.completed) 0.10f else 0.24f)))
+                .background(tint(if (item.completed) 0.10f else 0.24f))
                 .cornerRadius(11.dp),
             contentAlignment = Alignment.Center
         ) {
@@ -359,7 +355,7 @@ private fun HabitRow(item: HabitsWidgetItem) {
             modifier = GlanceModifier.defaultWeight(),
             maxLines = 1,
             style = TextStyle(
-                color = ColorProvider(if (item.completed) HabitsPalette.Muted else HabitsPalette.Ice),
+                color = if (item.completed) WidgetTheme.colors.textSecondary else WidgetTheme.colors.text,
                 fontSize = 13.sp,
                 fontWeight = if (item.completed) FontWeight.Normal else FontWeight.Medium,
                 textDecoration = if (item.completed) TextDecoration.LineThrough else TextDecoration.None
@@ -369,14 +365,14 @@ private fun HabitRow(item: HabitsWidgetItem) {
         Box(
             modifier = GlanceModifier
                 .size(30.dp)
-                .background(ColorProvider(if (item.completed) HabitsPalette.Green else accent.copy(alpha = 0.18f)))
+                .background(if (item.completed) WidgetTheme.colors.positive else tint(0.18f))
                 .cornerRadius(15.dp),
             contentAlignment = Alignment.Center
         ) {
             Text(
                 text = if (item.completed) "✓" else "",
                 style = TextStyle(
-                    color = ColorProvider(HabitsPalette.Background),
+                    color = WidgetTheme.colors.bgSolid,
                     fontSize = 17.sp,
                     fontWeight = FontWeight.Bold
                 )
@@ -385,9 +381,8 @@ private fun HabitRow(item: HabitsWidgetItem) {
     }
 }
 
-private fun parseAccent(colorHex: String?): Color =
+private fun parseAccent(colorHex: String?): Color? =
     colorHex?.let { runCatching { Color(android.graphics.Color.parseColor(it)) }.getOrNull() }
-        ?: HabitsPalette.Cyan
 
 class LogMoodAction : ActionCallback {
     override suspend fun onAction(context: Context, glanceId: GlanceId, parameters: ActionParameters) {

@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.Logout
 import androidx.compose.material.icons.outlined.Palette
+import androidx.compose.material.icons.outlined.Widgets
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.DrawerState
 import androidx.compose.material3.HorizontalDivider
@@ -41,6 +42,7 @@ fun AppMenuDrawer(drawerState: DrawerState, isOwner: Boolean, content: @Composab
     val scope = rememberCoroutineScope()
     var confirmSignOut by remember { mutableStateOf(false) }
     var showAppearance by remember { mutableStateOf(false) }
+    var showWidgets by remember { mutableStateOf(false) }
     var signingOut by remember { mutableStateOf(false) }
     val email = remember { SupabaseConfig.client.auth.currentUserOrNull()?.email }
 
@@ -68,6 +70,18 @@ fun AppMenuDrawer(drawerState: DrawerState, isOwner: Boolean, content: @Composab
                     )
                 )
                 NavigationDrawerItem(
+                    label = { Text("Widgets") },
+                    icon = { Icon(Icons.Outlined.Widgets, null) },
+                    selected = false,
+                    onClick = { showWidgets = true },
+                    modifier = Modifier.padding(horizontal = 12.dp),
+                    colors = NavigationDrawerItemDefaults.colors(
+                        unselectedContainerColor = AppTheme.colors.surfaceLow,
+                        unselectedTextColor = AppTheme.colors.text,
+                        unselectedIconColor = AppTheme.colors.accent
+                    )
+                )
+                NavigationDrawerItem(
                     label = { Text("Cerrar sesión") },
                     icon = { Icon(Icons.AutoMirrored.Outlined.Logout, null) },
                     selected = false,
@@ -85,6 +99,17 @@ fun AppMenuDrawer(drawerState: DrawerState, isOwner: Boolean, content: @Composab
     )
 
     if (showAppearance) AppearanceDialog(onDismiss = { showAppearance = false })
+
+    if (showWidgets) {
+        WidgetAppearanceDialog(
+            isOwner = isOwner,
+            onDismiss = { showWidgets = false },
+            onSaved = {
+                showWidgets = false
+                Toast.makeText(context, "Apariencia de widgets actualizada", Toast.LENGTH_SHORT).show()
+            }
+        )
+    }
 
     if (confirmSignOut) {
         AlertDialog(
