@@ -233,7 +233,7 @@ export default function Transactions() {
       <div className="card" style={{ marginBottom: '1rem' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '0.75rem', flexWrap: 'wrap' }}>
           <div>
-            <h2 style={{ margin: 0, fontSize: '1.1rem' }}>Registrar ingreso manual</h2>
+            <h2 style={{ margin: 0, fontSize: '1.1rem', fontFamily: 'var(--f-heading)' }}>Registrar ingreso manual</h2>
             <div style={{ color: 'var(--c-text-2)', fontSize: '0.85rem', marginTop: '0.35rem' }}>
               Guarda el ingreso en la base de datos para el mes que selecciones.
             </div>
