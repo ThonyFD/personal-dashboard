@@ -337,7 +337,7 @@ export default function Exports() {
             <h1 style={{ margin: '0 0 0.5rem 0', color: 'var(--c-text)', fontSize: '2rem' }}>
               {REPORT_TEMPLATES[selectedTemplate].icon} {REPORT_TEMPLATES[selectedTemplate].name}
             </h1>
-            <h2 style={{ margin: '0', color: 'var(--c-text-2)', fontSize: '1.2rem', fontWeight: 'normal' }}>
+            <h2 style={{ margin: '0', color: 'var(--c-text-2)', fontSize: '1.2rem', fontWeight: 'normal', fontFamily: 'var(--f-heading)' }}>
               {reportData?.period}
             </h2>
             <p style={{ margin: '0.5rem 0 0 0', color: 'var(--c-text-3)', fontSize: '0.9rem' }}>

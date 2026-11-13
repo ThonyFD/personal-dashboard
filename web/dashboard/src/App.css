@@ -226,6 +226,7 @@
 
 .marketing-card h2 {
   margin: 0 0 0.75rem;
+  font-family: var(--f-heading);
   font-size: 1rem;
   color: var(--c-primary);
   letter-spacing: -0.02em;
@@ -489,6 +490,7 @@
 .menu-section-label {
   margin: 0 0 0.65rem;
   color: var(--c-text-3);
+  font-family: var(--f-label);
   font-size: 0.72rem;
   text-transform: uppercase;
   letter-spacing: 0.14em;
@@ -643,7 +645,7 @@
   margin: 0;
   font-size: 0.76rem;
   color: var(--c-muted);
-  font-family: var(--f-body);
+  font-family: var(--f-label);
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.1em;
@@ -652,7 +654,7 @@
 .stat-card .value {
   font-size: 1.5rem;
   font-weight: 700;
-  font-family: var(--f-heading);
+  font-family: var(--f-display);
   color: var(--c-text);
   margin-top: 0.5rem;
   letter-spacing: -0.03em;
@@ -749,6 +751,7 @@
 
   .nav h1 {
     font-size: 1.35rem;
+    font-family: var(--f-display);
   }
 
   .main {
@@ -763,6 +766,7 @@
 
   .card h2 {
     font-size: 1.35rem;
+    font-family: var(--f-display);
   }
 
   .stat-card {

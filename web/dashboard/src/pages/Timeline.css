@@ -97,7 +97,7 @@
 .timeline-progress-value {
   color: var(--c-green);
   font-size: 2.2rem;
-  font-family: var(--f-heading);
+  font-family: var(--f-display);
   font-weight: 700;
 }
 
