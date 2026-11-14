@@ -3,14 +3,14 @@ package com.thonyfd.financedashboard.ui.theme
 import androidx.compose.ui.graphics.Color
 import kotlin.math.pow
 
-/** Skins de la app. Solo BRAND es seleccionable en esta fase; los demas existen pero estan ocultos. */
+/** Skins de la app. BRAND y NOTHING son seleccionables; GLASS existe pero esta oculto. */
 enum class Skin(val key: String) {
     BRAND("brand"),
     NOTHING("nothing"),
     GLASS("glass");
 
     companion object {
-        val SELECTABLE = listOf(BRAND)
+        val SELECTABLE = listOf(BRAND, NOTHING)
 
         /** Clave desconocida o no seleccionable cae en BRAND. */
         fun fromKey(key: String?): Skin =
@@ -101,10 +101,55 @@ val BrandLight = SkinTokens(
     isDark = false
 )
 
-/** Paleta del skin; en esta fase solo BRAND tiene paletas. */
-// NOTHING y GLASS caen a Brand a proposito hasta su fase.
+val NothingDark = SkinTokens(
+    bg = Color(0xFF000000),
+    surfaceLow = Color(0xFF0A0A0A),
+    surface = Color(0xFF111111),
+    surfaceRaised = Color(0xFF1A1A1A),
+    hairline = Color(0xFF2A2A2A),
+    text = Color(0xFFFFFFFF),
+    textSecondary = Color(0xFFB3B3B3),
+    textPassive = Color(0xFF808080),
+    accent = Color(0xFFFFFFFF),
+    onAccent = Color(0xFF000000),
+    positive = Color(0xFFFFFFFF),
+    negative = Color(0xFFE61921),
+    warning = Color(0xFFE0B040),
+    depth = Color(0xFF808080),
+    chart = listOf(
+        Color(0xFFFFFFFF), Color(0xFFE61921), Color(0xFFA6A6A6), Color(0xFF6E6E6E),
+        Color(0xFFE0B040), Color(0xFFFF6A70), Color(0xFF4D4D4D), Color(0xFFCFCFCF)
+    ),
+    isDark = true
+)
+
+val NothingLight = SkinTokens(
+    bg = Color(0xFFF2F2F2),
+    surfaceLow = Color(0xFFEAEAEA),
+    surface = Color(0xFFFFFFFF),
+    surfaceRaised = Color(0xFFE0E0E0),
+    hairline = Color(0xFFCCCCCC),
+    text = Color(0xFF000000),
+    textSecondary = Color(0xFF4D4D4D),
+    textPassive = Color(0xFF6E6E6E),
+    accent = Color(0xFF000000),
+    onAccent = Color(0xFFFFFFFF),
+    positive = Color(0xFF000000),
+    negative = Color(0xFFC8102E),
+    warning = Color(0xFF8A6100),
+    depth = Color(0xFF6E6E6E),
+    chart = listOf(
+        Color(0xFF000000), Color(0xFFC8102E), Color(0xFF6E6E6E), Color(0xFFA6A6A6),
+        Color(0xFF8A6100), Color(0xFFE0404A), Color(0xFF333333), Color(0xFF8C8C8C)
+    ),
+    isDark = false
+)
+
+/** Paleta del skin. */
+// GLASS cae a Brand a proposito hasta su fase.
 fun tokensFor(skin: Skin, dark: Boolean): SkinTokens = when (skin) {
-    Skin.BRAND, Skin.NOTHING, Skin.GLASS -> if (dark) BrandDark else BrandLight
+    Skin.NOTHING -> if (dark) NothingDark else NothingLight
+    Skin.BRAND, Skin.GLASS -> if (dark) BrandDark else BrandLight
 }
 
 private fun channel(v: Float): Double {

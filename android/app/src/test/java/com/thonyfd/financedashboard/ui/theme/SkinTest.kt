@@ -12,6 +12,7 @@ class SkinTest {
         assertEquals(Skin.BRAND, Skin.fromKey(null))
         assertEquals(Skin.BRAND, Skin.fromKey("neon"))
         assertEquals(Skin.BRAND, Skin.fromKey("glass"))
+        assertEquals(Skin.NOTHING, Skin.fromKey("nothing"))
         assertEquals(Skin.BRAND, Skin.fromKey("brand"))
     }
 
@@ -54,6 +55,8 @@ class SkinTest {
         check("onAccent/negative", t.onAccent, t.negative, 4.5)
         check("positive/bg text", t.positive, t.bg, 4.5)
         check("positive/surface text", t.positive, t.surface, 4.5)
+        check("negative/bg text", t.negative, t.bg, 4.5)
+        check("textPassive/bg", t.textPassive, t.bg, 3.0)
         assertTrue("$name chart size", t.chart.size >= 8)
     }
 
@@ -62,4 +65,18 @@ class SkinTest {
 
     @Test
     fun brandLightContrast() = assertContrast("BrandLight", BrandLight)
+
+    @Test
+    fun tokensForNothingPicksVariant() {
+        assertEquals(NothingDark, tokensFor(Skin.NOTHING, true))
+        assertEquals(NothingLight, tokensFor(Skin.NOTHING, false))
+        assertEquals(listOf(Skin.BRAND, Skin.NOTHING), Skin.SELECTABLE)
+        assertEquals(BrandDark, tokensFor(Skin.GLASS, true))
+    }
+
+    @Test
+    fun nothingDarkContrast() = assertContrast("NothingDark", NothingDark)
+
+    @Test
+    fun nothingLightContrast() = assertContrast("NothingLight", NothingLight)
 }
