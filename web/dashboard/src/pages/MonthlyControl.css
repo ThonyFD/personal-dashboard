@@ -617,12 +617,3 @@
     padding: 0.5rem 0.25rem;
   }
 }
-
-/* Numeric role for sub-20px money cells. Scoped to Nothing: these cells
-   inherit the body family today, so Brand must not change. */
-:root[data-skin="nothing"] .income-amount,
-:root[data-skin="nothing"] .summary-row .amount,
-:root[data-skin="nothing"] .transactions-table td.amount {
-  font-family: var(--f-numeric);
-  font-variant-numeric: tabular-nums;
-}
