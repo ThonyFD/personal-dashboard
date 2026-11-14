@@ -81,8 +81,7 @@
   border-bottom-style: dotted;
 }
 
-:root[data-skin="nothing"] .menu-footer,
-:root[data-skin="nothing"] .marketing-footer {
+:root[data-skin="nothing"] .menu-footer {
   border-top-style: dotted;
 }
 
@@ -101,4 +100,16 @@
   border-radius: 50%;
   background: var(--c-negative);
   pointer-events: none;
+}
+
+:root[data-skin="nothing"] .timeline-progress-fill {
+  background-image: none;
+  background-color: var(--c-primary);
+  box-shadow: none;
+}
+
+:root[data-skin="nothing"] .summary-totals-group {
+  background-image: none;
+  background-color: var(--c-surface);
+  box-shadow: none;
 }
