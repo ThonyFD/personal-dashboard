@@ -230,7 +230,7 @@ export default function Budgets() {
   const CustomTooltip = ({ active, payload, label }: any) => {
     if (active && payload && payload.length) {
       return (
-        <div style={{
+        <div className="skin-flat-card" style={{
           backgroundColor: 'var(--c-surface)',
           padding: '10px',
           border: '1px solid var(--c-hairline)',
@@ -257,7 +257,7 @@ export default function Budgets() {
     <div>
       {/* Toast notification */}
       {toast && (
-        <div style={{
+        <div className="skin-flat-card" style={{
           position: 'fixed',
           bottom: '1.5rem',
           right: '1.5rem',

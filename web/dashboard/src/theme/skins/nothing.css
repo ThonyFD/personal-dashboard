@@ -34,6 +34,7 @@
   box-shadow: none;
 }
 
+:root[data-skin="nothing"] .menu-header,
 :root[data-skin="nothing"] .timeline-modal,
 :root[data-skin="nothing"] .timeline-block-card,
 :root[data-skin="nothing"] .mood-header,
@@ -45,13 +46,17 @@
   background-color: var(--c-surface);
 }
 
-/* Inline-styled surfaces (TransactionDetailModal, HabitHeatmap, Budgets,
-   Reports, Recurring): CSS cannot beat inline styles without !important. */
-:root[data-skin="nothing"] [style*="box-shadow"] {
+/* Inline-styled containers: CSS cannot beat inline styles without !important.
+   Only elements carrying an explicit hook class are targeted. The classes have
+   no rule outside this Nothing scope, so Brand is unchanged.
+   skin-flat-card: TransactionDetailModal panel, HabitHeatmap section and cells,
+   Budgets toast, and the chart tooltips in Budgets, Reports, Recurring.
+   skin-flat-gradient: HabitHeatmap section. */
+:root[data-skin="nothing"] .skin-flat-card {
   box-shadow: none !important;
 }
 
-:root[data-skin="nothing"] section[style*="linear-gradient"] {
+:root[data-skin="nothing"] .skin-flat-gradient {
   background-image: none !important;
   background-color: var(--c-surface) !important;
 }

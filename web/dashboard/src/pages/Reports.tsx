@@ -188,7 +188,7 @@ export default function Reports() {
   const CustomTooltip = ({ active, payload, label }: any) => {
     if (active && payload && payload.length) {
       return (
-        <div style={{
+        <div className="skin-flat-card" style={{
           backgroundColor: 'var(--c-surface)',
           padding: '10px',
           border: '1px solid var(--c-hairline)',

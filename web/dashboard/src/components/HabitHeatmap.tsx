@@ -16,6 +16,7 @@ export function HabitHeatmap({ month, data }: Readonly<HabitHeatmapProps>) {
 
   return (
     <section
+      className="skin-flat-card skin-flat-gradient"
       style={{
         background: 'linear-gradient(180deg, color-mix(in srgb, var(--c-surface) 96%, transparent), color-mix(in srgb, var(--c-bg) 96%, transparent))',
         border: '1px solid var(--c-border-violet)',
@@ -67,6 +68,7 @@ export function HabitHeatmap({ month, data }: Readonly<HabitHeatmapProps>) {
           return (
             <div
               key={dateKey}
+              className="skin-flat-card"
               title={`${dateKey} · ${completion?.completedCount ?? 0}/${completion?.loggedCount ?? 0}`}
               style={{
                 aspectRatio: '1',

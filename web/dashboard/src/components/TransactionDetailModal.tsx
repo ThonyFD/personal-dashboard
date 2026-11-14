@@ -64,6 +64,7 @@ export function TransactionDetailModal({ transactionId, onClose }: TransactionDe
       }}
     >
       <div
+        className="skin-flat-card"
         onClick={(e) => e.stopPropagation()}
         style={{
           backgroundColor: 'var(--c-surface)',
