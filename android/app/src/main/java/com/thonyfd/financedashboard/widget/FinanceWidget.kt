@@ -182,7 +182,7 @@ private fun WidgetHeader(lastUpdated: String) {
         modifier = GlanceModifier.fillMaxWidth(),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Text(
+        WidgetText(
             text = "💰 Finance",
             style = TextStyle(
                 color = WidgetTheme.colors.accent,
@@ -191,7 +191,7 @@ private fun WidgetHeader(lastUpdated: String) {
             )
         )
         Spacer(modifier = GlanceModifier.defaultWeight())
-        Text(
+        WidgetText(
             text = lastUpdated,
             style = TextStyle(
                 color = WidgetTheme.colors.textPassive,
@@ -207,7 +207,7 @@ private fun WidgetHeader(lastUpdated: String) {
                 .clickable(actionRunCallback<RefreshAction>()),
             contentAlignment = Alignment.Center
         ) {
-            Text(
+            WidgetText(
                 text = "↻",
                 style = TextStyle(
                     color = WidgetTheme.colors.accent,
@@ -264,11 +264,11 @@ private fun CompactMetric(label: String, amount: Double, color: ColorProvider, m
         modifier = modifier.padding(3.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Text(
+        WidgetText(
             text = label,
             style = TextStyle(color = WidgetTheme.colors.textSecondary, fontSize = 8.sp)
         )
-        Text(
+        WidgetText(
             text = "$${String.format("%.0f", amount)}",
             style = TextStyle(
                 color = color,
@@ -290,7 +290,7 @@ private fun SpendCard(spend: Double, modifier: GlanceModifier) {
             .cornerRadius(8.dp)
             .padding(horizontal = 10.dp, vertical = 8.dp)
     ) {
-        Text(
+        WidgetText(
             text = "Gasto del mes",
             style = TextStyle(
                 color = WidgetTheme.colors.textSecondary,
@@ -337,7 +337,7 @@ private fun MonthNavCard(
                     .clickable(actionRunCallback<PrevMonthAction>()),
                 contentAlignment = Alignment.Center
             ) {
-                Text(
+                WidgetText(
                     text = "◀",
                     style = TextStyle(
                         color = WidgetTheme.colors.accent,
@@ -347,7 +347,7 @@ private fun MonthNavCard(
                 )
             }
             Spacer(modifier = GlanceModifier.defaultWeight())
-            Text(
+            WidgetText(
                 text = monthLabel.split(" ").let { parts ->
                     if (parts.size >= 2) "${parts[0]} ${parts[1].takeLast(2)}" else monthLabel
                 },
@@ -369,7 +369,7 @@ private fun MonthNavCard(
                     GlanceModifier.padding(horizontal = 12.dp, vertical = 6.dp),
                 contentAlignment = Alignment.Center
             ) {
-                Text(
+                WidgetText(
                     text = if (isCurrentMonth) "" else "▶",
                     style = TextStyle(
                         color = WidgetTheme.colors.accent,
@@ -385,7 +385,7 @@ private fun MonthNavCard(
         // KPIs row
         Row(modifier = GlanceModifier.fillMaxWidth()) {
             Column(modifier = GlanceModifier.defaultWeight()) {
-                Text(
+                WidgetText(
                     text = "$txnCount",
                     style = TextStyle(
                         color = WidgetTheme.colors.accent,
@@ -393,7 +393,7 @@ private fun MonthNavCard(
                         fontWeight = FontWeight.Bold
                     )
                 )
-                Text(
+                WidgetText(
                     text = "txns",
                     style = TextStyle(
                         color = WidgetTheme.colors.textSecondary,
@@ -402,7 +402,7 @@ private fun MonthNavCard(
                 )
             }
             Column(modifier = GlanceModifier.defaultWeight()) {
-                Text(
+                WidgetText(
                     text = "$pendingCount",
                     style = TextStyle(
                         color = if (pendingCount > 0) WidgetTheme.colors.warning else WidgetTheme.colors.accent,
@@ -410,7 +410,7 @@ private fun MonthNavCard(
                         fontWeight = FontWeight.Bold
                     )
                 )
-                Text(
+                WidgetText(
                     text = "pendientes",
                     style = TextStyle(
                         color = WidgetTheme.colors.textSecondary,
@@ -452,7 +452,7 @@ private fun UpcomingPaymentRow(payment: UpcomingPayment) {
         verticalAlignment = Alignment.CenterVertically
     ) {
         Column(modifier = GlanceModifier.defaultWeight()) {
-            Text(
+            WidgetText(
                 text = "$typePrefix${payment.description}",
                 style = TextStyle(
                     color = WidgetTheme.colors.text,
@@ -461,7 +461,7 @@ private fun UpcomingPaymentRow(payment: UpcomingPayment) {
                 ),
                 maxLines = 1
             )
-            Text(
+            WidgetText(
                 text = "$${String.format("%.2f", payment.amount)}${if (payment.paymentMethod != null) " · ${payment.paymentMethod}" else ""}",
                 style = TextStyle(
                     color = WidgetTheme.colors.textSecondary,
@@ -469,7 +469,7 @@ private fun UpcomingPaymentRow(payment: UpcomingPayment) {
                 )
             )
         }
-        Text(
+        WidgetText(
             text = daysLabel,
             style = TextStyle(
                 color = urgencyColor,
@@ -489,7 +489,7 @@ private fun RecentTransactionRow(txn: Transaction) {
         modifier = GlanceModifier.fillMaxWidth().padding(vertical = 2.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Text(
+        WidgetText(
             text = txn.merchantName?.split(" ")?.take(2)?.joinToString(" ") ?: txn.provider,
             style = TextStyle(
                 color = WidgetTheme.colors.text,
@@ -498,7 +498,7 @@ private fun RecentTransactionRow(txn: Transaction) {
             maxLines = 1,
             modifier = GlanceModifier.defaultWeight()
         )
-        Text(
+        WidgetText(
             text = "-$${String.format("%.0f", txn.amount)}",
             style = TextStyle(
                 color = WidgetTheme.colors.negative,
@@ -529,8 +529,8 @@ private fun CategoryChip(category: CategorySpend, modifier: GlanceModifier) {
             ),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Text(text = category.emoji, style = TextStyle(fontSize = 13.sp))
-        Text(
+        WidgetText(text = category.emoji, style = TextStyle(fontSize = 13.sp))
+        WidgetText(
             text = "${category.percentage}%",
             style = TextStyle(
                 color = WidgetTheme.colors.accent,
@@ -538,7 +538,7 @@ private fun CategoryChip(category: CategorySpend, modifier: GlanceModifier) {
                 fontWeight = FontWeight.Bold
             )
         )
-        Text(
+        WidgetText(
             text = category.name,
             style = TextStyle(
                 color = WidgetTheme.colors.textSecondary,
@@ -554,7 +554,7 @@ private fun CategoryChip(category: CategorySpend, modifier: GlanceModifier) {
 // ---------------------------------------------------------------------------
 @Composable
 private fun SectionTitle(text: String) {
-    Text(
+    WidgetText(
         text = text.uppercase(),
         style = TextStyle(
             color = WidgetTheme.colors.accent,
@@ -567,7 +567,7 @@ private fun SectionTitle(text: String) {
 
 @Composable
 private fun SmallText(text: String) {
-    Text(
+    WidgetText(
         text = text,
         style = TextStyle(
             color = WidgetTheme.colors.textPassive,
@@ -579,7 +579,7 @@ private fun SmallText(text: String) {
 @Composable
 private fun ErrorState() {
     Box(modifier = GlanceModifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-        Text(
+        WidgetText(
             text = "⚠️ Error al cargar\nToca ↻ para reintentar",
             style = TextStyle(
                 color = WidgetTheme.colors.negative,

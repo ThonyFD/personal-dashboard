@@ -26,7 +26,7 @@ internal fun WidgetNotAvailable() {
             .clickable(actionStartActivity<MainActivity>()),
         contentAlignment = Alignment.Center
     ) {
-        Text(
+        WidgetText(
             text = "No disponible para esta cuenta",
             style = TextStyle(
                 color = WidgetTheme.colors.textSecondary,

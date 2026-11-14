@@ -5,9 +5,7 @@ import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Paint
-import android.graphics.Rect
 import android.graphics.Typeface
-import android.os.Build
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.unit.sp
 import androidx.core.content.res.ResourcesCompat
@@ -21,6 +19,7 @@ import androidx.glance.text.TextStyle
 import androidx.glance.unit.ColorProvider
 import com.thonyfd.financedashboard.R
 import com.thonyfd.financedashboard.ui.theme.Skin
+import kotlin.math.ceil
 
 private const val BITMAP_PADDING_PX = 2
 
@@ -35,22 +34,21 @@ fun dotTextSizePx(textSizeSp: Float, density: Float, fontScale: Float): Float =
 fun renderDotText(context: Context, text: String, textSizeSp: Float): Bitmap {
     val metrics = context.resources.displayMetrics
     val base = ResourcesCompat.getFont(context, R.font.doto) ?: Typeface.MONOSPACE
-    val face = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) Typeface.create(base, 700, false) else base
     val paint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         color = Color.WHITE
-        typeface = face
+        typeface = base
+        fontVariationSettings = "'wght' 700"
         textSize = dotTextSizePx(textSizeSp, metrics.density, context.resources.configuration.fontScale)
     }
-    val bounds = Rect()
-    paint.getTextBounds(text, 0, text.length, bounds)
-    val width = (bounds.width() + 2 * BITMAP_PADDING_PX).coerceAtLeast(1)
-    val height = (bounds.height() + 2 * BITMAP_PADDING_PX).coerceAtLeast(1)
+    val fm = paint.fontMetricsInt
+    val width = (ceil(paint.measureText(text)).toInt() + 2 * BITMAP_PADDING_PX).coerceAtLeast(1)
+    val height = (fm.descent - fm.ascent + 2 * BITMAP_PADDING_PX).coerceAtLeast(1)
     return Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888).also { bitmap ->
         bitmap.density = metrics.densityDpi
         Canvas(bitmap).drawText(
             text,
-            (BITMAP_PADDING_PX - bounds.left).toFloat(),
-            (BITMAP_PADDING_PX - bounds.top).toFloat(),
+            BITMAP_PADDING_PX.toFloat(),
+            (BITMAP_PADDING_PX - fm.ascent).toFloat(),
             paint
         )
     }
@@ -68,6 +66,6 @@ internal fun WidgetKpiText(text: String, sizeSp: Float, color: ColorProvider, co
             colorFilter = ColorFilter.tint(color)
         )
     } else {
-        Text(text = text, style = TextStyle(color = color, fontSize = sizeSp.sp, fontWeight = FontWeight.Bold))
+        WidgetText(text = text, style = TextStyle(color = color, fontSize = sizeSp.sp, fontWeight = FontWeight.Bold))
     }
 }

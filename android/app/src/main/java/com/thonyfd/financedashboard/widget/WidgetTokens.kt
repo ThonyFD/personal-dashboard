@@ -73,12 +73,13 @@ internal object WidgetTheme {
         @Composable @ReadOnlyComposable get() = LocalWidgetColors.current
 }
 
+/** Widgets must use WidgetText (not Glance Text) so Nothing gets Monospace. */
 /**
  * Text de los widgets: igual que el de Glance, pero en Nothing usa familia monoespaciada.
  * Brand conserva la familia actual (null).
  */
 @Composable
-internal fun Text(
+internal fun WidgetText(
     text: String,
     modifier: GlanceModifier = GlanceModifier,
     style: TextStyle? = null,

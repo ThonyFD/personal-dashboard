@@ -93,7 +93,7 @@ private fun PaymentsWidgetContent(data: PaymentsWidgetData) {
 
         if (data.isError) {
             Box(modifier = GlanceModifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                Text(
+                WidgetText(
                     text = "⚠️ Error al cargar\nToca ↻ para reintentar",
                     style = TextStyle(
                         color = WidgetTheme.colors.negative,
@@ -112,7 +112,7 @@ private fun PaymentsWidgetContent(data: PaymentsWidgetData) {
         // Sección pagos: vencidos primero, luego por daysUntil asc
         val sorted = data.upcomingPayments.sortedWith(compareBy { it.daysUntil })
 
-        Text(
+        WidgetText(
             text = "PAGOS PENDIENTES",
             style = TextStyle(
                 color = WidgetTheme.colors.accent,
@@ -127,7 +127,7 @@ private fun PaymentsWidgetContent(data: PaymentsWidgetData) {
                 modifier = GlanceModifier.fillMaxWidth().padding(vertical = 8.dp),
                 contentAlignment = Alignment.Center
             ) {
-                Text(
+                WidgetText(
                     text = "✅ Todo al día",
                     style = TextStyle(
                         color = WidgetTheme.colors.accent,
@@ -153,7 +153,7 @@ private fun PaymentsHeader(lastUpdated: String) {
         modifier = GlanceModifier.fillMaxWidth(),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Text(
+        WidgetText(
             text = "💳 Pagos",
             style = TextStyle(
                 color = WidgetTheme.colors.accent,
@@ -162,7 +162,7 @@ private fun PaymentsHeader(lastUpdated: String) {
             )
         )
         Spacer(modifier = GlanceModifier.defaultWeight())
-        Text(
+        WidgetText(
             text = lastUpdated,
             style = TextStyle(
                 color = WidgetTheme.colors.textPassive,
@@ -178,7 +178,7 @@ private fun PaymentsHeader(lastUpdated: String) {
                 .clickable(actionRunCallback<PaymentsRefreshAction>()),
             contentAlignment = Alignment.Center
         ) {
-            Text(
+            WidgetText(
                 text = "↻",
                 style = TextStyle(
                     color = WidgetTheme.colors.accent,
@@ -221,14 +221,14 @@ private fun AccumulatedChip(label: String, amount: Double, color: ColorProvider,
         modifier = modifier.padding(3.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Text(
+        WidgetText(
             text = label,
             style = TextStyle(
                 color = WidgetTheme.colors.textSecondary,
                 fontSize = 8.sp
             )
         )
-        Text(
+        WidgetText(
             text = "$${String.format("%.0f", amount)}",
             style = TextStyle(
                 color = color,
@@ -270,13 +270,13 @@ private fun PaymentRow(payment: UpcomingPayment) {
             .padding(vertical = 2.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Text(
+        WidgetText(
             text = typeIcon,
             style = TextStyle(fontSize = 10.sp),
             modifier = GlanceModifier.padding(end = 4.dp)
         )
         Column(modifier = GlanceModifier.defaultWeight()) {
-            Text(
+            WidgetText(
                 text = payment.description,
                 style = TextStyle(
                     color = WidgetTheme.colors.text,
@@ -285,7 +285,7 @@ private fun PaymentRow(payment: UpcomingPayment) {
                 ),
                 maxLines = 1
             )
-            Text(
+            WidgetText(
                 text = "$${String.format("%.2f", payment.amount)}${
                     if (!payment.paymentMethod.isNullOrBlank()) " · ${payment.paymentMethod}" else ""
                 }",
@@ -296,7 +296,7 @@ private fun PaymentRow(payment: UpcomingPayment) {
             )
         }
         Spacer(modifier = GlanceModifier.width(4.dp))
-        Text(
+        WidgetText(
             text = daysLabel,
             style = TextStyle(
                 color = urgencyColor,

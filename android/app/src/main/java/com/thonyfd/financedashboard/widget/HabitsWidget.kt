@@ -170,12 +170,12 @@ private fun ProgressPanel(data: HabitsWidgetData, progress: Float, openHabits: I
             backgroundColor = WidgetTheme.colors.provider(0.12f) { it.text }
         )
         Spacer(GlanceModifier.height(6.dp))
-        Text(
+        WidgetText(
             text = "${data.completedCount} de ${data.dueCount}",
             style = TextStyle(color = WidgetTheme.colors.textSecondary, fontSize = 10.sp, fontWeight = FontWeight.Medium)
         )
         Spacer(GlanceModifier.height(10.dp))
-        Text(
+        WidgetText(
             text = "🔥 ${data.streak}d" + (StreakLevel.of(data.completedCount, data.dueCount)?.let { " ${it.emoji}" } ?: ""),
             modifier = GlanceModifier
                 .background(WidgetTheme.colors.provider(0.22f) { it.depth })
@@ -191,11 +191,11 @@ private fun Header(data: HabitsWidgetData, compact: Boolean, progress: Float, op
     Column(modifier = GlanceModifier.fillMaxWidth()) {
         Row(modifier = GlanceModifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
             Column(modifier = GlanceModifier.defaultWeight().clickable(actionStartActivity(openHabits))) {
-                Text(
+                WidgetText(
                     text = if (compact) "HÁBITOS  ${data.completedCount}/${data.dueCount}" else "HÁBITOS DE HOY",
                     style = TextStyle(color = WidgetTheme.colors.accent, fontSize = 11.sp, fontWeight = FontWeight.Bold)
                 )
-                Text(
+                WidgetText(
                     text = when {
                         data.isRefreshing -> "Actualizando…"
                         data.lastUpdated == "--:--" -> "Sin datos"
@@ -212,7 +212,7 @@ private fun Header(data: HabitsWidgetData, compact: Boolean, progress: Float, op
                     .clickable(actionRunCallback<RefreshHabitsAction>()),
                 contentAlignment = Alignment.Center
             ) {
-                Text(
+                WidgetText(
                     text = if (data.isRefreshing) "…" else "⟳",
                     style = TextStyle(color = WidgetTheme.colors.accent, fontSize = 16.sp, fontWeight = FontWeight.Bold)
                 )
@@ -248,7 +248,7 @@ private fun MoodRow(mood: MoodWidgetState, compact: Boolean) {
         verticalAlignment = Alignment.CenterVertically
     ) {
         if (!compact) {
-            Text(
+            WidgetText(
                 text = status,
                 modifier = GlanceModifier.defaultWeight(),
                 maxLines = 1,
@@ -267,7 +267,7 @@ private fun MoodRow(mood: MoodWidgetState, compact: Boolean) {
                     ),
                 contentAlignment = Alignment.Center
             ) {
-                Text(text = MoodScale.emoji(score), style = TextStyle(fontSize = 16.sp))
+                WidgetText(text = MoodScale.emoji(score), style = TextStyle(fontSize = 16.sp))
             }
             if (compact && score < 5) Spacer(GlanceModifier.defaultWeight())
         }
@@ -285,7 +285,7 @@ private fun ErrorBanner(lastUpdated: String) {
             .clickable(actionRunCallback<RefreshHabitsAction>()),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Text(
+        WidgetText(
             text = if (lastUpdated == "--:--") "Sin conexión · toca para reintentar" else "Sin conexión · datos de las $lastUpdated",
             style = TextStyle(color = WidgetTheme.colors.negative, fontSize = 10.sp, fontWeight = FontWeight.Medium)
         )
@@ -303,7 +303,7 @@ private fun HabitList(data: HabitsWidgetData) {
         }
         if (data.items.isEmpty()) {
             item {
-                Text(
+                WidgetText(
                     text = when {
                         data.lastUpdated == "--:--" && data.isRefreshing -> "Cargando hábitos…"
                         data.lastUpdated == "--:--" -> "Toca ⟳ para cargar"
@@ -345,10 +345,10 @@ private fun HabitRow(item: HabitsWidgetItem) {
                 .cornerRadius(11.dp),
             contentAlignment = Alignment.Center
         ) {
-            Text(text = item.icon, style = TextStyle(fontSize = 17.sp))
+            WidgetText(text = item.icon, style = TextStyle(fontSize = 17.sp))
         }
         Spacer(GlanceModifier.width(9.dp))
-        Text(
+        WidgetText(
             text = item.name,
             modifier = GlanceModifier.defaultWeight(),
             maxLines = 1,
@@ -367,7 +367,7 @@ private fun HabitRow(item: HabitsWidgetItem) {
                 .cornerRadius(15.dp),
             contentAlignment = Alignment.Center
         ) {
-            Text(
+            WidgetText(
                 text = if (item.completed) "✓" else "",
                 style = TextStyle(
                     color = WidgetTheme.colors.bgSolid,
