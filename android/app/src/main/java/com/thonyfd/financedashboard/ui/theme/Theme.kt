@@ -36,59 +36,69 @@ private fun variable(res: Int, weight: FontWeight) = Font(
     variationSettings = FontVariation.Settings(FontVariation.weight(weight.weight))
 )
 
-val DisplayFamily = FontFamily(
+internal val DisplayFamily = FontFamily(
     variable(R.font.space_grotesk, FontWeight.Normal),
     variable(R.font.space_grotesk, FontWeight.Medium),
     variable(R.font.space_grotesk, FontWeight.SemiBold),
     variable(R.font.space_grotesk, FontWeight.Bold)
 )
 
-val BodyFamily = FontFamily(
+internal val BodyFamily = FontFamily(
     variable(R.font.manrope, FontWeight.Normal),
     variable(R.font.manrope, FontWeight.Medium),
     variable(R.font.manrope, FontWeight.SemiBold),
     variable(R.font.manrope, FontWeight.Bold)
 )
 
-/** Cifras de dinero: Space Grotesk con números tabulares para que alineen en columnas. */
-val MoneyStyle = TextStyle(fontFamily = DisplayFamily, fontFeatureSettings = "tnum", letterSpacing = (-0.2).sp)
+private fun static(res: Int, weight: FontWeight) = Font(res, weight)
 
-private val base = Typography()
-
-private val AppTypography = Typography(
-    displayLarge = base.displayLarge.copy(fontFamily = DisplayFamily, fontWeight = FontWeight.SemiBold, letterSpacing = (-1).sp),
-    displayMedium = base.displayMedium.copy(fontFamily = DisplayFamily, fontWeight = FontWeight.SemiBold, letterSpacing = (-0.8).sp),
-    displaySmall = base.displaySmall.copy(fontFamily = DisplayFamily, fontWeight = FontWeight.SemiBold, letterSpacing = (-0.5).sp),
-    headlineLarge = base.headlineLarge.copy(fontFamily = DisplayFamily, fontWeight = FontWeight.SemiBold),
-    headlineMedium = base.headlineMedium.copy(fontFamily = DisplayFamily, fontWeight = FontWeight.SemiBold),
-    headlineSmall = base.headlineSmall.copy(fontFamily = DisplayFamily, fontWeight = FontWeight.SemiBold),
-    titleLarge = base.titleLarge.copy(fontFamily = DisplayFamily, fontWeight = FontWeight.SemiBold, letterSpacing = (-0.2).sp),
-    titleMedium = base.titleMedium.copy(fontFamily = BodyFamily, fontWeight = FontWeight.SemiBold),
-    titleSmall = base.titleSmall.copy(fontFamily = BodyFamily, fontWeight = FontWeight.SemiBold),
-    bodyLarge = base.bodyLarge.copy(fontFamily = BodyFamily),
-    bodyMedium = base.bodyMedium.copy(fontFamily = BodyFamily),
-    bodySmall = base.bodySmall.copy(fontFamily = BodyFamily),
-    labelLarge = base.labelLarge.copy(fontFamily = BodyFamily, fontWeight = FontWeight.SemiBold),
-    labelMedium = base.labelMedium.copy(fontFamily = BodyFamily, fontWeight = FontWeight.SemiBold),
-    labelSmall = base.labelSmall.copy(fontFamily = BodyFamily, fontWeight = FontWeight.Medium)
+internal val DotFamily = FontFamily(
+    variable(R.font.doto, FontWeight.Normal),
+    variable(R.font.doto, FontWeight.Medium),
+    variable(R.font.doto, FontWeight.SemiBold),
+    variable(R.font.doto, FontWeight.Bold)
 )
 
-private val AppShapes = Shapes(
-    extraSmall = RoundedCornerShape(6.dp),
-    small = RoundedCornerShape(10.dp),
-    medium = RoundedCornerShape(16.dp),
-    large = RoundedCornerShape(22.dp),
-    extraLarge = RoundedCornerShape(28.dp)
+internal val MonoFamily = FontFamily(
+    static(R.font.space_mono_regular, FontWeight.Normal),
+    static(R.font.space_mono_regular, FontWeight.Medium),
+    static(R.font.space_mono_bold, FontWeight.SemiBold),
+    static(R.font.space_mono_bold, FontWeight.Bold)
+)
+
+internal val InterFamily = FontFamily(
+    variable(R.font.inter, FontWeight.Normal),
+    variable(R.font.inter, FontWeight.Medium),
+    variable(R.font.inter, FontWeight.SemiBold),
+    variable(R.font.inter, FontWeight.Bold)
 )
 
 /** Tokens del skin activo. Brand oscuro por defecto (pantallas publicas como LoginScreen). */
 val LocalSkinTokens = staticCompositionLocalOf { BrandDark }
+
+val LocalSkin = staticCompositionLocalOf { Skin.BRAND }
 
 object AppTheme {
     val colors: SkinTokens
         @Composable
         @ReadOnlyComposable
         get() = LocalSkinTokens.current
+
+    val fonts: SkinFonts
+        @Composable
+        @ReadOnlyComposable
+        get() = fontsFor(LocalSkin.current)
+
+    val effects: SkinEffects
+        @Composable
+        @ReadOnlyComposable
+        get() = effectsFor(LocalSkin.current)
+
+    /** Cifras de dinero: familia numerica del skin con numeros tabulares para que alineen en columnas. */
+    val moneyStyle: TextStyle
+        @Composable
+        @ReadOnlyComposable
+        get() = TextStyle(fontFamily = fonts.numeric, fontFeatureSettings = "tnum", letterSpacing = (-0.2).sp)
 }
 
 private fun colorSchemeFor(t: SkinTokens): ColorScheme {
@@ -146,12 +156,12 @@ private fun colorSchemeFor(t: SkinTokens): ColorScheme {
 }
 
 @Composable
-fun FinanceDashboardTheme(tokens: SkinTokens = BrandDark, content: @Composable () -> Unit) {
-    CompositionLocalProvider(LocalSkinTokens provides tokens) {
+fun FinanceDashboardTheme(tokens: SkinTokens = BrandDark, skin: Skin = Skin.BRAND, content: @Composable () -> Unit) {
+    CompositionLocalProvider(LocalSkinTokens provides tokens, LocalSkin provides skin) {
         MaterialTheme(
             colorScheme = colorSchemeFor(tokens),
-            typography = AppTypography,
-            shapes = AppShapes,
+            typography = typographyFor(fontsFor(skin)),
+            shapes = shapesFor(skin),
             content = content
         )
     }
@@ -177,5 +187,5 @@ fun AppearanceTheme(content: @Composable () -> Unit) {
             }
         }
     }
-    FinanceDashboardTheme(tokens = tokens, content = content)
+    FinanceDashboardTheme(tokens = tokens, skin = skin, content = content)
 }

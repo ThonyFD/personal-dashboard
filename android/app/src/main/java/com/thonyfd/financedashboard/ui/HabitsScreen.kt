@@ -1,7 +1,6 @@
 package com.thonyfd.financedashboard.ui
 
 import com.thonyfd.financedashboard.ui.theme.AppTheme
-import com.thonyfd.financedashboard.ui.theme.MoneyStyle
 import androidx.compose.material.icons.outlined.Refresh
 import androidx.compose.material.icons.outlined.Menu
 import androidx.compose.ui.text.style.TextDecoration
@@ -228,7 +227,7 @@ fun HabitsScreen(padding: PaddingValues = PaddingValues(), onOpenMenu: (() -> Un
                                         date > today -> AppTheme.colors.textPassive
                                         else -> AppTheme.colors.text
                                     },
-                                    style = MoneyStyle,
+                                    style = AppTheme.moneyStyle,
                                     fontSize = 17.sp,
                                     fontWeight = FontWeight.SemiBold
                                 )
@@ -264,7 +263,7 @@ fun HabitsScreen(padding: PaddingValues = PaddingValues(), onOpenMenu: (() -> Un
                                     trackColor = Color.Transparent,
                                     strokeCap = StrokeCap.Round
                                 )
-                                Text("${(progress * 100).toInt()}%", color = AppTheme.colors.text, style = MoneyStyle, fontSize = 18.sp, fontWeight = FontWeight.SemiBold)
+                                Text("${(progress * 100).toInt()}%", color = AppTheme.colors.text, style = AppTheme.moneyStyle, fontSize = 18.sp, fontWeight = FontWeight.SemiBold)
                             }
                             Column(Modifier.padding(start = 18.dp).weight(1f)) {
                                 Text(
@@ -466,7 +465,7 @@ private fun PeriodCounter(done: Int, target: Int, accent: Color) {
             .background((if (reached) AppTheme.colors.positive else accent).copy(alpha = 0.16f), RoundedCornerShape(50))
             .padding(horizontal = 9.dp, vertical = 4.dp),
         color = if (reached) AppTheme.colors.positive else AppTheme.colors.text,
-        style = MoneyStyle,
+        style = AppTheme.moneyStyle,
         fontSize = 12.sp,
         fontWeight = FontWeight.SemiBold
     )

@@ -1,7 +1,6 @@
 package com.thonyfd.financedashboard.ui
 
 import com.thonyfd.financedashboard.ui.theme.AppTheme
-import com.thonyfd.financedashboard.ui.theme.MoneyStyle
 import androidx.compose.foundation.lazy.itemsIndexed
 import kotlinx.coroutines.CancellationException
 import androidx.activity.compose.BackHandler
@@ -126,7 +125,7 @@ fun CategoryDetailScreen(
                 Text(
                     if (isLoading) "—" else money(total),
                     color = AppTheme.colors.text,
-                    style = MoneyStyle,
+                    style = AppTheme.moneyStyle.copy(fontFamily = AppTheme.fonts.display),
                     fontSize = 40.sp,
                     fontWeight = FontWeight.SemiBold,
                     letterSpacing = (-1).sp

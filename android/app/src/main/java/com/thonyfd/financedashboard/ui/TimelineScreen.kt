@@ -2,7 +2,6 @@ package com.thonyfd.financedashboard.ui
 
 import com.thonyfd.financedashboard.ui.theme.AppTheme
 import com.thonyfd.financedashboard.data.models.HabitIcons
-import com.thonyfd.financedashboard.ui.theme.MoneyStyle
 import androidx.compose.material3.TextButton
 import androidx.compose.material.icons.outlined.Refresh
 import androidx.compose.material.icons.outlined.Menu
@@ -156,7 +155,7 @@ fun TimelineScreen(padding: PaddingValues = PaddingValues(), onOpenMenu: (() -> 
                     Column(Modifier.padding(top = 8.dp, start = 2.dp, bottom = 4.dp)) {
                         Text("Racha", color = AppTheme.colors.textSecondary, style = MaterialTheme.typography.bodyMedium)
                         Row(verticalAlignment = Alignment.Bottom) {
-                            Text("$streak", color = AppTheme.colors.text, style = MoneyStyle, fontSize = 52.sp, fontWeight = FontWeight.SemiBold, letterSpacing = (-1.5).sp)
+                            Text("$streak", color = AppTheme.colors.text, style = AppTheme.moneyStyle.copy(fontFamily = AppTheme.fonts.display), fontSize = 52.sp, fontWeight = FontWeight.SemiBold, letterSpacing = (-1.5).sp)
                             Spacer(Modifier.width(8.dp))
                             Text(if (streak == 1) "día" else "días", color = AppTheme.colors.textSecondary, style = MaterialTheme.typography.titleMedium, modifier = Modifier.padding(bottom = 10.dp))
                         }
@@ -286,7 +285,7 @@ private fun FocusTimerDialog(
                 Text(
                     text = "%02d:%02d".format(remaining / 60, remaining % 60),
                     color = AppTheme.colors.text,
-                    style = MoneyStyle,
+                    style = AppTheme.moneyStyle.copy(fontFamily = AppTheme.fonts.display),
                     fontSize = 56.sp,
                     fontWeight = FontWeight.Medium
                 )

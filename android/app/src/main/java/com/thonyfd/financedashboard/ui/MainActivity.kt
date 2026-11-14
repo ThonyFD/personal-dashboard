@@ -21,7 +21,6 @@ import androidx.compose.foundation.border
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.graphics.vector.ImageVector
-import com.thonyfd.financedashboard.ui.theme.MoneyStyle
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -325,9 +324,9 @@ private fun SpendHero(data: WidgetData) {
         Text("Gastado en ${data.monthLabel.lowercase()}", color = AppTheme.colors.textSecondary, style = MaterialTheme.typography.bodyMedium)
         Spacer(Modifier.height(4.dp))
         Row(verticalAlignment = Alignment.Bottom) {
-            Text("$", color = AppTheme.colors.textSecondary, style = MoneyStyle, fontSize = 28.sp, modifier = Modifier.padding(bottom = 8.dp, end = 2.dp))
-            Text(whole, color = AppTheme.colors.text, style = MoneyStyle, fontSize = 52.sp, fontWeight = FontWeight.SemiBold, letterSpacing = (-1.5).sp)
-            Text(".$cents", color = AppTheme.colors.textSecondary, style = MoneyStyle, fontSize = 24.sp, modifier = Modifier.padding(bottom = 9.dp))
+            Text("$", color = AppTheme.colors.textSecondary, style = AppTheme.moneyStyle.copy(fontFamily = AppTheme.fonts.display), fontSize = 28.sp, modifier = Modifier.padding(bottom = 8.dp, end = 2.dp))
+            Text(whole, color = AppTheme.colors.text, style = AppTheme.moneyStyle.copy(fontFamily = AppTheme.fonts.display), fontSize = 52.sp, fontWeight = FontWeight.SemiBold, letterSpacing = (-1.5).sp)
+            Text(".$cents", color = AppTheme.colors.textSecondary, style = AppTheme.moneyStyle.copy(fontFamily = AppTheme.fonts.display), fontSize = 24.sp, modifier = Modifier.padding(bottom = 9.dp))
         }
 
         if (data.topCategories.isNotEmpty()) {
@@ -350,7 +349,7 @@ private fun SpendHero(data: WidgetData) {
 @Composable
 private fun HeroStat(value: String, label: String, valueColor: Color) {
     Row(verticalAlignment = Alignment.Bottom) {
-        Text(value, color = valueColor, style = MoneyStyle, fontSize = 17.sp, fontWeight = FontWeight.SemiBold)
+        Text(value, color = valueColor, style = AppTheme.moneyStyle, fontSize = 17.sp, fontWeight = FontWeight.SemiBold)
         Spacer(Modifier.width(5.dp))
         Text(label, color = AppTheme.colors.textSecondary, style = MaterialTheme.typography.bodySmall, modifier = Modifier.padding(bottom = 2.dp))
     }
@@ -450,7 +449,7 @@ private fun CategoryRow(cat: CategorySpend, color: Color, onClick: () -> Unit) {
             }
         }
         Spacer(Modifier.width(16.dp))
-        Text("${cat.percentage}%", color = AppTheme.colors.text, style = MoneyStyle, fontSize = 15.sp, fontWeight = FontWeight.Medium)
+        Text("${cat.percentage}%", color = AppTheme.colors.text, style = AppTheme.moneyStyle, fontSize = 15.sp, fontWeight = FontWeight.Medium)
     }
 }
 
@@ -476,7 +475,7 @@ private fun PanelRow(
         }
         Spacer(Modifier.width(12.dp))
         Column(horizontalAlignment = Alignment.End) {
-            Text(amount, color = AppTheme.colors.text, style = MoneyStyle, fontSize = 15.sp, fontWeight = FontWeight.Medium)
+            Text(amount, color = AppTheme.colors.text, style = AppTheme.moneyStyle, fontSize = 15.sp, fontWeight = FontWeight.Medium)
             if (detail != null) {
                 Spacer(Modifier.height(2.dp))
                 Text(detail, color = detailColor, style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.Medium)

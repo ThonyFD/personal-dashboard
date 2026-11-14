@@ -58,7 +58,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.thonyfd.financedashboard.ui.theme.AppTheme
-import com.thonyfd.financedashboard.ui.theme.MoneyStyle
+import com.thonyfd.financedashboard.ui.theme.dotGrid
 
 // Lenguaje visual compartido: paneles agrupados sobre fondo Night, divisores finos,
 // encabezados en sentence case y cifras en Space Grotesk tabular.
@@ -75,6 +75,7 @@ fun GroupedPanel(modifier: Modifier = Modifier, content: @Composable ColumnScope
             .fillMaxWidth()
             .clip(PanelShape)
             .background(AppTheme.colors.surface)
+            .then(if (AppTheme.effects.dotPattern) Modifier.dotGrid(AppTheme.colors.text.copy(alpha = 0.12f)) else Modifier)
             .border(1.dp, AppTheme.colors.hairline, PanelShape),
         content = content
     )
@@ -302,7 +303,7 @@ fun AppIconButton(
 
 @Composable
 fun MoneyText(amount: Double, color: Color = AppTheme.colors.text, fontSize: Int = 15, prefix: String = "") {
-    Text(prefix + money(amount), color = color, style = MoneyStyle, fontSize = fontSize.sp)
+    Text(prefix + money(amount), color = color, style = if (fontSize >= 20) AppTheme.moneyStyle.copy(fontFamily = AppTheme.fonts.display) else AppTheme.moneyStyle, fontSize = fontSize.sp)
 }
 
 @OptIn(ExperimentalMaterial3Api::class)

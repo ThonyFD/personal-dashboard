@@ -2,7 +2,6 @@ package com.thonyfd.financedashboard.ui
 
 import com.thonyfd.financedashboard.ui.theme.AppTheme
 import androidx.compose.runtime.key
-import com.thonyfd.financedashboard.ui.theme.MoneyStyle
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.ExperimentalFoundationApi
@@ -517,7 +516,7 @@ private fun IncomeSection(
                     modifier = Modifier.width(140.dp),
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                     singleLine = true,
-                    textStyle = MoneyStyle.copy(color = WHITE, fontSize = 15.sp),
+                    textStyle = AppTheme.moneyStyle.copy(color = WHITE, fontSize = 15.sp),
                     colors = appFieldColors(),
                     shape = RoundedCornerShape(12.dp),
                     prefix = { Text("$", color = MUTED) }
@@ -550,17 +549,17 @@ private fun SummaryCards(state: MonthlyControlState) {
                 Text(
                     (if (positive) "" else "−") + "$",
                     color = if (positive) MUTED else RED,
-                    style = MoneyStyle, fontSize = 26.sp,
+                    style = AppTheme.moneyStyle.copy(fontFamily = AppTheme.fonts.display), fontSize = 26.sp,
                     modifier = Modifier.padding(bottom = 7.dp, end = 2.dp)
                 )
                 Text(
                     formatted.substringBeforeLast('.'),
                     color = if (positive) WHITE else RED,
-                    style = MoneyStyle, fontSize = 46.sp, fontWeight = FontWeight.SemiBold, letterSpacing = (-1.2).sp
+                    style = AppTheme.moneyStyle.copy(fontFamily = AppTheme.fonts.display), fontSize = 46.sp, fontWeight = FontWeight.SemiBold, letterSpacing = (-1.2).sp
                 )
                 Text(
                     "." + formatted.substringAfterLast('.'),
-                    color = MUTED, style = MoneyStyle, fontSize = 22.sp,
+                    color = MUTED, style = AppTheme.moneyStyle.copy(fontFamily = AppTheme.fonts.display), fontSize = 22.sp,
                     modifier = Modifier.padding(bottom = 8.dp)
                 )
             }
@@ -638,7 +637,7 @@ private fun TransactionItem(
                 Text(
                     text = txn.day?.toString() ?: "–",
                     color = if (txn.isPaid) MUTED else WHITE,
-                    style = MoneyStyle, fontSize = 18.sp, fontWeight = FontWeight.Medium
+                    style = AppTheme.moneyStyle, fontSize = 18.sp, fontWeight = FontWeight.Medium
                 )
                 Box(Modifier.size(width = 14.dp, height = 2.dp).background(typeColor.copy(alpha = 0.8f), RoundedCornerShape(1.dp)))
             }
