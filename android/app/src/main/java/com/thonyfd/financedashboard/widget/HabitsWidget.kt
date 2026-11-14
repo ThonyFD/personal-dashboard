@@ -46,7 +46,6 @@ import androidx.glance.layout.padding
 import androidx.glance.layout.size
 import androidx.glance.layout.width
 import androidx.glance.text.FontWeight
-import androidx.glance.text.Text
 import androidx.glance.text.TextDecoration
 import androidx.glance.text.TextStyle
 import androidx.glance.unit.ColorProvider
@@ -156,13 +155,12 @@ private fun ProgressPanel(data: HabitsWidgetData, progress: Float, openHabits: I
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Text(
-            text = "${(progress * 100).toInt()}%",
-            style = TextStyle(
-                color = if (allDone) WidgetTheme.colors.positive else WidgetTheme.colors.text,
-                fontSize = 28.sp,
-                fontWeight = FontWeight.Bold
-            )
+        val progressText = "${(progress * 100).toInt()}%"
+        WidgetKpiText(
+            text = progressText,
+            sizeSp = 28f,
+            color = if (allDone) WidgetTheme.colors.positive else WidgetTheme.colors.text,
+            contentDescription = progressText
         )
         Spacer(GlanceModifier.height(6.dp))
         LinearProgressIndicator(

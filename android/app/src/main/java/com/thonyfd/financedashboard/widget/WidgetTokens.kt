@@ -5,6 +5,9 @@ import androidx.compose.runtime.ReadOnlyComposable
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.graphics.Color
 import androidx.glance.color.ColorProvider
+import androidx.glance.GlanceModifier
+import androidx.glance.text.FontFamily
+import androidx.glance.text.TextStyle
 import androidx.glance.unit.ColorProvider
 import com.thonyfd.financedashboard.ui.theme.Skin
 import com.thonyfd.financedashboard.ui.theme.SkinTokens
@@ -20,7 +23,8 @@ class WidgetColors internal constructor(
     private val light: SkinTokens,
     private val dark: SkinTokens,
     private val mode: ThemeMode,
-    backgroundOpacity: Float
+    backgroundOpacity: Float,
+    val skin: Skin
 ) {
     /** Color de un token con alpha opcional; [pick] elige el token de cada variante. */
     fun provider(alpha: Float = 1f, pick: (SkinTokens) -> Color): ColorProvider {
@@ -50,7 +54,7 @@ class WidgetColors internal constructor(
 }
 
 fun widgetColors(skin: Skin, mode: ThemeMode, backgroundOpacity: Float): WidgetColors =
-    WidgetColors(tokensFor(skin, dark = false), tokensFor(skin, dark = true), mode, backgroundOpacity)
+    WidgetColors(tokensFor(skin, dark = false), tokensFor(skin, dark = true), mode, backgroundOpacity, skin)
 
 internal fun widgetColors(context: android.content.Context, kind: WidgetKind): WidgetColors =
     widgetColors(
@@ -67,4 +71,32 @@ internal val LocalWidgetColors = staticCompositionLocalOf<WidgetColors> {
 internal object WidgetTheme {
     val colors: WidgetColors
         @Composable @ReadOnlyComposable get() = LocalWidgetColors.current
+}
+
+/**
+ * Text de los widgets: igual que el de Glance, pero en Nothing usa familia monoespaciada.
+ * Brand conserva la familia actual (null).
+ */
+@Composable
+internal fun Text(
+    text: String,
+    modifier: GlanceModifier = GlanceModifier,
+    style: TextStyle? = null,
+    maxLines: Int = Int.MAX_VALUE
+) {
+    val base = style ?: TextStyle()
+    val styled = if (WidgetTheme.colors.skin == Skin.NOTHING) {
+        TextStyle(
+            color = base.color,
+            fontSize = base.fontSize,
+            fontWeight = base.fontWeight,
+            fontStyle = base.fontStyle,
+            textAlign = base.textAlign,
+            textDecoration = base.textDecoration,
+            fontFamily = FontFamily.Monospace
+        )
+    } else {
+        base
+    }
+    androidx.glance.text.Text(text = text, modifier = modifier, style = styled, maxLines = maxLines)
 }

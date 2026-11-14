@@ -33,7 +33,6 @@ import androidx.glance.layout.height
 import androidx.glance.layout.padding
 import androidx.glance.layout.width
 import androidx.glance.text.FontWeight
-import androidx.glance.text.Text
 import androidx.glance.text.TextStyle
 import androidx.glance.unit.ColorProvider
 import com.thonyfd.financedashboard.data.models.CategorySpend
@@ -298,13 +297,12 @@ private fun SpendCard(spend: Double, modifier: GlanceModifier) {
                 fontSize = 10.sp
             )
         )
-        Text(
-            text = "$${String.format("%,.2f", spend)}",
-            style = TextStyle(
-                color = WidgetTheme.colors.text,
-                fontSize = 20.sp,
-                fontWeight = FontWeight.Bold
-            )
+        val spendText = "$${String.format("%,.2f", spend)}"
+        WidgetKpiText(
+            text = spendText,
+            sizeSp = 20f,
+            color = WidgetTheme.colors.text,
+            contentDescription = spendText
         )
     }
 }
