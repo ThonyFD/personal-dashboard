@@ -9,6 +9,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
@@ -21,37 +22,20 @@ data class SkinFonts(
     val label: FontFamily
 )
 
-/** Familias reales; los tests pasan sustitutos sin recursos. */
-data class FontSet(
-    val brandDisplay: FontFamily,
-    val brandBody: FontFamily,
-    val dot: FontFamily,
-    val mono: FontFamily,
-    val sans: FontFamily
-)
-
-val RealFontSet = FontSet(
-    brandDisplay = DisplayFamily,
-    brandBody = BodyFamily,
-    dot = DotFamily,
-    mono = MonoFamily,
-    sans = InterFamily
-)
-
-fun fontsFor(skin: Skin, set: FontSet = RealFontSet): SkinFonts = when (skin) {
+fun fontsFor(skin: Skin): SkinFonts = when (skin) {
     Skin.NOTHING -> SkinFonts(
-        display = set.dot,
-        heading = set.mono,
-        body = set.sans,
-        numeric = set.mono,
-        label = set.mono
+        display = DotFamily,
+        heading = MonoFamily,
+        body = InterFamily,
+        numeric = MonoFamily,
+        label = MonoFamily
     )
     Skin.BRAND, Skin.GLASS -> SkinFonts(
-        display = set.brandDisplay,
-        heading = set.brandDisplay,
-        body = set.brandBody,
-        numeric = set.brandDisplay,
-        label = set.brandBody
+        display = DisplayFamily,
+        heading = DisplayFamily,
+        body = BodyFamily,
+        numeric = DisplayFamily,
+        label = BodyFamily
     )
 }
 
@@ -79,7 +63,8 @@ fun shapesFor(skin: Skin): Shapes = when (skin) {
 /** Mismos pesos y espaciado que la tipografia Brand original; solo cambian las familias por rol. */
 fun typographyFor(fonts: SkinFonts): Typography {
     val base = Typography()
-    val labelSpacing = if (fonts.label != fonts.body) 1.2.sp else base.labelLarge.letterSpacing
+    val wide = fonts.label != fonts.body
+    fun tracking(default: TextUnit) = if (wide) 1.2.sp else default
     return Typography(
         displayLarge = base.displayLarge.copy(fontFamily = fonts.display, fontWeight = FontWeight.SemiBold, letterSpacing = (-1).sp),
         displayMedium = base.displayMedium.copy(fontFamily = fonts.display, fontWeight = FontWeight.SemiBold, letterSpacing = (-0.8).sp),
@@ -93,9 +78,9 @@ fun typographyFor(fonts: SkinFonts): Typography {
         bodyLarge = base.bodyLarge.copy(fontFamily = fonts.body),
         bodyMedium = base.bodyMedium.copy(fontFamily = fonts.body),
         bodySmall = base.bodySmall.copy(fontFamily = fonts.body),
-        labelLarge = base.labelLarge.copy(fontFamily = fonts.label, fontWeight = FontWeight.SemiBold, letterSpacing = labelSpacing),
-        labelMedium = base.labelMedium.copy(fontFamily = fonts.label, fontWeight = FontWeight.SemiBold, letterSpacing = if (fonts.label != fonts.body) 1.2.sp else base.labelMedium.letterSpacing),
-        labelSmall = base.labelSmall.copy(fontFamily = fonts.label, fontWeight = FontWeight.Medium, letterSpacing = if (fonts.label != fonts.body) 1.2.sp else base.labelSmall.letterSpacing)
+        labelLarge = base.labelLarge.copy(fontFamily = fonts.label, fontWeight = FontWeight.SemiBold, letterSpacing = tracking(base.labelLarge.letterSpacing)),
+        labelMedium = base.labelMedium.copy(fontFamily = fonts.label, fontWeight = FontWeight.SemiBold, letterSpacing = tracking(base.labelMedium.letterSpacing)),
+        labelSmall = base.labelSmall.copy(fontFamily = fonts.label, fontWeight = FontWeight.Medium, letterSpacing = tracking(base.labelSmall.letterSpacing))
     )
 }
 

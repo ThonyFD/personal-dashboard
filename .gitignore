@@ -176,6 +176,7 @@ oauth-credential.json
 # Temporary documentation (keep out of git)
 *.txt
 !package.txt
+!design/fonts/*.txt
 *.html
 populate-categories-simple.js
 populate-categories-sql.py
