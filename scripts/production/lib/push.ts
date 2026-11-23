@@ -63,9 +63,13 @@ export async function sendPushToActiveSubscriptions(
       await getMessaging().send({
         token: fcmToken,
         notification: { title: payload.title, body: payload.body },
+        // The web app reads tag and link from data when it is in the foreground,
+        // where the FCM SDK does not show the notification itself.
+        data: { tag: payload.tag, link: payload.link },
         webpush: {
           notification: {
             icon: '/logo.svg',
+            badge: '/badge-72.png',
             tag: payload.tag,
             requireInteraction: payload.requireInteraction ?? false,
           },
