@@ -149,37 +149,54 @@ export async function fetchAlertTransaction(
   };
 }
 
+const CANDIDATE_PAGE = 100;
+
 /**
  * Transactions that may still need a budget alert, whatever inserted them (this
  * sync, the daily sync, or any other ingestion path): created at or after
  * `createdSince`, dated on one of `txnDates`, an alertable type, and without a
- * budget_alert_log row. Oldest first.
+ * budget_alert_log row. Oldest first, at most `max` per call.
+ *
+ * Pages through the transactions by id and drops logged ids page by page, so
+ * already alerted rows never hide newer ones behind a fixed limit.
  */
 export async function fetchBudgetAlertCandidates(
   client: SupabaseClient,
-  opts: { createdSince: string; txnDates: string[]; txnTypes: readonly string[] },
+  opts: { createdSince: string; txnDates: string[]; txnTypes: readonly string[]; max?: number },
 ): Promise<number[]> {
-  const { data, error } = await client
-    .from('transactions')
-    .select('id')
-    .gte('created_at', opts.createdSince)
-    .in('txn_date', opts.txnDates)
-    .in('txn_type', [...opts.txnTypes])
-    .order('id', { ascending: true })
-    .limit(200);
-  if (error) throw error;
+  const max = opts.max ?? 100;
+  const candidates: number[] = [];
+  let afterId = 0;
 
-  const ids = (data ?? []).map((r: any) => Number(r.id));
-  if (ids.length === 0) return [];
+  while (candidates.length < max) {
+    const { data, error } = await client
+      .from('transactions')
+      .select('id')
+      .gte('created_at', opts.createdSince)
+      .in('txn_date', opts.txnDates)
+      .in('txn_type', [...opts.txnTypes])
+      .gt('id', afterId)
+      .order('id', { ascending: true })
+      .limit(CANDIDATE_PAGE);
+    if (error) throw error;
 
-  const { data: logged, error: logError } = await client
-    .from('budget_alert_log')
-    .select('transaction_id')
-    .in('transaction_id', ids);
-  if (logError) throw logError;
+    const ids = (data ?? []).map((r: any) => Number(r.id));
+    if (ids.length === 0) break;
 
-  const done = new Set((logged ?? []).map((r: any) => Number(r.transaction_id)));
-  return ids.filter((id) => !done.has(id));
+    const { data: logged, error: logError } = await client
+      .from('budget_alert_log')
+      .select('transaction_id')
+      .in('transaction_id', ids);
+    if (logError) throw logError;
+
+    const done = new Set((logged ?? []).map((r: any) => Number(r.transaction_id)));
+    candidates.push(...ids.filter((id) => !done.has(id)));
+
+    if (ids.length < CANDIDATE_PAGE) break;
+    afterId = ids[ids.length - 1];
+  }
+
+  return candidates.slice(0, max);
 }
 
 export async function hasBudgetAlert(client: SupabaseClient, transactionId: number): Promise<boolean> {

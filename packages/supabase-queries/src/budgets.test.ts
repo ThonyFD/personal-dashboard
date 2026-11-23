@@ -56,20 +56,36 @@ describe('claimBudgetAlert', () => {
 });
 
 describe('fetchBudgetAlertCandidates', () => {
-  function candidateClient(txnIds: number[], loggedIds: number[], filters: unknown[][]) {
-    const txnQuery: any = {
-      select: () => txnQuery,
-      gte: (...a: unknown[]) => { filters.push(['gte', ...a]); return txnQuery; },
-      in: (...a: unknown[]) => { filters.push(['in', ...a]); return txnQuery; },
-      order: () => txnQuery,
-      limit: async () => ({ data: txnIds.map((id) => ({ id })), error: null }),
+  // Fake PostgREST: keyset pagination on id (gt + order + limit) over txnIds,
+  // and an `in` lookup over loggedIds for budget_alert_log.
+  function candidateClient(txnIds: number[], loggedIds: number[], filters: unknown[][], logLookups: number[][] = []) {
+    const logged = new Set(loggedIds);
+    const txnQuery = () => {
+      let afterId = 0;
+      const q: any = {
+        select: () => q,
+        gte: (...a: unknown[]) => { filters.push(['gte', ...a]); return q; },
+        in: (...a: unknown[]) => { filters.push(['in', ...a]); return q; },
+        gt: (_col: string, v: number) => { afterId = v; return q; },
+        order: () => q,
+        limit: async (n: number) => ({ data: txnIds.filter((id) => id > afterId).slice(0, n).map((id) => ({ id })), error: null }),
+      };
+      return q;
     };
-    const logQuery: any = {
-      select: () => logQuery,
-      in: async () => ({ data: loggedIds.map((transaction_id) => ({ transaction_id })), error: null }),
+    const logQuery = () => {
+      const q: any = {
+        select: () => q,
+        in: async (_col: string, ids: number[]) => {
+          logLookups.push(ids);
+          return { data: ids.filter((id) => logged.has(id)).map((transaction_id) => ({ transaction_id })), error: null };
+        },
+      };
+      return q;
     };
-    return { from: (table: string) => (table === 'transactions' ? txnQuery : logQuery) } as unknown as SupabaseClient;
+    return { from: (table: string) => (table === 'transactions' ? txnQuery() : logQuery()) } as unknown as SupabaseClient;
   }
+
+  const range = (from: number, to: number) => Array.from({ length: to - from + 1 }, (_, i) => from + i);
 
   it('filters by creation time, dates and types, and drops already alerted ids', async () => {
     const filters: unknown[][] = [];
@@ -87,12 +103,25 @@ describe('fetchBudgetAlertCandidates', () => {
     ]);
   });
 
+  it('reaches newer rows when the oldest ones are already alerted', async () => {
+    const opts = { createdSince: 'x', txnDates: ['2026-11-21'], txnTypes: ['PURCHASE'] };
+    const ids = await fetchBudgetAlertCandidates(candidateClient(range(1, 250), range(1, 200), []), opts);
+    expect(ids).toEqual(range(201, 250));
+  });
+
+  it('stops at max candidates', async () => {
+    const opts = { createdSince: 'x', txnDates: ['2026-11-21'], txnTypes: ['PURCHASE'], max: 30 };
+    const ids = await fetchBudgetAlertCandidates(candidateClient(range(1, 500), [], []), opts);
+    expect(ids).toEqual(range(1, 30));
+  });
+
   it('skips the log lookup when there are no candidates', async () => {
-    const filters: unknown[][] = [];
-    const ids = await fetchBudgetAlertCandidates(candidateClient([], [], filters), {
+    const logLookups: number[][] = [];
+    const ids = await fetchBudgetAlertCandidates(candidateClient([], [], [], logLookups), {
       createdSince: 'x', txnDates: [], txnTypes: [],
     });
     expect(ids).toEqual([]);
+    expect(logLookups).toEqual([]);
   });
 });
 
