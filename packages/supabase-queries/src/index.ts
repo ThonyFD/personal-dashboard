@@ -47,7 +47,7 @@ export {
   deleteCategory,
 } from './categories.js';
 
-export { getLastProcessedEmail } from './emails.js';
+export { getLastProcessedEmail, fetchParsedGmailMessageIds } from './emails.js';
 
 export {
   getPendingPaymentsNextDays,
