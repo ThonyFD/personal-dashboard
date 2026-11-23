@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   alertAsOfDate,
+  alertWindowDates,
   budgetAlertEligibility,
   buildBudgetAlert,
   formatUsd,
@@ -92,6 +93,13 @@ describe('panamaDate and alertAsOfDate', () => {
     expect(alertAsOfDate('2026-11-30', now)).toBe('2026-11-30');
     expect(budgetAlertEligibility({ txnId: 5, txnType: 'PURCHASE', txnDate: '2026-11-30', enabled: true, now }))
       .toEqual({ eligible: true });
+  });
+});
+
+describe('alertWindowDates', () => {
+  it('is yesterday and today in Panama, across a month boundary', () => {
+    expect(alertWindowDates(new Date('2026-12-01T13:00:00Z'))).toEqual(['2026-11-30', '2026-12-01']);
+    expect(alertWindowDates(new Date('2026-12-01T04:30:00Z'))).toEqual(['2026-11-29', '2026-11-30']);
   });
 });
 

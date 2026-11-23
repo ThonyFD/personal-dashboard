@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { SupabaseClient } from '@supabase/supabase-js';
-import { claimBudgetAlert, fetchBudgetStatus, mapAlertSettings } from './budgets.js';
+import { claimBudgetAlert, fetchBudgetAlertCandidates, fetchBudgetStatus, mapAlertSettings } from './budgets.js';
 
 const message = { rules: ['budget_ok' as const], title: 't', body: 'b' };
 
@@ -52,6 +52,47 @@ describe('claimBudgetAlert', () => {
   it('throws any other error', async () => {
     const error = { code: '42501', message: 'permission denied' };
     await expect(claimBudgetAlert(insertClient(error), 1, message)).rejects.toBe(error);
+  });
+});
+
+describe('fetchBudgetAlertCandidates', () => {
+  function candidateClient(txnIds: number[], loggedIds: number[], filters: unknown[][]) {
+    const txnQuery: any = {
+      select: () => txnQuery,
+      gte: (...a: unknown[]) => { filters.push(['gte', ...a]); return txnQuery; },
+      in: (...a: unknown[]) => { filters.push(['in', ...a]); return txnQuery; },
+      order: () => txnQuery,
+      limit: async () => ({ data: txnIds.map((id) => ({ id })), error: null }),
+    };
+    const logQuery: any = {
+      select: () => logQuery,
+      in: async () => ({ data: loggedIds.map((transaction_id) => ({ transaction_id })), error: null }),
+    };
+    return { from: (table: string) => (table === 'transactions' ? txnQuery : logQuery) } as unknown as SupabaseClient;
+  }
+
+  it('filters by creation time, dates and types, and drops already alerted ids', async () => {
+    const filters: unknown[][] = [];
+    const ids = await fetchBudgetAlertCandidates(candidateClient([3, 4, 5], [4], filters), {
+      createdSince: '2026-11-21T12:00:00.000Z',
+      txnDates: ['2026-11-20', '2026-11-21'],
+      txnTypes: ['PURCHASE', 'TRANSFER'],
+    });
+
+    expect(ids).toEqual([3, 5]);
+    expect(filters).toEqual([
+      ['gte', 'created_at', '2026-11-21T12:00:00.000Z'],
+      ['in', 'txn_date', ['2026-11-20', '2026-11-21']],
+      ['in', 'txn_type', ['PURCHASE', 'TRANSFER']],
+    ]);
+  });
+
+  it('skips the log lookup when there are no candidates', async () => {
+    const filters: unknown[][] = [];
+    const ids = await fetchBudgetAlertCandidates(candidateClient([], [], filters), {
+      createdSince: 'x', txnDates: [], txnTypes: [],
+    });
+    expect(ids).toEqual([]);
   });
 });
 

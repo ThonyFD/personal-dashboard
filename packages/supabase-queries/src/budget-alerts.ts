@@ -117,11 +117,16 @@ export function budgetAlertEligibility(input: {
   if (!input.enabled) return { eligible: false, reason: 'disabled' };
   if (!isAlertableType(input.txnType)) return { eligible: false, reason: 'type' };
 
-  const today = panamaDate(input.now);
-  if (input.txnDate !== today && input.txnDate !== shiftDate(today, -1)) {
+  if (!alertWindowDates(input.now).includes(input.txnDate)) {
     return { eligible: false, reason: 'stale' };
   }
   return { eligible: true };
+}
+
+/** The txn_date values that can still alert: yesterday and today in Panama. */
+export function alertWindowDates(now: Date): string[] {
+  const today = panamaDate(now);
+  return [shiftDate(today, -1), today];
 }
 
 /**

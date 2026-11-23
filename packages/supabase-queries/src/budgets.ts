@@ -149,6 +149,39 @@ export async function fetchAlertTransaction(
   };
 }
 
+/**
+ * Transactions that may still need a budget alert, whatever inserted them (this
+ * sync, the daily sync, or any other ingestion path): created at or after
+ * `createdSince`, dated on one of `txnDates`, an alertable type, and without a
+ * budget_alert_log row. Oldest first.
+ */
+export async function fetchBudgetAlertCandidates(
+  client: SupabaseClient,
+  opts: { createdSince: string; txnDates: string[]; txnTypes: readonly string[] },
+): Promise<number[]> {
+  const { data, error } = await client
+    .from('transactions')
+    .select('id')
+    .gte('created_at', opts.createdSince)
+    .in('txn_date', opts.txnDates)
+    .in('txn_type', [...opts.txnTypes])
+    .order('id', { ascending: true })
+    .limit(200);
+  if (error) throw error;
+
+  const ids = (data ?? []).map((r: any) => Number(r.id));
+  if (ids.length === 0) return [];
+
+  const { data: logged, error: logError } = await client
+    .from('budget_alert_log')
+    .select('transaction_id')
+    .in('transaction_id', ids);
+  if (logError) throw logError;
+
+  const done = new Set((logged ?? []).map((r: any) => Number(r.transaction_id)));
+  return ids.filter((id) => !done.has(id));
+}
+
 export async function hasBudgetAlert(client: SupabaseClient, transactionId: number): Promise<boolean> {
   const { data, error } = await client
     .from('budget_alert_log')

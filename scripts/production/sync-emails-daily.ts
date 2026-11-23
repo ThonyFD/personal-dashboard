@@ -28,11 +28,14 @@ import { persistTokens } from 'oauth-token-store';
 import { fileURLToPath } from 'url';
 import { createClient } from '@supabase/supabase-js';
 import {
-  budgetAlertEligibility,
+  ALERTABLE_TXN_TYPES,
+  alertWindowDates,
+  fetchBudgetAlertCandidates,
   fetchParsedGmailMessageIds,
   getLastProcessedEmail,
 } from '@personal-dashboard/supabase-queries';
 import { processBudgetAlertsSafely, supabaseBudgetAlertDeps } from './budget-alerts';
+import { Logger } from '../../services/ingestor/src/utils/logger';
 
 
 // Import from ingestor service
@@ -66,6 +69,9 @@ const RATE_LIMIT_DELAY_MS = 100; // Conservative rate limiting: 10 req/sec
 const MAX_RESULTS_PER_PAGE = 100;
 const DEFAULT_LOOKBACK_DAYS = 7; // Fallback if no last email found
 const MAX_LOOKBACK_DAYS = 30; // Safety limit
+// Budget alerts only look at transactions inserted in the last few hours, so the
+// first run after turning alerts on does not send a burst for older purchases.
+const ALERT_LOOKBACK_MS = 3 * 60 * 60 * 1000;
 
 class DailyEmailSync {
   private oauth2Client: OAuth2Client;
@@ -78,8 +84,6 @@ class DailyEmailSync {
   private stats: SyncStats;
   // Off unless the workflow sets BUDGET_ALERTS_ENABLED=true (repo variable).
   private readonly budgetAlertsEnabled = process.env.BUDGET_ALERTS_ENABLED === 'true';
-  // New transactions from this run that may deserve a budget alert.
-  private readonly alertCandidates: number[] = [];
 
   constructor() {
     this.oauth2Client = new OAuth2Client();
@@ -527,16 +531,6 @@ class DailyEmailSync {
 
       const txnId = await this.dbClient.insertTransaction(txnData);
 
-      // Same date string insertTransaction stores in txn_date.
-      const eligibility = budgetAlertEligibility({
-        txnId,
-        txnType: txnData.txnType,
-        txnDate: txnData.txnDate.toISOString().split('T')[0],
-        enabled: this.budgetAlertsEnabled,
-        now: new Date(),
-      });
-      if (eligibility.eligible) this.alertCandidates.push(txnId);
-
       if (txnId !== -1) {
         await this.dbClient.markEmailParsed(emailId);
         console.log(`      ✓ Transaction saved (ID: ${txnId})`);
@@ -578,17 +572,36 @@ class DailyEmailSync {
   }
 
   /**
-   * Send budget alerts for this run's new transactions. Failures are logged as
+   * Send budget alerts for recent transactions that have none yet. Candidates
+   * come from the database, not from this run, so a transaction inserted by any
+   * ingestion path still alerts, and one whose alert failed before being claimed
+   * is retried on the next run. Only txn_date today or yesterday (Panama) counts,
+   * so backfills of old emails never alert. Failures are logged as
    * budget_alert_failed and never fail the sync.
    */
   private async sendBudgetAlerts(): Promise<void> {
-    if (!this.budgetAlertsEnabled || this.alertCandidates.length === 0) return;
+    if (!this.budgetAlertsEnabled) return;
 
-    console.log(`🔔 Budget alerts for ${this.alertCandidates.length} new transaction(s)...\n`);
-    const outcomes = await processBudgetAlertsSafely(
-      this.alertCandidates,
-      supabaseBudgetAlertDeps(this.supabase),
-    );
+    let candidates: number[];
+    try {
+      const now = new Date();
+      candidates = await fetchBudgetAlertCandidates(this.supabase, {
+        createdSince: new Date(now.getTime() - ALERT_LOOKBACK_MS).toISOString(),
+        txnDates: alertWindowDates(now),
+        txnTypes: ALERTABLE_TXN_TYPES,
+      });
+    } catch (error) {
+      Logger.error('Budget alert candidates failed', {
+        event: 'budget_alert_failed',
+        error: error instanceof Error ? error.message : (error as any)?.message ?? String(error),
+      });
+      return;
+    }
+
+    if (candidates.length === 0) return;
+
+    console.log(`🔔 Budget alerts for ${candidates.length} transaction(s)...\n`);
+    const outcomes = await processBudgetAlertsSafely(candidates, supabaseBudgetAlertDeps(this.supabase));
     for (const outcome of outcomes) {
       if (outcome.status === 'sent') this.stats.alertsSent++;
       else if (outcome.status === 'failed') this.stats.alertsFailed++;
@@ -695,6 +708,8 @@ class DailyEmailSync {
 
       if (messageIds.length === 0) {
         console.log('✓ No new emails to process\n');
+        // Another ingestion path may still have inserted transactions to alert.
+        await this.sendBudgetAlerts();
         return;
       }
 
