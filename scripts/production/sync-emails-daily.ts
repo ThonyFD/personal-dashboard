@@ -34,7 +34,7 @@ import {
   fetchParsedGmailMessageIds,
   getLastProcessedEmail,
 } from '@personal-dashboard/supabase-queries';
-import { processBudgetAlertsSafely, supabaseBudgetAlertDeps } from './budget-alerts';
+import { budgetAlertsEnabled, processBudgetAlertsSafely, supabaseBudgetAlertDeps } from './budget-alerts';
 import { Logger } from '../../services/ingestor/src/utils/logger';
 
 
@@ -83,7 +83,7 @@ class DailyEmailSync {
   private readonly supabase: ReturnType<typeof createClient>;
   private stats: SyncStats;
   // Off unless the workflow sets BUDGET_ALERTS_ENABLED=true (repo variable).
-  private readonly budgetAlertsEnabled = process.env.BUDGET_ALERTS_ENABLED === 'true';
+  private readonly alertsEnabled = budgetAlertsEnabled();
 
   constructor() {
     this.oauth2Client = new OAuth2Client();
@@ -580,7 +580,7 @@ class DailyEmailSync {
    * budget_alert_failed and never fail the sync.
    */
   private async sendBudgetAlerts(): Promise<void> {
-    if (!this.budgetAlertsEnabled) return;
+    if (!this.alertsEnabled) return;
 
     let candidates: number[];
     try {

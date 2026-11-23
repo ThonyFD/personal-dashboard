@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 import type { AlertTransactionRow, BudgetStatus } from '@personal-dashboard/supabase-queries';
-import { processBudgetAlerts, processBudgetAlertsSafely, type BudgetAlertDeps } from './budget-alerts';
+import { budgetAlertsEnabled, processBudgetAlerts, processBudgetAlertsSafely, type BudgetAlertDeps } from './budget-alerts';
 
 // Made-up values only.
 const NOW = new Date('2026-11-21T15:00:00Z');
@@ -111,6 +111,35 @@ describe('processBudgetAlerts', () => {
     const d = deps({ fetchSettings: vi.fn(async () => null) });
     const out = await processBudgetAlerts([1, 2], d, { now: NOW });
     expect(out.map((o) => o.status)).toEqual(['skipped', 'skipped']);
+  });
+});
+
+describe('eligibility guard', () => {
+  it('skips a stale transaction live but still previews it in a dry run', async () => {
+    const old = deps({ fetchTransaction: vi.fn(async (id: number) => txnRow({ id, txnDate: '2026-11-10' })) });
+    expect(await processBudgetAlerts([7], old, { now: NOW })).toEqual([{ transactionId: 7, status: 'skipped', reason: 'stale' }]);
+    expect(old.claim).not.toHaveBeenCalled();
+
+    const preview = await processBudgetAlerts([7], deps({ fetchTransaction: vi.fn(async (id: number) => txnRow({ id, txnDate: '2026-11-10' })) }), { now: NOW, dryRun: true });
+    expect(preview[0].status).toBe('dry_run');
+  });
+
+  it('skips income and payments even if the candidate query returned them', async () => {
+    for (const txnType of ['INCOME', 'PAYMENT']) {
+      const d = deps({ fetchTransaction: vi.fn(async (id: number) => txnRow({ id, txnType })) });
+      expect(await processBudgetAlerts([7], d, { now: NOW })).toEqual([{ transactionId: 7, status: 'skipped', reason: 'type' }]);
+      expect(d.push).not.toHaveBeenCalled();
+    }
+  });
+});
+
+describe('budgetAlertsEnabled', () => {
+  it('is on only for the exact string true', () => {
+    expect(budgetAlertsEnabled({ BUDGET_ALERTS_ENABLED: 'true' })).toBe(true);
+    expect(budgetAlertsEnabled({ BUDGET_ALERTS_ENABLED: 'TRUE' })).toBe(false);
+    expect(budgetAlertsEnabled({ BUDGET_ALERTS_ENABLED: 'false' })).toBe(false);
+    expect(budgetAlertsEnabled({ BUDGET_ALERTS_ENABLED: '' })).toBe(false);
+    expect(budgetAlertsEnabled({})).toBe(false);
   });
 });
 

@@ -13,6 +13,7 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import {
   alertAsOfDate,
+  budgetAlertEligibility,
   buildBudgetAlert,
   claimBudgetAlert,
   fetchAlertSettings,
@@ -48,6 +49,11 @@ export interface BudgetAlertOptions {
   dryRun?: boolean;
   now?: Date;
   dashboardUrl?: string;
+}
+
+/** Alerts run only when the workflow sets BUDGET_ALERTS_ENABLED to exactly 'true'. */
+export function budgetAlertsEnabled(env: Record<string, string | undefined> = process.env): boolean {
+  return env.BUDGET_ALERTS_ENABLED === 'true';
 }
 
 export function supabaseBudgetAlertDeps(supabase: SupabaseClient): BudgetAlertDeps {
@@ -99,6 +105,22 @@ export async function processBudgetAlerts(
       if (!txn) {
         outcomes.push(skipped(transactionId, 'not_found'));
         continue;
+      }
+
+      // Guard against a candidate query that let something through. The dry run
+      // skips it so older transactions can be previewed.
+      if (!options.dryRun) {
+        const eligibility = budgetAlertEligibility({
+          txnId: txn.id,
+          txnType: txn.txnType,
+          txnDate: txn.txnDate,
+          enabled: true,
+          now,
+        });
+        if ('reason' in eligibility) {
+          outcomes.push(skipped(transactionId, eligibility.reason));
+          continue;
+        }
       }
 
       const alreadySent = await deps.hasAlert(transactionId);
