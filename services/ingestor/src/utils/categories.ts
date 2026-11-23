@@ -46,7 +46,8 @@ export function autoCategorizeMerchant(merchantName: string): Category {
     name.includes('BISTRO') ||
     name.includes('DINER') ||
     name.includes('BAKERY') ||
-    name.includes('BAR') ||
+    // Whole word only: a plain includes() sent names like ROOSEVELTBARBERSHOP here.
+    /\bBAR\b/.test(name) ||
     name.includes('PUB') ||
     name.includes('GEISHA') ||
     name.includes('LOTUS HOUSE')
