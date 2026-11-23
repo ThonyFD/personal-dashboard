@@ -21,6 +21,7 @@ Dashboard React -> Supabase + Firebase Cloud Messaging
 3. GitHub Actions renueva el watch de Gmail diariamente.
 4. GitHub Actions corre un sync defensivo y envía recordatorios por FCM.
 5. El dashboard consulta Supabase directo y muestra métricas, transacciones y control mensual.
+6. GitHub Actions sincroniza cada 15 minutos y manda alertas de presupuesto por compra (ver [Alertas de presupuesto](#alertas-de-presupuesto)).
 
 ## Estructura
 
@@ -155,6 +156,42 @@ gcloud pubsub subscriptions describe gmail-ingestor-sub \
 cd infra/gcloud
 ./setup-gmail-watch.sh
 ```
+
+## Alertas de presupuesto
+
+Cada compra nueva puede mandar un push con lo que queda del tope mensual de su categoría.
+
+### Cómo funciona
+
+- `.github/workflows/frequent-email-sync.yml` corre el sync cada 15 minutos (GitHub puede atrasarlo unos minutos). El workflow diario sigue renovando el watch y mandando los recordatorios de pago.
+- Al terminar el sync, `scripts/production/budget-alerts.ts` busca transacciones `PURCHASE` o `TRANSFER` insertadas en las últimas 3 horas, con fecha de hoy o de ayer en Panamá y sin fila en `budget_alert_log`. Los backfills de correos viejos nunca alertan.
+- Las reglas viven en `packages/supabase-queries/src/budget-alerts.ts` (funciones puras, con tests): tarjeta apagada, compra grande, presupuesto bajo 80 %, entre 80 % y 99 %, y 100 % o más. Sale un solo push por transacción.
+- El gasto sale de `budget_status()`: `PURCHASE + TRANSFER - REFUND` del mes, por categoría del comercio. La página Budgets usa la misma función, así que la cifra de la web y la del push coinciden.
+- Antes de enviar se inserta la fila en `budget_alert_log`, así que una transacción recibe como máximo un push.
+- El sync frecuente no tiene `GEMINI_API_KEY`: los correos que solo entiende el fallback LLM se resuelven en la corrida diaria, y su alerta llega esa mañana.
+- Los logs solo llevan ids, reglas y conteos. Los logs de Actions de este repo son públicos.
+
+### Despliegue (lo corre el dueño)
+
+1. Revisar RLS: correr `supabase/checks/rls_diagnostic.sql` en el SQL editor. Si no aparecen políticas `Owner only` ni `app_owner`, aplicar primero `20261102000001_app_owner.sql` (y luego insertar el uid del dueño en `app_owner`), `20261102000002_multi_user_rls.sql` y `supabase/checks/multi_user_rls_check.sql`.
+2. Aplicar en orden `supabase/migrations/20261123000001_revoke_anon_privileges.sql` y `20261123000002_budgets.sql`.
+3. Correr `supabase/checks/budget_status_check.sql`. Todos los checks deben decir `true`.
+4. Copiar `supabase/examples/budgets_setup.example.sql` fuera del repo, poner los valores reales en la copia y correrla.
+5. Correr `ops/top-merchants-90d.sql` y corregir categorías desde la web (página Merchants).
+6. Pasar los cambios a `main`: los workflows programados solo corren en la rama por defecto.
+7. Probar con datos reales sin enviar, desde tu máquina y nunca en Actions:
+
+   ```bash
+   SUPABASE_URL=... SUPABASE_SERVICE_ROLE_KEY=... \
+     npx tsx scripts/production/budget-alert-dry-run.ts <id> <id> <id>
+   ```
+
+8. Encender: `gh variable set BUDGET_ALERTS_ENABLED --body true`. Luego hacer una compra real pequeña.
+
+### Apagar (rollback)
+
+- Sin deploy: `gh variable set BUDGET_ALERTS_ENABLED --body false`.
+- Desde la web o SQL: `UPDATE alert_settings SET alerts_enabled = false WHERE id = 1;`
 
 ## Troubleshooting
 
