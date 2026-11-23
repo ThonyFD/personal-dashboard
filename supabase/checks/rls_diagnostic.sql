@@ -51,6 +51,7 @@ secdef AS (
   SELECT '5_security_definer_fn', p.oid::regprocedure::text,
          'anon=' || has_function_privilege('anon', p.oid, 'EXECUTE')
            || ' authenticated=' || has_function_privilege('authenticated', p.oid, 'EXECUTE')
+           || ' returns=' || format_type(p.prorettype, NULL)
   FROM pg_proc p JOIN pg_namespace n ON n.oid = p.pronamespace
   WHERE n.nspname = 'public' AND p.prosecdef
 ),

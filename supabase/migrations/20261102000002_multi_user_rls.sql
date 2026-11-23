@@ -116,6 +116,27 @@ BEGIN
   END LOOP;
 END $$;
 
+-- 3b. Drift found by supabase/checks/rls_diagnostic.sql on 2026-11-23: tables created
+-- outside this repo whose only policy checks auth.role() = 'service_role' but has no TO
+-- clause, so it is attached to PUBLIC. service_role bypasses RLS anyway and the check is
+-- false for anon and authenticated, so moving the policy to service_role changes nothing
+-- for anyone; it only stops the gap check below from flagging a PUBLIC policy.
+DO $$
+DECLARE
+  p record;
+BEGIN
+  FOR p IN
+    SELECT tablename, policyname FROM pg_policies
+    WHERE schemaname = 'public'
+      AND tablename = ANY (ARRAY['tdash_componentes', 'tdash_datasources', 'tdash_pantallas', 'tseg_roles'])
+      AND roles && ARRAY['public']::name[]
+      AND qual = '(auth.role() = ''service_role''::text)'
+      AND with_check = '(auth.role() = ''service_role''::text)'
+  LOOP
+    EXECUTE format('ALTER POLICY %I ON public.%I TO service_role', p.policyname, p.tablename);
+  END LOOP;
+END $$;
+
 -- 4. Server-only functions: callable with the service role only.
 DO $$
 DECLARE
@@ -154,6 +175,9 @@ BEGIN
     SELECT 'security definer function callable by clients: ' || p.oid::regprocedure::text
     FROM pg_proc p JOIN pg_namespace n ON n.oid = p.pronamespace
     WHERE n.nspname = 'public' AND p.prosecdef AND p.proname <> 'is_owner'
+      -- Trigger and event trigger functions (e.g. rls_auto_enable) cannot be called
+      -- by clients: Postgres only runs them as triggers.
+      AND p.prorettype NOT IN ('trigger'::regtype, 'event_trigger'::regtype)
       AND (has_function_privilege('anon', p.oid, 'EXECUTE') OR has_function_privilege('authenticated', p.oid, 'EXECUTE'))
   ) gaps;
 
