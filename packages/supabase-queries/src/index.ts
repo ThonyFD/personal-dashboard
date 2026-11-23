@@ -104,3 +104,38 @@ export {
 } from './mood.js';
 
 export { fetchIsOwner } from './account.js';
+
+export type {
+  AlertSettings,
+  AlertTransaction,
+  BudgetStatus,
+  BudgetAlertRule,
+  BudgetAlertMessage,
+  BudgetAlertResult,
+  EligibilityResult,
+} from './budget-alerts.js';
+export {
+  ALERTABLE_TXN_TYPES,
+  PANAMA_TIME_ZONE,
+  alertAsOfDate,
+  budgetAlertEligibility,
+  buildBudgetAlert,
+  formatUsd,
+  panamaDate,
+} from './budget-alerts.js';
+
+export type { Budget, AlertTransactionRow } from './budgets.js';
+export {
+  claimBudgetAlert,
+  createBudget,
+  deleteBudget,
+  fetchAlertSettings,
+  fetchAlertTransaction,
+  fetchBudgets,
+  fetchBudgetStatus,
+  hasBudgetAlert,
+  mapAlertSettings,
+  mapBudgetStatusRow,
+  updateAlertSettings,
+  updateBudget,
+} from './budgets.js';
