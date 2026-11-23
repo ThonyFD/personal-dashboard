@@ -429,7 +429,7 @@ class DailyEmailSync {
           this.stats.duplicatesSkipped++;
         }
       } else {
-        console.log(`      ⊘ No provider detected (${subject.substring(0, 50)}...)`);
+        console.log(`      ⊘ No provider detected`);
       }
 
       this.stats.processedEmails++;
@@ -539,7 +539,7 @@ class DailyEmailSync {
 
       if (txnId !== -1) {
         await this.dbClient.markEmailParsed(emailId);
-        console.log(`      ✓ Transaction: ${transaction.merchant} - $${transaction.amount}`);
+        console.log(`      ✓ Transaction saved (ID: ${txnId})`);
         return true;
       } else {
         // Duplicate: the transaction already exists. Mark the email parsed so we
