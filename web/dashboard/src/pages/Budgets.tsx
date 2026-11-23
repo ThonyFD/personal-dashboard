@@ -49,6 +49,19 @@ function clearLegacyBudgets() {
   }
 }
 
+/** Keeps only `items` in the browser; removes the key when nothing is left. */
+function keepLegacyBudgets(items: LegacyBudget[]) {
+  if (items.length === 0) {
+    clearLegacyBudgets()
+    return
+  }
+  try {
+    localStorage.setItem(LEGACY_STORAGE_KEY, JSON.stringify(items))
+  } catch {
+    // Storage blocked: the in-memory list still shows what is left.
+  }
+}
+
 function lastDayOfMonth(yearMonth: string): string {
   const [y, m] = yearMonth.split('-').map(Number)
   const day = new Date(Date.UTC(y, m, 0)).getUTCDate()
@@ -177,13 +190,20 @@ export default function Budgets() {
     onError: () => showToast('No se pudo eliminar el presupuesto', 'error'),
   })
 
+  // Only entries that end up in the database leave the browser. An entry whose
+  // category no longer exists stays in localStorage, so nothing is lost silently.
   const importMutation = useMutation({
     mutationFn: async (items: LegacyBudget[]) => {
       const existing = new Set(budgets.map((b) => b.categoryId))
+      const leftover: LegacyBudget[] = []
+      let imported = 0
       for (const item of items) {
         if (existing.has(Number(item.categoryId))) continue
         const category = categories.find((c) => c.id === Number(item.categoryId))
-        if (!category) continue
+        if (!category) {
+          leftover.push(item)
+          continue
+        }
         await createBudget({
           categoryId: category.id,
           label: category.name,
@@ -191,15 +211,26 @@ export default function Budgets() {
           monthlyLimit: Number(item.monthlyLimit),
         })
         existing.add(category.id)
+        imported++
+      }
+      return { imported, leftover }
+    },
+    onSuccess: ({ imported, leftover }) => {
+      keepLegacyBudgets(leftover)
+      setLegacy(leftover)
+      refreshBudgets()
+      if (leftover.length === 0) {
+        showToast('Presupuestos importados', 'success')
+      } else {
+        showToast(`Se importaron ${imported}. ${leftover.length} quedaron en el navegador porque su categoría ya no existe.`, 'error')
       }
     },
-    onSuccess: () => {
-      clearLegacyBudgets()
-      setLegacy([])
+    // A failure halfway leaves storage untouched; the ones already created are
+    // skipped on the next try because their category already has a budget.
+    onError: () => {
       refreshBudgets()
-      showToast('Presupuestos importados', 'success')
+      showToast('No se pudieron importar. Intenta de nuevo.', 'error')
     },
-    onError: () => showToast('No se pudieron importar. Intenta de nuevo.', 'error'),
   })
 
   const budgetByCategory = useMemo(() => new Map(budgets.map((b) => [b.categoryId, b])), [budgets])
@@ -245,6 +276,8 @@ export default function Budgets() {
   }
 
   const pendingLegacy = legacy.filter((l) => !budgetByCategory.has(Number(l.categoryId)))
+  // Without categories every entry would be skipped, so importing is blocked.
+  const categoriesUnavailable = categoriesQuery.isLoading || categoriesQuery.isError || categories.length === 0
 
   return (
     <div>
@@ -289,8 +322,13 @@ export default function Budgets() {
             Hay {pendingLegacy.length} presupuesto{pendingLegacy.length > 1 ? 's' : ''} guardado{pendingLegacy.length > 1 ? 's' : ''} solo en este navegador.
             Impórtalos para que las alertas los usen.
           </p>
+          {categoriesUnavailable && !categoriesQuery.isLoading && (
+            <p style={{ color: 'var(--c-negative)', fontSize: '0.85rem' }}>
+              No se pudieron cargar las categorías. Recarga la página antes de importar; tus presupuestos siguen guardados en este navegador.
+            </p>
+          )}
           <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
-            <button type="button" style={buttonStyle('primary')} disabled={importMutation.isPending || categoriesQuery.isLoading}
+            <button type="button" style={buttonStyle('primary')} disabled={importMutation.isPending || categoriesUnavailable}
               onClick={() => importMutation.mutate(pendingLegacy)}>
               {importMutation.isPending ? 'Importando...' : 'Importar'}
             </button>
