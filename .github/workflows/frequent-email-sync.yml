@@ -1,0 +1,61 @@
+name: Frequent Gmail Sync And Budget Alerts
+
+# Near real-time ingestion: syncs Gmail every 15 minutes and, when the repo
+# variable BUDGET_ALERTS_ENABLED is 'true', sends a budget alert for each new
+# purchase. The daily workflow still renews the Gmail watch and sends the
+# payment reminders. GitHub may delay scheduled runs by a few minutes.
+#
+# Logs of this public repo are public: the sync logs only ids and counts.
+
+on:
+  schedule:
+    # Off the top of the hour, when GitHub's scheduler is busiest.
+    - cron: '7,22,37,52 * * * *'
+  workflow_dispatch:
+
+concurrency:
+  group: gmail-sync
+  cancel-in-progress: false
+
+jobs:
+  sync-emails:
+    name: Sync Emails And Budget Alerts
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      id-token: write
+
+    steps:
+      - uses: actions/checkout@v6.0.2
+
+      - uses: actions/setup-node@v6.3.0
+        with:
+          node-version: '22'
+          cache: 'npm'
+          cache-dependency-path: 'package-lock.json'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Authenticate to Google Cloud
+        id: auth
+        uses: google-github-actions/auth@v3.0.0
+        with:
+          workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
+          token_format: 'access_token'
+
+      - name: Run email sync
+        env:
+          GOOGLE_CLOUD_PROJECT: mail-reader-433802
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          # No GEMINI_API_KEY on purpose: unparsed emails are retried on every run,
+          # and the LLM fallback would be called ~96 times a day per such email.
+          # The daily workflow keeps the LLM fallback; its alerts still apply to
+          # yesterday's purchases.
+          BUDGET_ALERTS_ENABLED: ${{ vars.BUDGET_ALERTS_ENABLED }}
+          FIREBASE_ACCESS_TOKEN: ${{ steps.auth.outputs.access_token }}
+          DASHBOARD_URL: ${{ vars.DASHBOARD_URL }}
+        run: npx tsx scripts/production/sync-emails-daily.ts

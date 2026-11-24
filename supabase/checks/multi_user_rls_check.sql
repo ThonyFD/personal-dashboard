@@ -1,12 +1,9 @@
 -- Multi-user RLS check. NOT a migration: run by hand in the Supabase SQL editor
 -- after 20261102000002_multi_user_rls.sql.
 --
--- Before running, replace locally (never commit the filled-in copy):
---   <OWNER_UID>       owner uid from Authentication > Users
---   <HABITS_BEFORE>   SELECT count(*) FROM user_habits;  (taken before the migration)
---   <LOGS_BEFORE>     SELECT count(*) FROM habit_logs;
---   <MOODS_BEFORE>    SELECT count(*) FROM mood_logs;
---   <TX_BEFORE>       SELECT count(*) FROM transactions;
+-- Nothing to fill in: the owner uid comes from app_owner, and the totals are counted
+-- as postgres (which bypasses RLS) at the start of the block, then compared with what
+-- the owner sees through RLS. The migration only adds columns, so no row can be lost.
 --
 -- Everything runs in one DO block that always ends with an exception, so every
 -- write (including the throwaway user) is rolled back. The results are in the
@@ -14,7 +11,11 @@
 
 DO $$
 DECLARE
-  owner_uid uuid := '<OWNER_UID>';
+  owner_uid uuid := (SELECT user_id FROM public.app_owner LIMIT 1);
+  habits_total bigint := (SELECT count(*) FROM public.user_habits);
+  logs_total bigint := (SELECT count(*) FROM public.habit_logs);
+  moods_total bigint := (SELECT count(*) FROM public.mood_logs);
+  tx_total bigint := (SELECT count(*) FROM public.transactions);
   other_uid uuid := '00000000-0000-0000-0000-00000000c0de';
   owner_habit bigint;
   other_habit bigint;
@@ -37,11 +38,11 @@ BEGIN
 
     -- Owner.
     PERFORM set_config('request.jwt.claims', json_build_object('sub', owner_uid, 'role', 'authenticated')::text, true);
-    results := results || format(' owner_sees_all_habits=%s', (SELECT count(*) FROM public.user_habits) = <HABITS_BEFORE>);
-    results := results || format(' owner_sees_all_logs=%s', (SELECT count(*) FROM public.habit_logs) = <LOGS_BEFORE>);
-    results := results || format(' owner_sees_all_moods=%s', (SELECT count(*) FROM public.mood_logs) = <MOODS_BEFORE>);
+    results := results || format(' owner_sees_all_habits=%s', (SELECT count(*) FROM public.user_habits) = habits_total);
+    results := results || format(' owner_sees_all_logs=%s', (SELECT count(*) FROM public.habit_logs) = logs_total);
+    results := results || format(' owner_sees_all_moods=%s', (SELECT count(*) FROM public.mood_logs) = moods_total);
     results := results || format(' owner_is_owner=%s', public.is_owner());
-    results := results || format(' owner_sees_all_transactions=%s', (SELECT count(*) FROM public.transactions) = <TX_BEFORE>);
+    results := results || format(' owner_sees_all_transactions=%s', (SELECT count(*) FROM public.transactions) = tx_total);
     INSERT INTO public.mood_logs (log_date, mood_score) VALUES ('2099-01-01', 3);
 
     -- Other account.

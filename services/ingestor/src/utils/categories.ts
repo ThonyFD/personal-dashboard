@@ -18,6 +18,7 @@ export type Category =
   | 'Transfers'
   | 'Investment'
   | 'Pago Mensual'
+  | 'Home Care'
   | 'Other';
 
 /**
@@ -39,17 +40,33 @@ export function autoCategorizeMerchant(merchantName: string): Category {
     name.includes('SUBWAY') ||
     name.includes('STARBUCKS') ||
     name.includes('DUNKIN') ||
-    name.includes('WENDYS') ||
+    // WENDY also covers WENDY'S, which the old WENDYS keyword missed.
+    name.includes('WENDY') ||
     name.includes('TACO') ||
     name.includes('SUSHI') ||
     name.includes('GRILL') ||
     name.includes('BISTRO') ||
     name.includes('DINER') ||
     name.includes('BAKERY') ||
-    name.includes('BAR') ||
-    name.includes('PUB') ||
+    // Whole word only: a plain includes() sent names like ROOSEVELTBARBERSHOP here.
+    /\bBAR\b/.test(name) ||
+    // Whole word only: a plain includes() matched PUB inside words like REPUBLICA.
+    /\bPUB\b/.test(name) ||
     name.includes('GEISHA') ||
-    name.includes('LOTUS HOUSE')
+    name.includes('LOTUS HOUSE') ||
+    name.includes('TIM HORTONS') ||
+    name.includes('POPEYES') ||
+    name.includes('PF CHANG') ||
+    name.includes('DIM SUM') ||
+    name.includes('PIO PIO') ||
+    name.includes('DAIRY QUEEN') ||
+    name.includes('DON LEE') ||
+    name.includes('GELARTI') ||
+    name.includes('REFRESQUERIA') ||
+    name.includes('CHICKEN') ||
+    name.includes('CINNABON') ||
+    /\bRAMEN\b/.test(name) ||
+    /\bFONDA\b/.test(name)
   ) {
     return 'Food & Dining';
   }
@@ -64,7 +81,10 @@ export function autoCategorizeMerchant(merchantName: string): Category {
     name.includes('COSTCO') ||
     name.includes('RIBA SMITH') ||
     name.includes('EL REY') ||
-    name.includes('XTRA')
+    /\bREY\b/.test(name) ||
+    name.includes('XTRA') ||
+    name.includes('PRICESMART') ||
+    name.includes('ABARROTERIA')
   ) {
     return 'Groceries';
   }
@@ -74,7 +94,9 @@ export function autoCategorizeMerchant(merchantName: string): Category {
     name.includes('UBER') ||
     name.includes('LYFT') ||
     name.includes('TAXI') ||
-    name.includes('GAS') ||
+    // Whole word only: a plain includes() matched GAS inside GASTRONOMIA or VEGAS.
+    /\bGAS\b/.test(name) ||
+    name.includes('GASOLINERA') ||
     name.includes('FUEL') ||
     name.includes('PARKING') ||
     name.includes('TOLL') ||
@@ -83,7 +105,16 @@ export function autoCategorizeMerchant(merchantName: string): Category {
     name.includes('CABIFY') ||
     name.includes('SHELL') ||
     name.includes('CHEVRON') ||
-    name.includes('PUMA ENERGY')
+    name.includes('PUMA ENERGY') ||
+    name.includes('JMJ PUMA') ||
+    name.includes('PUMA ESTACION') ||
+    name.includes('TERPEL') ||
+    name.includes('TEXACO') ||
+    // Delta gas stations, but not Delta the airline (Travel, checked later).
+    (/\bDELTA\b/.test(name) && !name.includes('AIR')) ||
+    /\bESTACION\b/.test(name) ||
+    name.includes('CAR WASH') ||
+    name.includes('PREMIUM WASH')
   ) {
     return 'Transportation';
   }
@@ -103,9 +134,18 @@ export function autoCategorizeMerchant(merchantName: string): Category {
     name.includes('XBOX') ||
     name.includes('NINTENDO') ||
     name.includes('STEAM') ||
-    name.includes('GAME')
+    name.includes('GAME') ||
+    name.includes('CINEPOLIS') ||
+    name.includes('TICKETPLUS') ||
+    name.includes('PANATICKETS') ||
+    name.includes('CRUNCHYROLL')
   ) {
     return 'Entertainment';
+  }
+
+  // Barbershops before Shopping, whose SHOP keyword would claim them.
+  if (name.includes('BARBER')) {
+    return 'Services';
   }
 
   // Shopping
@@ -120,7 +160,10 @@ export function autoCategorizeMerchant(merchantName: string): Category {
     name.includes('NIKE') ||
     name.includes('ADIDAS') ||
     name.includes('ZARA') ||
-    name.includes('H&M')
+    name.includes('H&M') ||
+    name.includes('CONWAY') ||
+    name.includes('MULTIMAX') ||
+    name.includes('OUTDOORS')
   ) {
     return 'Shopping';
   }
@@ -135,7 +178,11 @@ export function autoCategorizeMerchant(merchantName: string): Category {
     name.includes('UTILITY') ||
     name.includes('CWP') ||
     name.includes('AES') ||
-    name.includes('IDAAN')
+    name.includes('IDAAN') ||
+    name.includes('MAPFRE') ||
+    name.includes('SEGUROS') ||
+    /\bTIGO\b/.test(name) ||
+    /\bASSA\b/.test(name)
   ) {
     return 'Bills & Utilities';
   }
@@ -151,9 +198,17 @@ export function autoCategorizeMerchant(merchantName: string): Category {
     name.includes('DENTAL') ||
     name.includes('CVS') ||
     name.includes('WALGREENS') ||
-    name.includes('FARMACIAS')
+    // FARMA and PHARMA also cover FARMACIA(S) and PHARMACY.
+    name.includes('FARMA') ||
+    name.includes('PHARMA') ||
+    name.includes('MINIMED')
   ) {
     return 'Healthcare';
+  }
+
+  // Home Care
+  if (name.includes('NOVEY') || name.includes('DO IT CENTER')) {
+    return 'Home Care';
   }
 
   // Travel
@@ -176,6 +231,7 @@ export function autoCategorizeMerchant(merchantName: string): Category {
   if (
     name.includes('SCHOOL') ||
     name.includes('UNIVERSITY') ||
+    name.includes('UNIVERSIDAD') ||
     name.includes('COLLEGE') ||
     name.includes('EDUCATION') ||
     name.includes('COURSE') ||
@@ -191,7 +247,8 @@ export function autoCategorizeMerchant(merchantName: string): Category {
     name.includes('ADMIRAL') ||
     name.includes('MARKETS') ||
     name.includes('TRADING') ||
-    name.includes('BROKER') ||
+    // Customs brokers handle imports, not investments.
+    (name.includes('BROKER') && !name.includes('CUSTOMS')) ||
     name.includes('INVEST') ||
     name.includes('SECURITIES') ||
     name.includes('STOCK') ||
@@ -209,7 +266,14 @@ export function autoCategorizeMerchant(merchantName: string): Category {
   if (
     name.includes('SUBSCRIPTION') ||
     name.includes('MONTHLY') ||
-    name.includes('MEMBERSHIP')
+    name.includes('MEMBERSHIP') ||
+    name.includes('OPENAI') ||
+    name.includes('CHATGPT') ||
+    name.includes('ANTHROPIC') ||
+    name.includes('GOOGLE ONE') ||
+    name.includes('GOOGLE *CLOUD') ||
+    name.includes('GOOGLE CLOUD') ||
+    name.includes('APPLE.COM')
   ) {
     return 'Subscriptions';
   }
@@ -244,7 +308,8 @@ export function autoCategorizeMerchant(merchantName: string): Category {
     name.includes('REPAIR') ||
     name.includes('CLEANING') ||
     name.includes('SALON') ||
-    name.includes('SPA')
+    // Whole word only: a plain includes() sent names with ESPANA here.
+    /\bSPA\b/.test(name)
   ) {
     return 'Services';
   }

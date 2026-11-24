@@ -112,7 +112,6 @@ export class DatabaseClient {
         event: 'merchant_upserted',
         duration_ms: timer(),
         merchantId,
-        normalizedName: data.normalizedName,
       });
 
       return merchantId as number;
@@ -177,8 +176,6 @@ export class DatabaseClient {
         duration_ms: timer(),
         transactionId: row.id,
         idempotencyKey: data.idempotencyKey,
-        amount: data.amount,
-        merchant: data.merchantName,
       });
 
       return row.id;

@@ -47,6 +47,10 @@ jobs:
   sync-emails:
     name: Sync Emails
     runs-on: ubuntu-latest
+    # Shared with frequent-email-sync.yml so two syncs never overlap.
+    concurrency:
+      group: gmail-sync
+      cancel-in-progress: false
     permissions:
       contents: read
       id-token: write
@@ -64,10 +68,12 @@ jobs:
         run: npm ci
 
       - name: Authenticate to Google Cloud
+        id: auth
         uses: google-github-actions/auth@v3.0.0
         with:
           workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
           service_account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
+          token_format: 'access_token'
 
       - name: Run email sync
         env:
@@ -76,6 +82,10 @@ jobs:
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           LOOKBACK_DAYS: ${{ inputs.lookback_days }}
+          # Budget alerts: repo variable, 'true' to turn on. Unset means off.
+          BUDGET_ALERTS_ENABLED: ${{ vars.BUDGET_ALERTS_ENABLED }}
+          FIREBASE_ACCESS_TOKEN: ${{ steps.auth.outputs.access_token }}
+          DASHBOARD_URL: ${{ vars.DASHBOARD_URL }}
         run: npx tsx scripts/production/sync-emails-daily.ts
 
       - name: Upload logs on failure

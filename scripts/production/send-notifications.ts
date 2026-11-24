@@ -4,37 +4,25 @@
  * Run daily via GitHub Actions (same schedule as sync).
  *
  * Env vars required:
- *   GOOGLE_CLOUD_PROJECT  — GCP project ID (for Firebase Admin SDK)
+ *   GOOGLE_CLOUD_PROJECT : GCP project ID (for Firebase Admin SDK)
+ *   FIREBASE_ACCESS_TOKEN: OAuth access token from google-github-actions/auth
  *   SUPABASE_URL
  *   SUPABASE_SERVICE_ROLE_KEY
  */
 
-import { initializeApp } from 'firebase-admin/app';
-import { getMessaging } from 'firebase-admin/messaging';
 import { createClient } from '@supabase/supabase-js';
 import { fileURLToPath } from 'url';
 import {
   getPendingPaymentsNextDays,
-  getActiveSubscriptions,
-  deactivateSubscription,
   type PendingPayment,
 } from '@personal-dashboard/supabase-queries';
+import { DASHBOARD_URL, sendPushToActiveSubscriptions } from './lib/push';
 
 const supabase = createClient(
   process.env.SUPABASE_URL ?? '',
   process.env.SUPABASE_SERVICE_ROLE_KEY ?? '',
   { auth: { persistSession: false } },
 );
-
-initializeApp({
-  projectId: process.env.GOOGLE_CLOUD_PROJECT || 'mail-reader-433802',
-  credential: {
-    getAccessToken: async () => ({
-      access_token: process.env.FIREBASE_ACCESS_TOKEN ?? '',
-      expires_in: 3600,
-    }),
-  },
-});
 
 function buildNotificationText(payments: PendingPayment[]): { title: string; body: string } {
   const totalAmount = payments.reduce((s, p) => s + p.amount, 0);
@@ -65,52 +53,22 @@ async function run(): Promise<void> {
   const payments = await getPendingPaymentsNextDays(supabase, 4);
 
   if (payments.length === 0) {
-    console.log('✓ No pending payments — nothing to notify');
+    console.log('✓ No pending payments, nothing to notify');
     return;
   }
 
   const { title, body } = buildNotificationText(payments);
-  const totalAmount = payments.reduce((s, p) => s + p.amount, 0);
 
-  const subs = await getActiveSubscriptions(supabase);
+  const result = await sendPushToActiveSubscriptions(supabase, {
+    title,
+    body,
+    tag: 'payment-reminder',
+    link: `${DASHBOARD_URL}/monthly-control`,
+    requireInteraction: true,
+  });
 
-  if (subs.length === 0) {
-    console.log('✓ No active subscriptions');
-    return;
-  }
-
-  let sent = 0, failed = 0;
-
-  for (const sub of subs) {
-    try {
-      const fcmToken = sub.keys.fcmToken || sub.endpoint;
-
-      await getMessaging().send({
-        token: fcmToken,
-        notification: { title, body },
-        webpush: {
-          notification: { icon: '/logo.svg', tag: 'payment-reminder', requireInteraction: true },
-          fcmOptions: { link: 'https://personal-finantial-dashboard.web.app/monthly-control' },
-        },
-      });
-
-      console.log(`  ✓ Sent to ${sub.user_email}`);
-      sent++;
-    } catch (err: any) {
-      if (
-        err.code === 'messaging/invalid-registration-token' ||
-        err.code === 'messaging/registration-token-not-registered'
-      ) {
-        await deactivateSubscription(supabase, sub.id);
-        console.log(`  ⊘ Invalid token deactivated (${sub.user_email})`);
-      } else {
-        console.error(`  ✗ Failed (${sub.user_email}):`, err.message);
-      }
-      failed++;
-    }
-  }
-
-  console.log(`\n✅ Done — sent: ${sent}, failed: ${failed}, payments: ${payments.length}, amount: $${totalAmount.toFixed(2)}`);
+  // Counts only: these logs are public (public repo), so no emails or amounts.
+  console.log(`\n✅ Done. sent: ${result.sent}, failed: ${result.failed}, deactivated: ${result.deactivated}, payments: ${payments.length}`);
 }
 
 if (fileURLToPath(import.meta.url) === process.argv[1]) {

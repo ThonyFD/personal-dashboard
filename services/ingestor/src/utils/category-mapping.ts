@@ -25,6 +25,7 @@ export const CATEGORY_ID_MAP: Record<Category, number> = {
   'Investment': 13,
   'Pago Mensual': 14,
   'Other': 15,
+  'Home Care': 17,
 };
 
 /**
