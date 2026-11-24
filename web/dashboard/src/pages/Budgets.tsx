@@ -1,6 +1,6 @@
-import { useMemo, useState, type CSSProperties, type FormEvent } from 'react'
+import { useEffect, useMemo, useState, type CSSProperties, type FormEvent } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { Bar, BarChart, CartesianGrid, Legend, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
+import { Bar, BarChart, CartesianGrid, Cell, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
 import { panamaDate } from '@personal-dashboard/supabase-queries'
 import {
   createBudget,
@@ -17,6 +17,7 @@ import {
 import { fetchCategories } from '../api/categories-client'
 import { formatCurrency } from '../utils/format'
 import { useChartColors } from '../theme/AppearanceContext'
+import './Budgets.css'
 
 // Budgets used to live only in this browser. The page offers to import them once.
 const LEGACY_STORAGE_KEY = 'financial_budgets'
@@ -85,30 +86,13 @@ const LEVEL_COLOR: Record<Level, string> = {
   over: 'var(--c-negative)',
 }
 
-const inputStyle: CSSProperties = {
-  width: '100%',
-  padding: '0.5rem',
-  border: '1px solid var(--c-hairline)',
-  borderRadius: '4px',
-  background: 'var(--c-surface)',
-  color: 'inherit',
-  fontSize: '0.9rem',
-}
+type ButtonKind = 'primary' | 'ghost' | 'danger'
 
-const labelStyle: CSSProperties = { display: 'block', marginBottom: '0.35rem', fontWeight: 500, fontSize: '0.9rem' }
+/** Class list for a page button; `extra` adds size or tone modifiers. */
+const btn = (kind: ButtonKind, extra = '') => `budgets-btn budgets-btn--${kind}${extra ? ` ${extra}` : ''}`
+const CARD_ACTION = 'budgets-btn--sm budgets-btn--quiet'
 
-function buttonStyle(kind: 'primary' | 'ghost' | 'danger'): CSSProperties {
-  const base: CSSProperties = {
-    padding: '0.45rem 0.9rem',
-    borderRadius: '4px',
-    cursor: 'pointer',
-    fontSize: '0.85rem',
-    border: '1px solid transparent',
-  }
-  if (kind === 'primary') return { ...base, backgroundColor: 'var(--c-green)', color: 'var(--c-on-accent)' }
-  if (kind === 'danger') return { ...base, backgroundColor: 'var(--c-negative)', color: 'var(--c-on-accent)' }
-  return { ...base, backgroundColor: 'transparent', color: 'inherit', borderColor: 'var(--c-hairline)' }
-}
+const levelVar = (level: Level) => ({ '--level': LEVEL_COLOR[level] }) as CSSProperties
 
 interface FormState {
   id?: number
@@ -260,6 +244,18 @@ export default function Budgets() {
     saveMutation.mutate(form)
   }
 
+  // Escape closes the dialog, unless a save is in flight.
+  const dialogOpen = form !== null
+  const savePending = saveMutation.isPending
+  useEffect(() => {
+    if (!dialogOpen) return
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && !savePending) setForm(null)
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [dialogOpen, savePending])
+
   if (statusQuery.isLoading || budgetsQuery.isLoading) {
     return <div className="loading">Cargando presupuestos...</div>
   }
@@ -280,37 +276,33 @@ export default function Budgets() {
   const categoriesUnavailable = categoriesQuery.isLoading || categoriesQuery.isError || categories.length === 0
 
   return (
-    <div>
+    <div className="budgets-page">
       {toast && (
-        <div role="status" className="skin-flat-card" style={{
-          position: 'fixed', bottom: '1.5rem', right: '1.5rem', zIndex: 2000,
-          padding: '0.75rem 1.25rem', borderRadius: '6px',
-          backgroundColor: toast.type === 'success' ? 'var(--c-green)' : 'var(--c-negative)',
-          color: 'var(--c-on-accent)', fontWeight: 500,
-        }}>
+        <div role="status" className="skin-flat-card budgets-toast"
+          style={{ backgroundColor: toast.type === 'success' ? 'var(--c-green)' : 'var(--c-negative)' }}>
           {toast.message}
         </div>
       )}
 
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', gap: '1rem', flexWrap: 'wrap', marginBottom: '1.5rem' }}>
+      <div className="budgets-header">
         <div>
-          <h1 style={{ marginBottom: '0.25rem' }}>Presupuestos</h1>
-          <p style={{ margin: 0, color: 'var(--c-text-2)', fontSize: '0.9rem' }}>
-            Tope mensual por categoría. Las alertas push usan estas mismas cifras.
-          </p>
+          <h1>Presupuestos</h1>
+          <p>Tope mensual por categoría. Las alertas push usan estas mismas cifras.</p>
         </div>
-        <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center', flexWrap: 'wrap' }}>
-          <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.9rem' }}>
+        <div className="budgets-toolbar">
+          <label className="budgets-month">
             Mes
             <input
               type="month"
+              className="budgets-field"
               value={selectedMonth}
               max={currentMonth}
               onChange={(e) => e.target.value && setSelectedMonth(e.target.value)}
-              style={{ ...inputStyle, width: 'auto' }}
+              style={{ width: 'auto' }}
             />
           </label>
-          <button type="button" onClick={openCreate} disabled={freeCategories.length === 0} style={buttonStyle('primary')}>
+          <button type="button" className={btn('primary')} onClick={openCreate} disabled={freeCategories.length === 0}
+            title={freeCategories.length === 0 ? 'Todas las categorías ya tienen presupuesto' : undefined}>
             Nuevo presupuesto
           </button>
         </div>
@@ -318,21 +310,21 @@ export default function Budgets() {
 
       {pendingLegacy.length > 0 && (
         <div className="card" style={{ marginBottom: '1.5rem', borderLeft: '4px solid var(--c-warning)' }}>
-          <p style={{ marginTop: 0 }}>
+          <p style={{ marginTop: 0, marginBottom: '0.75rem' }}>
             Hay {pendingLegacy.length} presupuesto{pendingLegacy.length > 1 ? 's' : ''} guardado{pendingLegacy.length > 1 ? 's' : ''} solo en este navegador.
             Impórtalos para que las alertas los usen.
           </p>
           {categoriesUnavailable && !categoriesQuery.isLoading && (
-            <p style={{ color: 'var(--c-negative)', fontSize: '0.85rem' }}>
+            <p style={{ color: 'var(--c-negative)', fontSize: '0.85rem', marginBottom: '0.75rem' }}>
               No se pudieron cargar las categorías. Recarga la página antes de importar; tus presupuestos siguen guardados en este navegador.
             </p>
           )}
           <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
-            <button type="button" style={buttonStyle('primary')} disabled={importMutation.isPending || categoriesUnavailable}
+            <button type="button" className={btn('primary')} disabled={importMutation.isPending || categoriesUnavailable}
               onClick={() => importMutation.mutate(pendingLegacy)}>
               {importMutation.isPending ? 'Importando...' : 'Importar'}
             </button>
-            <button type="button" style={buttonStyle('ghost')} disabled={importMutation.isPending}
+            <button type="button" className={btn('ghost')} disabled={importMutation.isPending}
               onClick={() => { clearLegacyBudgets(); setLegacy([]) }}>
               Descartar
             </button>
@@ -363,54 +355,65 @@ export default function Budgets() {
       </div>
 
       {status.length === 0 ? (
-        <div className="card" style={{ marginBottom: '1.5rem' }}>
-          <p style={{ margin: 0 }}>Todavía no hay presupuestos activos. Crea uno para empezar a recibir alertas.</p>
+        <div className="card budgets-empty">
+          <p>Todavía no hay presupuestos activos. Crea uno para empezar a recibir alertas.</p>
+          {freeCategories.length > 0 && (
+            <button type="button" className={btn('primary')} onClick={openCreate}>Crear presupuesto</button>
+          )}
         </div>
       ) : (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 280px), 1fr))', gap: '1rem', marginBottom: '1.5rem' }}>
+        <div className="budgets-grid">
           {status.map((row) => {
             const budget = budgetByCategory.get(row.categoryId)
             const level = levelOf(row)
             const pct = (row.spent / row.monthlyLimit) * 100
             const perDay = row.remaining > 0 && row.daysLeft > 0 ? row.remaining / row.daysLeft : 0
             return (
-              <div key={row.categoryId} className="card" style={{ margin: 0, borderTop: `3px solid ${LEVEL_COLOR[level]}` }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: '0.5rem' }}>
-                  <h3 style={{ margin: 0 }}>{row.emoji} {row.label}</h3>
-                  <span style={{ color: LEVEL_COLOR[level], fontWeight: 600 }}>{Math.floor(pct)} %</span>
+              <div key={row.categoryId} className="card budget-card" style={{
+                ...levelVar(level),
+                borderColor: level === 'ok' ? undefined : `color-mix(in srgb, ${LEVEL_COLOR[level]} 40%, transparent)`,
+              }}>
+                <div className="budget-card__head">
+                  <div>
+                    <h3 className="budget-card__title">{row.emoji} {row.label}</h3>
+                    <div className="budget-card__category">{categoryName(row.categoryId)}</div>
+                  </div>
+                  <span className="budget-pill">{Math.floor(pct)} %</span>
                 </div>
-                <div style={{ fontSize: '0.8rem', color: 'var(--c-text-2)', marginBottom: '0.75rem' }}>{categoryName(row.categoryId)}</div>
 
-                <div role="progressbar" aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.min(100, Math.round(pct))}
-                  aria-label={`${row.label}: ${Math.floor(pct)} % del tope`}
-                  style={{ height: '8px', borderRadius: '4px', background: 'var(--c-surface-2)', overflow: 'hidden', marginBottom: '0.75rem' }}>
-                  <div style={{ width: `${Math.min(100, pct)}%`, height: '100%', background: LEVEL_COLOR[level] }} />
+                <div role="progressbar" className="budget-bar" aria-valuemin={0} aria-valuemax={100}
+                  aria-valuenow={Math.min(100, Math.round(pct))} aria-label={`${row.label}: ${Math.floor(pct)} % del tope`}>
+                  <div className="budget-bar__fill" style={{ width: `${Math.min(100, pct)}%` }} />
                 </div>
 
-                <div style={{ fontSize: '0.9rem', lineHeight: 1.6 }}>
-                  <div>{money(row.spent)} de {money(row.monthlyLimit)}</div>
+                <div className="budget-card__amount">
+                  {money(row.spent)} <span>de {money(row.monthlyLimit)}</span>
+                </div>
+                <div className="budget-card__meta">
                   {row.remaining >= 0 ? (
                     <div>Te quedan <strong>{money(row.remaining)}</strong>{isCurrentMonth ? ` para ${row.daysLeft} ${row.daysLeft === 1 ? 'día' : 'días'}` : ''}</div>
                   ) : (
-                    <div style={{ color: 'var(--c-negative)' }}>Te pasaste <strong>{money(-row.remaining)}</strong></div>
+                    <div style={{ color: 'var(--c-negative)' }}>Te pasaste <strong style={{ color: 'inherit' }}>{money(-row.remaining)}</strong></div>
                   )}
-                  {isCurrentMonth && (
-                    <div style={{ color: 'var(--c-text-2)' }}>
-                      Disponible por día: <strong style={{ color: 'inherit' }}>{money(perDay)}</strong>
-                    </div>
+                  {isCurrentMonth && perDay > 0 && (
+                    <div>Disponible por día: <strong>{money(perDay)}</strong></div>
                   )}
                 </div>
 
                 {budget && (
-                  <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.9rem', flexWrap: 'wrap' }}>
-                    <button type="button" style={buttonStyle('ghost')} onClick={() => openEdit(budget)}>Editar</button>
-                    <button type="button" style={buttonStyle('ghost')} disabled={toggleMutation.isPending}
+                  <div className="budget-card__actions">
+                    <button type="button" className={btn('ghost', CARD_ACTION)} onClick={() => openEdit(budget)}>Editar</button>
+                    <button type="button" className={btn('ghost', CARD_ACTION)} disabled={toggleMutation.isPending}
                       onClick={() => toggleMutation.mutate(budget)}>Pausar</button>
                     {confirmDeleteId === budget.id ? (
-                      <button type="button" style={buttonStyle('danger')} disabled={deleteMutation.isPending}
-                        onClick={() => deleteMutation.mutate(budget.id)}>Sí, eliminar</button>
+                      <>
+                        <button type="button" className={btn('danger', 'budgets-btn--sm')} disabled={deleteMutation.isPending}
+                          onClick={() => deleteMutation.mutate(budget.id)}>Sí, eliminar</button>
+                        <button type="button" className={btn('ghost', CARD_ACTION)} onClick={() => setConfirmDeleteId(null)}>No</button>
+                      </>
                     ) : (
-                      <button type="button" style={buttonStyle('ghost')} onClick={() => setConfirmDeleteId(budget.id)}>Eliminar</button>
+                      <button type="button" className={btn('ghost', `${CARD_ACTION} budgets-btn--quiet-danger`)}
+                        onClick={() => setConfirmDeleteId(budget.id)}>Eliminar</button>
                     )}
                   </div>
                 )}
@@ -423,15 +426,27 @@ export default function Budgets() {
       {status.length > 0 && (
         <div className="card" style={{ marginBottom: '1.5rem' }}>
           <h2>Gastado vs tope</h2>
+          <p className="budgets-section-hint">
+            Barra gris: tope. Barra de color: gastado (verde bien, ámbar desde 80 %, rojo excedido).
+          </p>
           <ResponsiveContainer width="100%" height={280}>
-            <BarChart data={status.map((r) => ({ name: r.label, Tope: r.monthlyLimit, Gastado: r.spent }))}>
-              <CartesianGrid strokeDasharray="3 3" stroke={chart.grid} />
-              <XAxis dataKey="name" tick={{ fill: chart.text }} />
-              <YAxis tick={{ fill: chart.text }} />
-              <Tooltip formatter={(value: number) => money(value)} />
-              <Legend />
-              <Bar dataKey="Tope" fill="var(--c-green)" />
-              <Bar dataKey="Gastado" fill="var(--c-violet)" />
+            <BarChart data={status.map((r) => ({ name: r.label, Tope: r.monthlyLimit, Gastado: r.spent, level: levelOf(r) }))}
+              barSize={28} barGap={4} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
+              <CartesianGrid strokeDasharray="3 3" stroke={chart.grid} vertical={false} />
+              <XAxis dataKey="name" tick={{ fill: chart.text, fontSize: 12 }} tickLine={false} axisLine={{ stroke: chart.grid }} />
+              <YAxis tick={{ fill: chart.text, fontSize: 12 }} tickLine={false} axisLine={false} width={56}
+                tickFormatter={(v: number) => `$${v}`} />
+              <Tooltip
+                formatter={(value: number) => money(value)}
+                cursor={{ fill: chart.grid, opacity: 0.35 }}
+                contentStyle={{ backgroundColor: chart.tooltipBg, border: `1px solid ${chart.grid}`, borderRadius: 8 }}
+                labelStyle={{ color: chart.text, marginBottom: 4 }}
+                itemStyle={{ color: chart.text }}
+              />
+              <Bar dataKey="Tope" fill="var(--c-muted)" fillOpacity={0.35} radius={[4, 4, 0, 0]} />
+              <Bar dataKey="Gastado" radius={[4, 4, 0, 0]}>
+                {status.map((r) => <Cell key={r.categoryId} fill={LEVEL_COLOR[levelOf(r)]} />)}
+              </Bar>
             </BarChart>
           </ResponsiveContainer>
         </div>
@@ -440,16 +455,22 @@ export default function Budgets() {
       {pausedBudgets.length > 0 && (
         <div className="card" style={{ marginBottom: '1.5rem' }}>
           <h2>Pausados</h2>
-          <p style={{ marginTop: 0, color: 'var(--c-text-2)', fontSize: '0.9rem' }}>No cuentan para las alertas.</p>
+          <p className="budgets-section-hint">No cuentan para las alertas.</p>
           {pausedBudgets.map((b) => (
-            <div key={b.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '0.5rem', padding: '0.5rem 0', borderTop: '1px solid var(--c-hairline)', flexWrap: 'wrap' }}>
+            <div key={b.id} className="budgets-paused-row">
               <span>{b.emoji} {b.label} · {money(b.monthlyLimit)}</span>
-              <span style={{ display: 'flex', gap: '0.5rem' }}>
-                <button type="button" style={buttonStyle('ghost')} disabled={toggleMutation.isPending} onClick={() => toggleMutation.mutate(b)}>Activar</button>
+              <span style={{ display: 'flex', gap: '0.4rem' }}>
+                <button type="button" className={btn('ghost', 'budgets-btn--sm')} disabled={toggleMutation.isPending}
+                  onClick={() => toggleMutation.mutate(b)}>Activar</button>
                 {confirmDeleteId === b.id ? (
-                  <button type="button" style={buttonStyle('danger')} disabled={deleteMutation.isPending} onClick={() => deleteMutation.mutate(b.id)}>Sí, eliminar</button>
+                  <>
+                    <button type="button" className={btn('danger', 'budgets-btn--sm')} disabled={deleteMutation.isPending}
+                      onClick={() => deleteMutation.mutate(b.id)}>Sí, eliminar</button>
+                    <button type="button" className={btn('ghost', CARD_ACTION)} onClick={() => setConfirmDeleteId(null)}>No</button>
+                  </>
                 ) : (
-                  <button type="button" style={buttonStyle('ghost')} onClick={() => setConfirmDeleteId(b.id)}>Eliminar</button>
+                  <button type="button" className={btn('ghost', `${CARD_ACTION} budgets-btn--quiet-danger`)}
+                    onClick={() => setConfirmDeleteId(b.id)}>Eliminar</button>
                 )}
               </span>
             </div>
@@ -468,20 +489,18 @@ export default function Budgets() {
       />
 
       {form && (
-        <div style={{
-          position: 'fixed', inset: 0, zIndex: 1000, padding: '16px',
-          backgroundColor: 'color-mix(in srgb, var(--c-scrim) 50%, transparent)',
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-        }}>
-          <form onSubmit={submitForm} role="dialog" aria-modal="true" aria-labelledby="budget-form-title" style={{
-            backgroundColor: 'var(--c-surface)', padding: '1.5rem', borderRadius: '8px', width: '420px', maxWidth: '100%',
-          }}>
-            <h3 id="budget-form-title" style={{ marginTop: 0 }}>{form.id ? 'Editar presupuesto' : 'Nuevo presupuesto'}</h3>
+        <div className="budgets-scrim"
+          onMouseDown={(e) => { if (e.target === e.currentTarget && !saveMutation.isPending) setForm(null) }}>
+          <form onSubmit={submitForm} role="dialog" aria-modal="true" aria-labelledby="budget-form-title" className="budgets-dialog">
+            <h3 id="budget-form-title">{form.id ? 'Editar presupuesto' : 'Nuevo presupuesto'}</h3>
+            <p className="budgets-dialog__hint">
+              {form.id ? categoryName(form.categoryId as number) : 'Elige la categoría y cuánto quieres gastar como máximo al mes.'}
+            </p>
 
             {!form.id && (
-              <div style={{ marginBottom: '1rem' }}>
-                <label htmlFor="budget-category" style={labelStyle}>Categoría</label>
-                <select id="budget-category" required value={form.categoryId} style={inputStyle}
+              <div className="budgets-dialog__row">
+                <label htmlFor="budget-category" className="budgets-label">Categoría</label>
+                <select id="budget-category" required autoFocus value={form.categoryId} className="budgets-field"
                   onChange={(e) => {
                     const category = categories.find((c) => c.id === Number(e.target.value))
                     setForm({ ...form, categoryId: Number(e.target.value), label: category?.name ?? form.label, emoji: category?.icon || form.emoji })
@@ -491,28 +510,29 @@ export default function Budgets() {
               </div>
             )}
 
-            <div style={{ display: 'grid', gridTemplateColumns: '4.5rem 1fr', gap: '0.75rem', marginBottom: '1rem' }}>
+            <div className="budgets-dialog__pair">
               <div>
-                <label htmlFor="budget-emoji" style={labelStyle}>Emoji</label>
-                <input id="budget-emoji" value={form.emoji} maxLength={8} style={inputStyle}
+                <label htmlFor="budget-emoji" className="budgets-label">Emoji</label>
+                <input id="budget-emoji" value={form.emoji} maxLength={8} className="budgets-field" style={{ textAlign: 'center' }}
                   onChange={(e) => setForm({ ...form, emoji: e.target.value })} />
               </div>
               <div>
-                <label htmlFor="budget-label" style={labelStyle}>Nombre en la alerta</label>
-                <input id="budget-label" required value={form.label} maxLength={40} placeholder="Comida fuera" style={inputStyle}
-                  onChange={(e) => setForm({ ...form, label: e.target.value })} />
+                <label htmlFor="budget-label" className="budgets-label">Nombre en la alerta</label>
+                <input id="budget-label" required autoFocus={Boolean(form.id)} value={form.label} maxLength={40} placeholder="Comida fuera"
+                  className="budgets-field" onChange={(e) => setForm({ ...form, label: e.target.value })} />
               </div>
             </div>
 
-            <div style={{ marginBottom: '1.25rem' }}>
-              <label htmlFor="budget-limit" style={labelStyle}>Tope mensual (USD)</label>
-              <input id="budget-limit" type="number" required min="0.01" step="0.01" inputMode="decimal" value={form.monthlyLimit} style={inputStyle}
+            <div className="budgets-dialog__row">
+              <label htmlFor="budget-limit" className="budgets-label">Tope mensual (USD)</label>
+              <input id="budget-limit" type="number" required min="0.01" step="0.01" inputMode="decimal" placeholder="300.00"
+                value={form.monthlyLimit} className="budgets-field"
                 onChange={(e) => setForm({ ...form, monthlyLimit: e.target.value })} />
             </div>
 
-            <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end' }}>
-              <button type="button" style={buttonStyle('ghost')} disabled={saveMutation.isPending} onClick={() => setForm(null)}>Cancelar</button>
-              <button type="submit" style={buttonStyle('primary')} disabled={saveMutation.isPending}>
+            <div className="budgets-dialog__actions">
+              <button type="button" className={btn('ghost')} disabled={saveMutation.isPending} onClick={() => setForm(null)}>Cancelar</button>
+              <button type="submit" className={btn('primary')} disabled={saveMutation.isPending}>
                 {saveMutation.isPending ? 'Guardando...' : 'Guardar'}
               </button>
             </div>
@@ -581,36 +601,36 @@ function AlertSettingsCard({ settings, loading, onSaved, onError }: {
   return (
     <form className="card" onSubmit={submit}>
       <h2>Alertas push</h2>
-      <p style={{ marginTop: 0, color: 'var(--c-text-2)', fontSize: '0.9rem' }}>
+      <p className="budgets-section-hint">
         Cada compra nueva puede mandar un aviso con lo que queda del tope de su categoría.
       </p>
 
-      <label style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', marginBottom: '0.75rem' }}>
+      <label className="budgets-check">
         <input type="checkbox" checked={current.alertsEnabled} onChange={(e) => set({ alertsEnabled: e.target.checked })} />
         Alertas activadas
       </label>
 
-      <label style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', marginBottom: '1rem' }}>
+      <label className="budgets-check">
         <input type="checkbox" checked={current.notifyEveryPurchase} onChange={(e) => set({ notifyEveryPurchase: e.target.checked })} />
         Avisar en cada compra (si no, solo desde el 80 % del tope)
       </label>
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 220px), 1fr))', gap: '1rem', marginBottom: '1rem' }}>
+      <div className="budgets-alert-fields">
         <div>
-          <label htmlFor="alert-threshold" style={labelStyle}>Compra grande desde (USD)</label>
-          <input id="alert-threshold" type="number" min="1" step="0.01" inputMode="decimal" required value={current.threshold} style={inputStyle}
-            onChange={(e) => set({ threshold: e.target.value })} />
+          <label htmlFor="alert-threshold" className="budgets-label">Compra grande desde (USD)</label>
+          <input id="alert-threshold" type="number" min="1" step="0.01" inputMode="decimal" required value={current.threshold}
+            className="budgets-field" onChange={(e) => set({ threshold: e.target.value })} />
         </div>
         <div>
-          <label htmlFor="alert-cards" style={labelStyle}>Tarjetas apagadas (últimos 4 dígitos)</label>
-          <input id="alert-cards" value={current.cards} placeholder="1234, 5678" inputMode="numeric" style={inputStyle}
+          <label htmlFor="alert-cards" className="budgets-label">Tarjetas apagadas (últimos 4 dígitos)</label>
+          <input id="alert-cards" value={current.cards} placeholder="1234, 5678" inputMode="numeric" className="budgets-field"
             aria-invalid={cardsError ? true : undefined} aria-describedby={cardsError ? 'alert-cards-error' : undefined}
             onChange={(e) => set({ cards: e.target.value })} />
           {cardsError && <div id="alert-cards-error" style={{ color: 'var(--c-negative)', fontSize: '0.8rem', marginTop: '0.35rem' }}>{cardsError}</div>}
         </div>
       </div>
 
-      <button type="submit" style={buttonStyle('primary')} disabled={saveMutation.isPending || draft === null}>
+      <button type="submit" className={btn('primary')} disabled={saveMutation.isPending || draft === null}>
         {saveMutation.isPending ? 'Guardando...' : 'Guardar alertas'}
       </button>
     </form>
