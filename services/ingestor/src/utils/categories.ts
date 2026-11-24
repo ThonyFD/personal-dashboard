@@ -50,7 +50,8 @@ export function autoCategorizeMerchant(merchantName: string): Category {
     name.includes('BAKERY') ||
     // Whole word only: a plain includes() sent names like ROOSEVELTBARBERSHOP here.
     /\bBAR\b/.test(name) ||
-    name.includes('PUB') ||
+    // Whole word only: a plain includes() matched PUB inside words like REPUBLICA.
+    /\bPUB\b/.test(name) ||
     name.includes('GEISHA') ||
     name.includes('LOTUS HOUSE') ||
     name.includes('TIM HORTONS') ||
@@ -93,7 +94,9 @@ export function autoCategorizeMerchant(merchantName: string): Category {
     name.includes('UBER') ||
     name.includes('LYFT') ||
     name.includes('TAXI') ||
-    name.includes('GAS') ||
+    // Whole word only: a plain includes() matched GAS inside GASTRONOMIA or VEGAS.
+    /\bGAS\b/.test(name) ||
+    name.includes('GASOLINERA') ||
     name.includes('FUEL') ||
     name.includes('PARKING') ||
     name.includes('TOLL') ||
@@ -244,7 +247,8 @@ export function autoCategorizeMerchant(merchantName: string): Category {
     name.includes('ADMIRAL') ||
     name.includes('MARKETS') ||
     name.includes('TRADING') ||
-    name.includes('BROKER') ||
+    // Customs brokers handle imports, not investments.
+    (name.includes('BROKER') && !name.includes('CUSTOMS')) ||
     name.includes('INVEST') ||
     name.includes('SECURITIES') ||
     name.includes('STOCK') ||

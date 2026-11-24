@@ -78,5 +78,15 @@ describe('autoCategorizeMerchant Panama chains', () => {
     expect(autoCategorizeMerchant('TIENDA ESPANA')).not.toBe('Services');
     expect(autoCategorizeMerchant('CONTIGO TIENDA')).not.toBe('Bills & Utilities');
     expect(autoCategorizeMerchant('LA FONDANT')).not.toBe('Food & Dining');
+    expect(autoCategorizeMerchant('AEROREPUBLICA')).not.toBe('Food & Dining');
+    expect(autoCategorizeMerchant('BACK OFFICE GASTRONOMIA')).not.toBe('Transportation');
+    expect(autoCategorizeMerchant('ACME CUSTOMS BROKERAGE')).not.toBe('Investment');
+  });
+
+  it('keeps the whole-word versions of the tightened keywords', () => {
+    expect(autoCategorizeMerchant('IRISH PUB')).toBe('Food & Dining');
+    expect(autoCategorizeMerchant('GAS STATION 24')).toBe('Transportation');
+    expect(autoCategorizeMerchant('GASOLINERA CENTRO')).toBe('Transportation');
+    expect(autoCategorizeMerchant('ACME BROKER')).toBe('Investment');
   });
 });
