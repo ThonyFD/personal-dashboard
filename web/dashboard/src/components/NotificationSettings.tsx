@@ -32,7 +32,7 @@ export const NotificationSettings: React.FC = () => {
 
       <div className="notification-status">
         <div className="status-item">
-          <span className="label">Estado:</span>
+          <span className="label">Este dispositivo:</span>
           <span className={`badge ${isSubscribed ? 'active' : 'inactive'}`}>
             {isSubscribed ? '✓ Activo' : '○ Desactivado'}
           </span>
