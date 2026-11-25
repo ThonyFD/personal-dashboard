@@ -14,8 +14,7 @@
  * - Auto-updates sync state on success
  *
  * Usage:
- *   cd scripts
- *   npx tsx sync-emails-daily.ts
+ *   npx tsx scripts/production/sync-emails-daily.ts
  *
  * Environment Variables:
  *   GOOGLE_CLOUD_PROJECT - GCP project ID (default: mail-reader-433802)
@@ -28,6 +27,15 @@ import { SecretManagerServiceClient } from '@google-cloud/secret-manager';
 import { persistTokens } from 'oauth-token-store';
 import { fileURLToPath } from 'url';
 import { createClient } from '@supabase/supabase-js';
+import {
+  ALERTABLE_TXN_TYPES,
+  alertWindowDates,
+  fetchBudgetAlertCandidates,
+  fetchParsedGmailMessageIds,
+  getLastProcessedEmail,
+} from '@personal-dashboard/supabase-queries';
+import { budgetAlertsEnabled, processBudgetAlertsSafely, supabaseBudgetAlertDeps } from './budget-alerts';
+import { Logger } from '../../services/ingestor/src/utils/logger';
 
 
 // Import from ingestor service
@@ -48,6 +56,10 @@ interface SyncStats {
   failedEmails: number;
   transactionsSaved: number;
   duplicatesSkipped: number;
+  alreadyParsedSkipped: number;
+  alertsSent: number;
+  alertsSkipped: number;
+  alertsFailed: number;
   startTime: Date;
   errors: Array<{ messageId: string; error: string }>;
 }
@@ -57,6 +69,9 @@ const RATE_LIMIT_DELAY_MS = 100; // Conservative rate limiting: 10 req/sec
 const MAX_RESULTS_PER_PAGE = 100;
 const DEFAULT_LOOKBACK_DAYS = 7; // Fallback if no last email found
 const MAX_LOOKBACK_DAYS = 30; // Safety limit
+// Budget alerts only look at transactions inserted in the last few hours, so the
+// first run after turning alerts on does not send a burst for older purchases.
+const ALERT_LOOKBACK_MS = 3 * 60 * 60 * 1000;
 
 class DailyEmailSync {
   private oauth2Client: OAuth2Client;
@@ -67,6 +82,8 @@ class DailyEmailSync {
   private projectId: string;
   private readonly supabase: ReturnType<typeof createClient>;
   private stats: SyncStats;
+  // Off unless the workflow sets BUDGET_ALERTS_ENABLED=true (repo variable).
+  private readonly alertsEnabled = budgetAlertsEnabled();
 
   constructor() {
     this.oauth2Client = new OAuth2Client();
@@ -85,6 +102,10 @@ class DailyEmailSync {
       failedEmails: 0,
       transactionsSaved: 0,
       duplicatesSkipped: 0,
+      alreadyParsedSkipped: 0,
+      alertsSent: 0,
+      alertsSkipped: 0,
+      alertsFailed: 0,
       startTime: new Date(),
       errors: [],
     };
@@ -100,6 +121,22 @@ class DailyEmailSync {
       { label: `accessSecretVersion(${secretName})` }
     );
     return version.payload?.data?.toString() || '';
+  }
+
+  private wrapOAuthError(error: unknown): Error {
+    const message = error instanceof Error ? error.message : String(error);
+
+    if (message.includes('invalid_grant')) {
+      return new Error(
+        [
+          'Google rechazo el refresh token (`invalid_grant`).',
+          'Causa comun: el OAuth consent screen sigue en `Testing`, y para `gmail.readonly` Google vence el refresh token a los 7 dias.',
+          'Corrige esto en Google Cloud Auth Platform -> Audience cambiando el app a `In production` (o `Internal` si usas Google Workspace), luego genera un refresh token nuevo y actualiza `gmail-oauth-refresh-token` en Secret Manager.',
+        ].join('\n')
+      );
+    }
+
+    return error instanceof Error ? error : new Error(message);
   }
 
   /**
@@ -141,6 +178,16 @@ class DailyEmailSync {
         console.error('❌ Failed to persist refreshed tokens:', error);
       });
     });
+
+    try {
+      const accessToken = await this.oauth2Client.getAccessToken();
+      if (!accessToken.token) {
+        throw new Error('Google did not return an access token');
+      }
+      console.log('✓ OAuth refresh validated\n');
+    } catch (error) {
+      throw this.wrapOAuthError(error);
+    }
 
     this.gmail = google.gmail({ version: 'v1', auth: this.oauth2Client });
     console.log('✓ Gmail client initialized\n');
@@ -210,15 +257,7 @@ class DailyEmailSync {
    */
   private async getLastProcessedEmail(): Promise<any> {
     try {
-      const { data, error } = await this.supabase
-        .from('emails')
-        .select('received_at')
-        .order('received_at', { ascending: false })
-        .limit(1)
-        .maybeSingle();
-
-      if (error) throw error;
-      return data ? { receivedAt: (data as { received_at: string }).received_at } : null;
+      return await getLastProcessedEmail(this.supabase);
     } catch (error) {
       console.error('Error fetching last email:', error);
       return null;
@@ -401,7 +440,7 @@ class DailyEmailSync {
           this.stats.duplicatesSkipped++;
         }
       } else {
-        console.log(`      ⊘ No provider detected (${subject.substring(0, 50)}...)`);
+        console.log(`      ⊘ No provider detected`);
       }
 
       this.stats.processedEmails++;
@@ -476,6 +515,8 @@ class DailyEmailSync {
 
       // Generate idempotency key
       const idempotencyKey = generateIdempotencyKey(
+        provider,
+        transaction.referenceNumber,
         emailId,
         transaction.date,
         transaction.amount,
@@ -507,9 +548,13 @@ class DailyEmailSync {
 
       if (txnId !== -1) {
         await this.dbClient.markEmailParsed(emailId);
-        console.log(`      ✓ Transaction: ${transaction.merchant} - $${transaction.amount}`);
+        console.log(`      ✓ Transaction saved (ID: ${txnId})`);
         return true;
       } else {
+        // Duplicate: the transaction already exists. Mark the email parsed so we
+        // don't re-attempt it on every daily run (the insert would keep hitting
+        // the unique index and returning -1 forever).
+        await this.dbClient.markEmailParsed(emailId);
         console.log(`      ⊘ Duplicate transaction (skipped)`);
         return false;
       }
@@ -521,8 +566,108 @@ class DailyEmailSync {
   }
 
   /**
-   * Rate limiting delay
+   * Drop messages already stored with parsed = true. With the sync running every
+   * 15 minutes over a 7-day window, this avoids fetching the same emails again.
+   * Unparsed emails stay in the list so they keep being retried. On a lookup
+   * error, everything is processed as before (inserts are idempotent).
    */
+  private async skipAlreadyParsed(messageIds: string[]): Promise<string[]> {
+    if (messageIds.length === 0) return messageIds;
+    try {
+      const parsed = await fetchParsedGmailMessageIds(this.supabase, messageIds);
+      this.stats.alreadyParsedSkipped = parsed.size;
+      if (parsed.size > 0) {
+        console.log(`   Skipping ${parsed.size} already parsed emails\n`);
+      }
+      return messageIds.filter((id) => !parsed.has(id));
+    } catch (error) {
+      console.error('   ⚠️  Could not check parsed emails, processing all:', error);
+      return messageIds;
+    }
+  }
+
+  /**
+   * Send budget alerts for recent transactions that have none yet. Candidates
+   * come from the database, not from this run, so a transaction inserted by any
+   * ingestion path still alerts, and one whose alert failed before being claimed
+   * is retried on the next run. Only txn_date today or yesterday (Panama) counts,
+   * so backfills of old emails never alert. Failures are logged as
+   * budget_alert_failed and never fail the sync.
+   */
+  private async sendBudgetAlerts(): Promise<void> {
+    if (!this.alertsEnabled) return;
+
+    let candidates: number[];
+    try {
+      const now = new Date();
+      candidates = await fetchBudgetAlertCandidates(this.supabase, {
+        createdSince: new Date(now.getTime() - ALERT_LOOKBACK_MS).toISOString(),
+        txnDates: alertWindowDates(now),
+        txnTypes: ALERTABLE_TXN_TYPES,
+      });
+    } catch (error) {
+      Logger.error('Budget alert candidates failed', {
+        event: 'budget_alert_failed',
+        error: error instanceof Error ? error.message : (error as any)?.message ?? String(error),
+      });
+      return;
+    }
+
+    if (candidates.length === 0) return;
+
+    console.log(`🔔 Budget alerts for ${candidates.length} transaction(s)...\n`);
+    const outcomes = await processBudgetAlertsSafely(candidates, supabaseBudgetAlertDeps(this.supabase));
+    for (const outcome of outcomes) {
+      if (outcome.status === 'sent') this.stats.alertsSent++;
+      else if (outcome.status === 'failed') this.stats.alertsFailed++;
+      else this.stats.alertsSkipped++;
+    }
+  }
+
+  private async checkAndAlertDuplicateMerchants(): Promise<void> {
+    try {
+      const { data, error } = await this.supabase.rpc('count_duplicate_merchants');
+      if (error) throw error;
+
+      const { duplicate_groups, duplicate_records } = (data?.[0] ?? {}) as {
+        duplicate_groups: number;
+        duplicate_records: number;
+      };
+
+      if (!duplicate_groups || duplicate_groups === 0) {
+        console.log('✓ No duplicate merchants detected\n');
+        return;
+      }
+
+      console.log(`⚠️  Duplicate merchants detected: ${duplicate_groups} groups, ${duplicate_records} extra records\n`);
+
+      // Only create a new alert if there is no unresolved one of the same type
+      const { data: existing } = await this.supabase
+        .from('system_alerts')
+        .select('id')
+        .eq('type', 'duplicate_merchants')
+        .eq('resolved', false)
+        .maybeSingle();
+
+      if (existing) {
+        console.log('   Alert already exists — skipping duplicate alert creation\n');
+        return;
+      }
+
+      await this.supabase.from('system_alerts').insert({
+        type:     'duplicate_merchants',
+        severity: 'warning',
+        title:    `${duplicate_groups} grupo(s) de merchants duplicados detectados`,
+        details:  { duplicate_groups, duplicate_records },
+      });
+
+      console.log('   Alert created in system_alerts\n');
+    } catch (err) {
+      // Non-fatal: don't fail the sync over an alert check
+      console.error('   Failed to check duplicate merchants:', err);
+    }
+  }
+
   private async delay(ms: number): Promise<void> {
     return new Promise(resolve => setTimeout(resolve, ms));
   }
@@ -540,6 +685,8 @@ class DailyEmailSync {
     console.log(`Successfully Processed:   ${this.stats.processedEmails}`);
     console.log(`Transactions Saved:       ${this.stats.transactionsSaved}`);
     console.log(`Duplicates Skipped:       ${this.stats.duplicatesSkipped}`);
+    console.log(`Already Parsed Skipped:   ${this.stats.alreadyParsedSkipped}`);
+    console.log(`Budget Alerts:            sent ${this.stats.alertsSent}, skipped ${this.stats.alertsSkipped}, failed ${this.stats.alertsFailed}`);
     console.log(`Failed:                   ${this.stats.failedEmails}`);
     console.log(`Duration:                 ${duration.toFixed(2)}s`);
     console.log(`Rate:                     ${(this.stats.processedEmails / duration).toFixed(2)} emails/sec`);
@@ -571,11 +718,13 @@ class DailyEmailSync {
       // Calculate date range
       const dateQuery = await this.calculateDateQuery();
 
-      // Fetch message IDs
-      const messageIds = await this.listMessages(dateQuery);
+      // Fetch message IDs, minus the ones already parsed by an earlier run
+      const messageIds = await this.skipAlreadyParsed(await this.listMessages(dateQuery));
 
       if (messageIds.length === 0) {
         console.log('✓ No new emails to process\n');
+        // Another ingestion path may still have inserted transactions to alert.
+        await this.sendBudgetAlerts();
         return;
       }
 
@@ -594,8 +743,14 @@ class DailyEmailSync {
         }
       }
 
+      // Budget alerts for the new transactions of this run (never throws)
+      await this.sendBudgetAlerts();
+
       // Print statistics
       this.printStats();
+
+      // Check for duplicate merchants and alert user if found
+      await this.checkAndAlertDuplicateMerchants();
 
       console.log('✅ Sync complete!\n');
 

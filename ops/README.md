@@ -1,6 +1,6 @@
 # Operational Tools
 
-Scripts and utilities for managing the AI Finance Agent system.
+Scripts y utilidades para operar Gmail OAuth, backfills y tareas manuales del sistema.
 
 ## OAuth Token Generator
 
@@ -50,9 +50,14 @@ npm run get-token
 ### What This Does
 
 - Requests Gmail API readonly scope
-- Gets a **refresh token** (never expires unless revoked)
+- Gets a **refresh token** that can remain valid long-term if the OAuth app is **In production** or **Internal**
 - Provides formatted commands to store in Secret Manager
 - Saves token locally in `token.json` (for reference only - don't commit!)
+
+### Important
+
+- If your OAuth consent screen stays in **Testing**, Google may expire `gmail.readonly` refresh tokens after 7 days
+- Before generating a new token, switch the OAuth app to **In production** in Google Auth Platform → Audience
 
 ### Troubleshooting
 
@@ -102,7 +107,8 @@ tsx backfill.ts --days=30 --max=100
 
 Environment variables:
 - `GOOGLE_CLOUD_PROJECT` - Your GCP project ID
-- `DATABASE_URL` - PostgreSQL connection string
+- `SUPABASE_URL` - Supabase project URL
+- `SUPABASE_SERVICE_ROLE_KEY` - Supabase service role key
 
 Secrets (via Secret Manager):
 - `gmail-oauth-client-id`

@@ -126,7 +126,10 @@ export class OAuthTokenManager {
       if (errorMessage.includes('invalid_grant')) {
         Logger.error('Refresh token is invalid or expired', {
           event: 'refresh_token_invalid',
-          message: 'Manual intervention required to renew OAuth credentials',
+          message:
+            'Manual intervention required. Common causes: OAuth app still in Testing mode (7-day refresh tokens), token revoked, password change, or 6+ months without use.',
+          remediation:
+            'Set the OAuth app to In production (or Internal for Workspace), generate a new refresh token, and update gmail-oauth-refresh-token in Secret Manager.',
         });
       }
 

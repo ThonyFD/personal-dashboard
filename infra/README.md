@@ -10,7 +10,6 @@ This directory contains infrastructure-as-code and setup scripts for the AI Fina
    - Cloud Run
    - Pub/Sub
    - Secret Manager
-   - Firebase Data Connect
    - Cloud Scheduler
 
 ## Setup Order
@@ -30,7 +29,6 @@ gcloud services enable \
   pubsub.googleapis.com \
   secretmanager.googleapis.com \
   cloudscheduler.googleapis.com \
-  firebasedataconnect.googleapis.com \
   --project=$GOOGLE_CLOUD_PROJECT
 ```
 
@@ -58,9 +56,9 @@ Then add your OAuth credentials (see script output for instructions).
 
 ### 5. Deploy Services
 
-See service-specific READMEs:
+See the active automation paths:
 - [Ingestor Service](../services/ingestor/README.md)
-- [Renewal Service](../services/renewal/README.md)
+- [GitHub Actions Workflow](../.github/workflows/daily-email-sync.yml)
 
 ## Gmail OAuth Setup
 

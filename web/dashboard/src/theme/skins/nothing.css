@@ -1,0 +1,115 @@
+/* Nothing skin effects. Every selector is scoped to the Nothing skin so
+   Brand renders exactly as before. */
+
+/* Numeric role for sub-20px money cells. Lives here (not in a page CSS) so it
+   applies app-wide. These cells inherit the body family under Brand. */
+:root[data-skin="nothing"] .income-amount,
+:root[data-skin="nothing"] .summary-row .amount,
+:root[data-skin="nothing"] .transactions-table td.amount {
+  font-family: var(--f-numeric);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Dot pattern: background-image only, so the element keeps its background color. */
+:root[data-skin="nothing"] .stat-card,
+:root[data-skin="nothing"] .main {
+  background-image: radial-gradient(color-mix(in srgb, var(--c-text) 12%, transparent) 1px, transparent 1px);
+  background-size: 12px 12px;
+}
+
+/* Flat surfaces: no shadows, no gradients. Cards that painted their surface
+   color through a gradient shorthand get it back as a solid color. */
+:root[data-skin="nothing"] .card,
+:root[data-skin="nothing"] .stat-card,
+:root[data-skin="nothing"] .summary-card,
+:root[data-skin="nothing"] .menu-drawer,
+:root[data-skin="nothing"] .signout-dialog,
+:root[data-skin="nothing"] .timeline-modal,
+:root[data-skin="nothing"] .timeline-block-card,
+:root[data-skin="nothing"] .mood-header,
+:root[data-skin="nothing"] .mood-card,
+:root[data-skin="nothing"] .habits-header,
+:root[data-skin="nothing"] .habits-form-card,
+:root[data-skin="nothing"] .habits-list-card {
+  box-shadow: none;
+}
+
+:root[data-skin="nothing"] .menu-header,
+:root[data-skin="nothing"] .timeline-modal,
+:root[data-skin="nothing"] .timeline-block-card,
+:root[data-skin="nothing"] .mood-header,
+:root[data-skin="nothing"] .mood-card,
+:root[data-skin="nothing"] .habits-header,
+:root[data-skin="nothing"] .habits-form-card,
+:root[data-skin="nothing"] .habits-list-card {
+  background-image: none;
+  background-color: var(--c-surface);
+}
+
+/* Inline-styled containers: CSS cannot beat inline styles without !important.
+   Only elements carrying an explicit hook class are targeted. The classes have
+   no rule outside this Nothing scope, so Brand is unchanged.
+   skin-flat-card: TransactionDetailModal panel, HabitHeatmap section and cells,
+   Budgets toast, and the chart tooltips in Budgets, Reports, Recurring.
+   skin-flat-gradient: HabitHeatmap section. */
+:root[data-skin="nothing"] .skin-flat-card {
+  box-shadow: none !important;
+}
+
+:root[data-skin="nothing"] .skin-flat-gradient {
+  background-image: none !important;
+  background-color: var(--c-surface) !important;
+}
+
+/* Labels (elements using --f-label). */
+:root[data-skin="nothing"] .menu-section-label,
+:root[data-skin="nothing"] .stat-card h3,
+:root[data-skin="nothing"] .summary-card h4 {
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+/* Dotted section dividers. */
+:root[data-skin="nothing"] hr {
+  border-style: dotted;
+}
+
+:root[data-skin="nothing"] .menu-header,
+:root[data-skin="nothing"] .menu-section-switcher,
+:root[data-skin="nothing"] .menu-footer,
+:root[data-skin="nothing"] .nav {
+  border-bottom-style: dotted;
+}
+
+:root[data-skin="nothing"] .menu-footer {
+  border-top-style: dotted;
+}
+
+/* Accent dot, decorative. */
+:root[data-skin="nothing"] .stat-card {
+  position: relative;
+}
+
+:root[data-skin="nothing"] .stat-card::after {
+  content: '';
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--c-negative);
+  pointer-events: none;
+}
+
+:root[data-skin="nothing"] .timeline-progress-fill {
+  background-image: none;
+  background-color: var(--c-primary);
+  box-shadow: none;
+}
+
+:root[data-skin="nothing"] .summary-totals-group {
+  background-image: none;
+  background-color: var(--c-surface);
+  box-shadow: none;
+}

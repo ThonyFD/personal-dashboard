@@ -1,0 +1,21 @@
+# Project Rules
+
+## Project Shape
+- This project is configured for SwarmForge with four Claude-backed agents: specifier, coder, refactorer, and architect.
+- Monorepo: Android app in `android/` (Kotlin, Jetpack Compose, supabase-kt 3.1.4), web dashboard in `web/dashboard/` (React 18, TypeScript, Vite), shared Supabase queries in `packages/supabase-queries/` (TypeScript, tested), Supabase migrations in `supabase/migrations/`.
+- Current feature: Projects and Tasks. Source of truth: `docs/superpowers/specs/2026-11-01-projects-and-tasks-design.md`. Phase plans live in `docs/superpowers/plans/`. Phase 0 (Android Google login) is implemented; next is Phase 1 (schema, storage bucket, shared queries).
+- Every feature must ship on both Android and web with the same data model.
+- Visual work follows `design/BRAND_BOOK.md` and existing app components (`AppComponents.kt`, `AppColors`). UI copy is Spanish.
+- Never use the em dash character in code, comments, copy, or commit messages.
+- The repo is PUBLIC: never commit real financial data, dumps, keys, client IDs, or `local.properties`.
+- Android builds: `cd android && JAVA_HOME="/Applications/Android Studio.app/Contents/jbr/Contents/Home" ~/.gradle/wrapper/dists/gradle-9.7.0-bin/*/gradle-9.7.0/bin/gradle :app:testDebugUnitTest`. Requires `GOOGLE_WEB_CLIENT_ID` in `android/local.properties`.
+
+## Local Configuration
+- Preserve project-local SwarmForge configuration under `swarmforge/`.
+- Keep swarm state local under `.swarmforge/`, worktrees under `.worktrees/`, and shared scripts under `swarmforge/scripts/`.
+
+## Handoffs
+- Prefer terse, explicit handoffs that report state and request role-appropriate review. Do not include verifications or sender process narrative.
+
+## Ownership
+- Do not change another role's prompt or workflow ownership without explicit user direction.

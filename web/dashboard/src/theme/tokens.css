@@ -1,0 +1,165 @@
+/* Semantic tokens. :root is Brand dark; Brand light overrides under data-variant. */
+:root {
+  /* Brand palette */
+  --c-primary: #00D9FF;
+  --c-green: #39FF14;
+  --c-violet: #7A5CFF;
+  --c-glow: #E8FFFF;
+  --c-white: #FFFFFF;
+  --c-bg: #081022;
+  --c-surface: #111A2E;
+  --c-surface-2: #0d1524;
+  --c-surface-raised: #17223A;
+  --c-hairline: #1F2B45;
+  --c-muted: #5E677A;
+  --c-border: rgba(0, 217, 255, 0.12);
+  --c-border-violet: rgba(122, 92, 255, 0.2);
+  --c-text: #E8FFFF;
+  --c-text-2: rgba(232, 255, 255, 0.65);
+  --c-text-3: rgba(232, 255, 255, 0.38);
+  --c-negative: #FF6B81;
+  --c-warning: #FFC069;
+  --c-on-accent: #081022;
+  --c-scrim: #000000;
+  /* Chart series */
+  --c-chart-1: #00D9FF;
+  --c-chart-2: #39FF14;
+  --c-chart-3: #7A5CFF;
+  --c-chart-4: #FF6B81;
+  --c-chart-5: #FFC069;
+  --c-chart-6: #E8FFFF;
+  --c-chart-7: #5E677A;
+  --c-chart-8: #00A3BF;
+  /* Typography */
+  --f-heading: 'Space Grotesk', -apple-system, sans-serif;
+  --f-display: 'Space Grotesk', -apple-system, sans-serif;
+  --f-numeric: 'Space Grotesk', -apple-system, sans-serif;
+  --f-label: 'Manrope', -apple-system, sans-serif;
+  --f-body: 'Manrope', -apple-system, sans-serif;
+  /* Radius */
+  --r-sm: 6px;
+  --r-md: 10px;
+  --r-lg: 14px;
+  --r-xl: 18px;
+}
+
+:root[data-variant="light"] {
+  --c-primary: #007C99;
+  --c-green: #237A0C;
+  --c-violet: #5B3FE0;
+  --c-glow: #081022;
+  --c-white: #FFFFFF;
+  --c-bg: #F4FAFC;
+  --c-surface: #FFFFFF;
+  --c-surface-2: #EAF2F6;
+  --c-surface-raised: #E2ECF2;
+  --c-hairline: #D3DEE6;
+  --c-muted: #5E677A;
+  --c-border: color-mix(in srgb, #007C99 18%, transparent);
+  --c-border-violet: color-mix(in srgb, var(--c-violet) 20%, transparent);
+  --c-text: #081022;
+  --c-text-2: #3E4A5E;
+  --c-text-3: #5E677A;
+  --c-negative: #C8304A;
+  --c-warning: #9A5B00;
+  --c-on-accent: #FFFFFF;
+  --c-scrim: #000000;
+  --c-chart-1: #007C99;
+  --c-chart-2: #237A0C;
+  --c-chart-3: #5B3FE0;
+  --c-chart-4: #C8304A;
+  --c-chart-5: #9A5B00;
+  --c-chart-6: #081022;
+  --c-chart-7: #5E677A;
+  --c-chart-8: #00A3BF;
+  --f-heading: 'Space Grotesk', -apple-system, sans-serif;
+  --f-display: 'Space Grotesk', -apple-system, sans-serif;
+  --f-numeric: 'Space Grotesk', -apple-system, sans-serif;
+  --f-label: 'Manrope', -apple-system, sans-serif;
+  --f-body: 'Manrope', -apple-system, sans-serif;
+  --r-sm: 6px;
+  --r-md: 10px;
+  --r-lg: 14px;
+  --r-xl: 18px;
+}
+
+/* Nothing skin: monochrome with a red accent. Scoped so Brand is untouched. */
+:root[data-skin="nothing"] {
+  --c-primary: #FFFFFF;
+  --c-green: #FFFFFF;
+  --c-violet: #808080;
+  --c-glow: #FFFFFF;
+  --c-white: #FFFFFF;
+  --c-bg: #000000;
+  --c-surface: #111111;
+  --c-surface-2: #0A0A0A;
+  --c-surface-raised: #1A1A1A;
+  --c-hairline: #2A2A2A;
+  --c-muted: #808080;
+  --c-border: color-mix(in srgb, #FFFFFF 14%, transparent);
+  --c-border-violet: color-mix(in srgb, #808080 20%, transparent);
+  --c-text: #FFFFFF;
+  --c-text-2: #B3B3B3;
+  --c-text-3: #808080;
+  --c-negative: #E61921;
+  --c-warning: #E0B040;
+  --c-on-accent: #000000;
+  --c-scrim: #000000;
+  --c-chart-1: #FFFFFF;
+  --c-chart-2: #E61921;
+  --c-chart-3: #A6A6A6;
+  --c-chart-4: #6E6E6E;
+  --c-chart-5: #E0B040;
+  --c-chart-6: #FF6A70;
+  --c-chart-7: #4D4D4D;
+  --c-chart-8: #CFCFCF;
+  --f-heading: 'Space Mono', ui-monospace, monospace;
+  --f-display: 'Doto', 'Space Mono', ui-monospace, monospace;
+  --f-numeric: 'Space Mono', ui-monospace, monospace;
+  --f-label: 'Space Mono', ui-monospace, monospace;
+  --f-body: 'Inter', -apple-system, sans-serif;
+  --r-sm: 4px;
+  --r-md: 8px;
+  --r-lg: 12px;
+  --r-xl: 16px;
+}
+
+:root[data-skin="nothing"][data-variant="light"] {
+  --c-primary: #000000;
+  --c-green: #000000;
+  --c-violet: #6E6E6E;
+  --c-glow: #000000;
+  --c-white: #FFFFFF;
+  --c-bg: #F2F2F2;
+  --c-surface: #FFFFFF;
+  --c-surface-2: #EAEAEA;
+  --c-surface-raised: #E0E0E0;
+  --c-hairline: #CCCCCC;
+  --c-muted: #6E6E6E;
+  --c-border: color-mix(in srgb, #000000 14%, transparent);
+  --c-border-violet: color-mix(in srgb, #6E6E6E 20%, transparent);
+  --c-text: #000000;
+  --c-text-2: #4D4D4D;
+  --c-text-3: #6E6E6E;
+  --c-negative: #C8102E;
+  --c-warning: #8A6100;
+  --c-on-accent: #FFFFFF;
+  --c-scrim: #000000;
+  --c-chart-1: #000000;
+  --c-chart-2: #C8102E;
+  --c-chart-3: #6E6E6E;
+  --c-chart-4: #A6A6A6;
+  --c-chart-5: #8A6100;
+  --c-chart-6: #E0404A;
+  --c-chart-7: #333333;
+  --c-chart-8: #8C8C8C;
+  --f-heading: 'Space Mono', ui-monospace, monospace;
+  --f-display: 'Doto', 'Space Mono', ui-monospace, monospace;
+  --f-numeric: 'Space Mono', ui-monospace, monospace;
+  --f-label: 'Space Mono', ui-monospace, monospace;
+  --f-body: 'Inter', -apple-system, sans-serif;
+  --r-sm: 4px;
+  --r-md: 8px;
+  --r-lg: 12px;
+  --r-xl: 16px;
+}

@@ -1,96 +1,87 @@
 # Ingestor Service
 
-Cloud Run service that receives Gmail push notifications via Pub/Sub, fetches emails, parses transactions, and stores them in the database.
+Servicio de Cloud Run que recibe notificaciones push de Gmail vía Pub/Sub, parsea correos financieros y persiste el resultado en Supabase.
 
-## Features
+## Arquitectura
 
-- Receives Gmail push notifications via Pub/Sub
-- Fetches email content using Gmail API
-- Detects financial provider (BAC, Clave, Yappy, etc.)
-- Parses transaction details using regex
-- Stores emails and transactions in PostgreSQL
-- Idempotent transaction insertion
-- Structured logging for Cloud Monitoring
-
-## Architecture
-
-```
-Gmail → Pub/Sub → Cloud Run (this service) → Firebase Data Connect (Postgres)
+```text
+Gmail -> Pub/Sub -> Cloud Run ingestor -> Supabase PostgreSQL
 ```
 
-## Environment Variables
+## Responsabilidades
 
-Required:
-- `GOOGLE_CLOUD_PROJECT` - GCP project ID
-- `DATABASE_URL` - PostgreSQL connection string (from Secret Manager)
+- recibir eventos push de Gmail
+- descargar el mensaje completo desde Gmail API
+- detectar proveedor y parser aplicable
+- extraer emails, merchants y transacciones
+- insertar datos de forma idempotente
+- exponer endpoints de health y metrics
 
-## Secrets (via Secret Manager)
+## Variables de entorno
 
-- `gmail-oauth-client-id` - OAuth 2.0 client ID
-- `gmail-oauth-client-secret` - OAuth 2.0 client secret
-- `gmail-oauth-refresh-token` - OAuth 2.0 refresh token
+Requeridas:
 
-## Local Development
+- `GOOGLE_CLOUD_PROJECT`
+- `SUPABASE_URL`
+- `SUPABASE_SERVICE_ROLE_KEY`
 
-1. Install dependencies:
+Opcionales según el flujo:
+
+- `GOOGLE_CLOUD_REGION`
+- `GEMINI_API_KEY`
+
+## Secretos en Secret Manager
+
+- `gmail-oauth-client-id`
+- `gmail-oauth-client-secret`
+- `gmail-oauth-refresh-token`
+
+## Desarrollo local
+
 ```bash
 npm install
-```
 
-2. Set up environment variables:
-```bash
-export GOOGLE_CLOUD_PROJECT="your-project-id"
-export DATABASE_URL="postgresql://user:pass@host:5432/db"
-```
+export GOOGLE_CLOUD_PROJECT="mail-reader-433802"
+export SUPABASE_URL="https://your-project.supabase.co"
+export SUPABASE_SERVICE_ROLE_KEY="your-service-role-key"
 
-3. Run in development mode:
-```bash
 npm run dev
 ```
 
-## Deployment
+## Deploy
 
-1. Ensure infrastructure is set up (see [infra/README.md](../../infra/README.md))
-
-2. Deploy to Cloud Run:
 ```bash
-chmod +x deploy.sh
-export GOOGLE_CLOUD_PROJECT="your-project-id"
+export GOOGLE_CLOUD_PROJECT="mail-reader-433802"
 export GOOGLE_CLOUD_REGION="us-central1"
+
 ./deploy.sh
 ```
 
+La infraestructura base de Pub/Sub y secretos vive en [infra/README.md](/Users/thonyfd/projects/personal-dashboard/infra/README.md).
+
 ## Endpoints
 
-- `GET /health` - Health check
-- `POST /pubsub` - Pub/Sub push endpoint
-- `POST /trigger/:messageId` - Manual trigger for testing
+- `GET /health`
+- `GET /monitoring/health`
+- `GET /monitoring/metrics`
+- `POST /pubsub`
+- `POST /trigger/:messageId`
 
-## Testing
+## Proveedores soportados
 
-Test with a specific Gmail message ID:
-```bash
-curl -X POST https://your-service-url/trigger/MESSAGE_ID
-```
+- BAC
+- Clave
+- Yappy
+- Banistmo
+- fallback con Gemini para formatos desconocidos
 
-## Supported Providers
+Los parsers viven en [src/parsers](/Users/thonyfd/projects/personal-dashboard/services/ingestor/src/parsers).
 
-- BAC (Banco de América Central)
-- Clave (Panama digital payments)
-- Yappy (Banco General mobile payments)
+## Monitoreo
 
-Additional providers can be added in `src/parsers/`
+Revisar especialmente:
 
-## Error Handling
-
-- Pub/Sub retries on transient failures (5 attempts)
-- Failed messages sent to DLQ after max retries
-- All errors logged to Cloud Logging
-
-## Monitoring
-
-Key metrics to monitor:
-- Request latency
-- Error rate
-- Pub/Sub unacked messages
-- DLQ message count
+- latencia del servicio
+- tasa de errores
+- backlog de Pub/Sub
+- actividad reciente de emails y transacciones

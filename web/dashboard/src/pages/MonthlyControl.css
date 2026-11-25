@@ -10,7 +10,7 @@
 
 .monthly-control-header h1 {
   margin-bottom: 1rem;
-  color: #333;
+  color: var(--c-text);
 }
 
 /* Month Navigator */
@@ -24,31 +24,36 @@
 
 .nav-btn {
   padding: 0.5rem 1rem;
-  background: #f5f5f5;
-  border: 1px solid #ddd;
-  border-radius: 4px;
+  background: var(--c-surface);
+  border: 1px solid color-mix(in srgb, var(--c-primary) 18%, transparent);
+  border-radius: var(--r-sm);
+  color: var(--c-text-2);
   cursor: pointer;
   font-size: 0.9rem;
+  font-family: var(--f-body);
   transition: all 0.2s;
 }
 
 .nav-btn:hover:not(:disabled) {
-  background: #e8e8e8;
-  border-color: #bbb;
+  background: color-mix(in srgb, var(--c-primary) 7%, transparent);
+  border-color: color-mix(in srgb, var(--c-primary) 40%, transparent);
+  color: var(--c-primary);
 }
 
 .nav-btn:disabled {
-  opacity: 0.5;
+  opacity: 0.4;
   cursor: not-allowed;
 }
 
 .current-month {
   font-size: 1.8rem;
   font-weight: 700;
-  color: #2c5aa0;
+  font-family: var(--f-heading);
+  color: var(--c-primary);
   margin: 0;
   min-width: 200px;
   text-align: center;
+  letter-spacing: -0.03em;
 }
 
 /* Incomes Panel */
@@ -59,8 +64,9 @@
 
 .incomes-panel h3 {
   margin: 0 0 1rem 0;
-  color: #2c5aa0;
+  color: var(--c-primary);
   font-size: 1.2rem;
+  font-family: var(--f-heading);
 }
 
 .incomes-list {
@@ -72,19 +78,21 @@
   justify-content: space-between;
   align-items: center;
   padding: 0.75rem;
-  background: #f9f9f9;
-  border-radius: 4px;
+  background: color-mix(in srgb, var(--c-primary) 4%, transparent);
+  border: 1px solid var(--c-border);
+  border-radius: var(--r-sm);
   margin-bottom: 0.5rem;
 }
 
 .income-source {
   font-weight: 500;
   flex: 1;
+  color: var(--c-text-2);
 }
 
 .income-amount {
   font-weight: 600;
-  color: #38a169;
+  color: var(--c-green);
   margin-right: 1rem;
 }
 
@@ -93,16 +101,18 @@
   gap: 0.5rem;
   margin-bottom: 0.5rem;
   padding: 0.75rem;
-  background: #f0f7ff;
-  border-radius: 4px;
-  border: 2px solid #2c5aa0;
+  background: color-mix(in srgb, var(--c-primary) 5%, transparent);
+  border-radius: var(--r-sm);
+  border: 1px solid color-mix(in srgb, var(--c-primary) 30%, transparent);
 }
 
 .income-form input {
   padding: 0.5rem;
-  border: 1px solid #ddd;
-  border-radius: 4px;
+  border: 1px solid color-mix(in srgb, var(--c-primary) 18%, transparent);
+  border-radius: var(--r-sm);
   font-size: 0.9rem;
+  background: var(--c-surface);
+  color: var(--c-text);
 }
 
 .income-form input[type="text"] {
@@ -121,49 +131,57 @@
 .save-btn, .cancel-btn {
   padding: 0.5rem 0.75rem;
   border: none;
-  border-radius: 4px;
+  border-radius: var(--r-sm);
   cursor: pointer;
   font-size: 0.85rem;
-  font-weight: 500;
+  font-weight: 600;
+  font-family: var(--f-body);
+  transition: all 0.2s;
 }
 
 .save-btn {
-  background: #38a169;
-  color: white;
+  background: color-mix(in srgb, var(--c-green) 8%, transparent);
+  color: var(--c-green);
+  border: 1px solid color-mix(in srgb, var(--c-green) 40%, transparent);
 }
 
 .save-btn:hover {
-  background: #2f855a;
+  background: color-mix(in srgb, var(--c-green) 14%, transparent);
+  border-color: color-mix(in srgb, var(--c-green) 60%, transparent);
 }
 
 .cancel-btn {
-  background: #e8e8e8;
-  color: #333;
+  background: var(--c-surface);
+  color: var(--c-muted);
+  border: 1px solid var(--c-border);
 }
 
 .cancel-btn:hover {
-  background: #d0d0d0;
+  background: color-mix(in srgb, var(--c-text) 4%, transparent);
+  color: var(--c-text-2);
 }
 
 .add-btn {
   padding: 0.6rem 1rem;
-  background: #2c5aa0;
-  color: white;
-  border: none;
-  border-radius: 4px;
+  background: color-mix(in srgb, var(--c-primary) 10%, transparent);
+  color: var(--c-primary);
+  border: 1px solid color-mix(in srgb, var(--c-primary) 30%, transparent);
+  border-radius: var(--r-sm);
   cursor: pointer;
-  font-weight: 500;
-  transition: background 0.2s;
+  font-weight: 600;
+  font-family: var(--f-body);
+  transition: all 0.2s;
 }
 
 .add-btn:hover {
-  background: #1e4177;
+  background: color-mix(in srgb, var(--c-primary) 18%, transparent);
+  border-color: color-mix(in srgb, var(--c-primary) 55%, transparent);
 }
 
 .delete-btn {
   background: none;
   border: none;
-  color: #e53e3e;
+  color: color-mix(in srgb, var(--c-negative) 70%, transparent);
   cursor: pointer;
   font-size: 1.2rem;
   padding: 0.25rem 0.5rem;
@@ -171,13 +189,13 @@
 }
 
 .delete-btn:hover {
-  color: #c53030;
+  color: var(--c-negative);
 }
 
 /* Incomes Summary */
 .incomes-summary {
   margin-top: 1.5rem;
-  border-top: 2px solid #e8e8e8;
+  border-top: 1px solid var(--c-border);
   padding-top: 1rem;
 }
 
@@ -186,108 +204,164 @@
   justify-content: space-between;
   padding: 0.5rem 0;
   font-size: 1rem;
+  color: var(--c-text-2);
 }
 
 .summary-row.total {
-  border-top: 2px solid #333;
-  border-bottom: 2px solid #333;
+  border-top: 1px solid color-mix(in srgb, var(--c-primary) 25%, transparent);
+  border-bottom: 1px solid color-mix(in srgb, var(--c-primary) 25%, transparent);
   margin-top: 0.5rem;
   padding-top: 0.75rem;
   padding-bottom: 0.75rem;
   font-weight: 700;
   font-size: 1.1rem;
+  color: var(--c-text);
 }
 
 .summary-row.projection {
-  color: #666;
+  color: var(--c-muted);
   font-style: italic;
   font-size: 0.9rem;
 }
 
 .summary-row .amount {
   font-weight: 600;
-  color: #38a169;
+  color: var(--c-green);
 }
 
 .balance-input {
   width: 120px;
   padding: 0.25rem 0.5rem;
-  border: 1px solid #ddd;
-  border-radius: 4px;
+  border: 1px solid color-mix(in srgb, var(--c-primary) 18%, transparent);
+  border-radius: var(--r-sm);
   text-align: right;
   font-weight: 600;
+  background: var(--c-surface);
+  color: var(--c-text);
 }
 
 /* Summary Cards */
 .summary-cards {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  grid-template-columns: 2fr 1fr;
   gap: 1rem;
   margin-bottom: 1.5rem;
+  align-items: stretch;
 }
 
 .summary-card {
-  background: white;
+  background: var(--c-surface);
   padding: 1.25rem;
-  border-radius: 8px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  border-left: 4px solid #666;
+  border-radius: var(--r-md);
+  border: 1px solid var(--c-border);
+  border-left: 4px solid var(--c-muted);
 }
 
 .summary-card h4 {
   margin: 0 0 0.5rem 0;
-  color: #666;
-  font-size: 0.9rem;
-  font-weight: 500;
+  color: var(--c-muted);
+  font-size: 0.76rem;
+  font-weight: 600;
+  font-family: var(--f-label);
   text-transform: uppercase;
+  letter-spacing: 0.1em;
 }
 
 .summary-card .amount {
   font-size: 1.5rem;
   font-weight: 700;
-  color: #333;
+  font-family: var(--f-display);
+  color: var(--c-text);
+  letter-spacing: -0.03em;
 }
 
 .summary-card.investment {
-  border-left-color: #38a169;
+  border-left-color: var(--c-green);
 }
 
 .summary-card.investment .amount {
-  color: #38a169;
+  color: var(--c-green);
 }
 
 .summary-card.debt {
-  border-left-color: #e53e3e;
+  border-left-color: var(--c-negative);
 }
 
 .summary-card.debt .amount {
-  color: #e53e3e;
+  color: var(--c-negative);
 }
 
 .summary-card.savings {
-  border-left-color: #3182ce;
+  border-left-color: var(--c-primary);
 }
 
 .summary-card.savings .amount {
-  color: #3182ce;
+  color: var(--c-primary);
 }
 
 .summary-card.balance.positive {
-  border-left-color: #38a169;
-  background: #f0fff4;
+  border-left-color: var(--c-green);
+  background: color-mix(in srgb, var(--c-green) 5%, transparent);
 }
 
 .summary-card.balance.positive .amount {
-  color: #38a169;
+  color: var(--c-green);
 }
 
 .summary-card.balance.negative {
-  border-left-color: #e53e3e;
-  background: #fff5f5;
+  border-left-color: var(--c-negative);
+  background: color-mix(in srgb, var(--c-negative) 10%, transparent);
 }
 
 .summary-card.balance.negative .amount {
-  color: #e53e3e;
+  color: var(--c-negative);
+}
+
+.summary-card.total-spent {
+  border-left-color: var(--c-violet);
+}
+
+.summary-card.total-spent .amount {
+  color: var(--c-violet);
+}
+
+/* Metrics group */
+.summary-metrics-group {
+  display: flex;
+  gap: 0.5rem;
+  background: var(--c-surface);
+  border: 1px solid var(--c-border);
+  border-radius: 12px;
+  padding: 0.5rem;
+}
+
+.summary-metrics-group .summary-card {
+  flex: 1;
+  box-shadow: none;
+}
+
+/* Totals group */
+.summary-totals-group {
+  display: flex;
+  gap: 0.5rem;
+  background: radial-gradient(ellipse at top, color-mix(in srgb, var(--c-primary) 8%, transparent) 0%, color-mix(in srgb, var(--c-violet) 6%, transparent) 100%);
+  border: 1px solid color-mix(in srgb, var(--c-violet) 30%, transparent);
+  border-radius: 12px;
+  padding: 0.5rem;
+  box-shadow: 0 4px 20px color-mix(in srgb, var(--c-violet) 10%, transparent);
+}
+
+.summary-totals-group .summary-card {
+  flex: 1;
+  border: none;
+}
+
+.summary-totals-group .summary-card h4 {
+  font-size: 0.72rem;
+}
+
+.summary-totals-group .summary-card .amount {
+  font-size: 1.6rem;
 }
 
 /* Transactions Section */
@@ -304,8 +378,9 @@
 
 .transactions-header h3 {
   margin: 0;
-  color: #2c5aa0;
+  color: var(--c-primary);
   font-size: 1.2rem;
+  font-family: var(--f-heading);
 }
 
 .header-actions {
@@ -316,38 +391,42 @@
 
 .export-btn {
   padding: 0.5rem 1rem;
-  background: #38a169;
-  color: white;
-  border: none;
-  border-radius: 4px;
+  background: color-mix(in srgb, var(--c-green) 8%, transparent);
+  color: var(--c-green);
+  border: 1px solid color-mix(in srgb, var(--c-green) 35%, transparent);
+  border-radius: var(--r-sm);
   cursor: pointer;
   font-size: 0.9rem;
-  font-weight: 500;
-  transition: background 0.2s;
+  font-weight: 600;
+  font-family: var(--f-body);
+  transition: all 0.2s;
 }
 
 .export-btn:hover {
-  background: #2f855a;
+  background: color-mix(in srgb, var(--c-green) 14%, transparent);
+  border-color: color-mix(in srgb, var(--c-green) 55%, transparent);
 }
 
 .copy-btn {
   padding: 0.5rem 1rem;
-  background: #3182ce;
-  color: white;
-  border: none;
-  border-radius: 4px;
+  background: color-mix(in srgb, var(--c-primary) 8%, transparent);
+  color: var(--c-primary);
+  border: 1px solid color-mix(in srgb, var(--c-primary) 35%, transparent);
+  border-radius: var(--r-sm);
   cursor: pointer;
   font-size: 0.9rem;
-  font-weight: 500;
-  transition: background 0.2s;
+  font-weight: 600;
+  font-family: var(--f-body);
+  transition: all 0.2s;
 }
 
 .copy-btn:hover:not(:disabled) {
-  background: #2c5aa0;
+  background: color-mix(in srgb, var(--c-primary) 14%, transparent);
+  border-color: color-mix(in srgb, var(--c-primary) 55%, transparent);
 }
 
 .copy-btn:disabled {
-  opacity: 0.6;
+  opacity: 0.5;
   cursor: not-allowed;
 }
 
@@ -362,9 +441,12 @@
 .filters select,
 .filters .search-input {
   padding: 0.5rem;
-  border: 1px solid #ddd;
-  border-radius: 4px;
+  border: 1px solid color-mix(in srgb, var(--c-primary) 18%, transparent);
+  border-radius: var(--r-sm);
   font-size: 0.9rem;
+  background: var(--c-surface);
+  color: var(--c-text);
+  font-family: var(--f-body);
 }
 
 .filters select {
@@ -389,29 +471,34 @@
 }
 
 .transactions-table thead {
-  background: #f5f5f5;
-  border-bottom: 2px solid #ddd;
+  background: color-mix(in srgb, var(--c-primary) 4%, transparent);
+  border-bottom: 1px solid color-mix(in srgb, var(--c-primary) 15%, transparent);
 }
 
 .transactions-table th {
   padding: 0.75rem 0.5rem;
   text-align: left;
   font-weight: 600;
-  color: #333;
+  font-family: var(--f-body);
+  color: var(--c-muted);
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
   white-space: nowrap;
 }
 
 .transactions-table td {
   padding: 0.75rem 0.5rem;
-  border-bottom: 1px solid #e8e8e8;
+  border-bottom: 1px solid var(--c-border);
+  color: var(--c-text-2);
 }
 
 .transactions-table tr.pending {
-  background: #fffbeb;
+  background: color-mix(in srgb, var(--c-warning) 5%, transparent);
 }
 
 .transactions-table tr:hover {
-  background: #f9f9f9;
+  background: color-mix(in srgb, var(--c-primary) 4%, transparent);
 }
 
 .transactions-table td.description {
@@ -432,15 +519,15 @@
 }
 
 .transactions-table td.type.inversión {
-  color: #38a169;
+  color: var(--c-green);
 }
 
 .transactions-table td.type.deuda {
-  color: #e53e3e;
+  color: var(--c-negative);
 }
 
 .transactions-table td.type.ahorro {
-  color: #3182ce;
+  color: var(--c-primary);
 }
 
 .transactions-table td.paid-status {
@@ -461,11 +548,11 @@
 }
 
 .paid-toggle.paid {
-  color: #38a169;
+  color: var(--c-green);
 }
 
 .paid-toggle.pending {
-  color: #f59e0b;
+  color: var(--c-warning);
 }
 
 .transactions-table td.balance {
@@ -475,11 +562,11 @@
 }
 
 .transactions-table td.balance.positive {
-  color: #38a169;
+  color: var(--c-green);
 }
 
 .transactions-table td.balance.negative {
-  color: #e53e3e;
+  color: var(--c-negative);
 }
 
 /* Responsive */

@@ -1,7 +1,8 @@
 import { useQuery } from '@tanstack/react-query'
-import { fetchTransactions } from '../api/dataconnect-client'
+import { fetchTransactions } from '../api/supabase-data-client'
 import { useState, useMemo } from 'react'
 import { formatCurrency } from '../utils/format'
+import { useChartColors } from '../theme/AppearanceContext'
 import {
   BarChart,
   Bar,
@@ -29,6 +30,7 @@ import {
 } from 'date-fns'
 
 export default function Reports() {
+  const chart = useChartColors()
   const [reportType, setReportType] = useState<'monthly' | 'yearly'>('monthly')
   const [comparisonYears, setComparisonYears] = useState(2)
 
@@ -186,12 +188,12 @@ export default function Reports() {
   const CustomTooltip = ({ active, payload, label }: any) => {
     if (active && payload && payload.length) {
       return (
-        <div style={{
-          backgroundColor: 'white',
+        <div className="skin-flat-card" style={{
+          backgroundColor: 'var(--c-surface)',
           padding: '10px',
-          border: '1px solid #ccc',
+          border: '1px solid var(--c-hairline)',
           borderRadius: '4px',
-          boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+          boxShadow: '0 2px 4px color-mix(in srgb, var(--c-scrim) 10%, transparent)'
         }}>
           <p style={{ margin: 0, fontWeight: 'bold' }}>{label}</p>
           {payload.map((entry: any, index: number) => (
@@ -217,7 +219,7 @@ export default function Reports() {
       <div style={{
         marginBottom: '2rem',
         padding: '1rem',
-        backgroundColor: '#f8f9fa',
+        backgroundColor: 'var(--c-surface-2)',
         borderRadius: '8px',
         display: 'flex',
         gap: '1rem',
@@ -231,7 +233,7 @@ export default function Reports() {
             onChange={(e) => setReportType(e.target.value as 'monthly' | 'yearly')}
             style={{
               padding: '0.4rem 0.75rem',
-              border: '1px solid #ddd',
+              border: '1px solid var(--c-hairline)',
               borderRadius: '4px',
               fontSize: '0.9rem'
             }}
@@ -248,7 +250,7 @@ export default function Reports() {
             onChange={(e) => setComparisonYears(Number(e.target.value))}
             style={{
               padding: '0.4rem 0.75rem',
-              border: '1px solid #ddd',
+              border: '1px solid var(--c-hairline)',
               borderRadius: '4px',
               fontSize: '0.9rem'
             }}
@@ -264,52 +266,52 @@ export default function Reports() {
       {yearOverYearGrowth && (
         <div className="stats-grid" style={{ marginBottom: '2rem' }}>
           <div className="stat-card" style={{
-            backgroundColor: yearOverYearGrowth.incomeGrowth >= 0 ? '#f0fff4' : '#fff5f5',
-            borderLeft: `4px solid ${yearOverYearGrowth.incomeGrowth >= 0 ? '#38a169' : '#e53e3e'}`
+            backgroundColor: yearOverYearGrowth.incomeGrowth >= 0 ? 'color-mix(in srgb, var(--c-green) 10%, transparent)' : 'color-mix(in srgb, var(--c-negative) 10%, transparent)',
+            borderLeft: `4px solid ${yearOverYearGrowth.incomeGrowth >= 0 ? 'var(--c-green)' : 'var(--c-negative)'}`
           }}>
-            <h3 style={{ color: yearOverYearGrowth.incomeGrowth >= 0 ? '#2f855a' : '#c53030' }}>
+            <h3 style={{ color: yearOverYearGrowth.incomeGrowth >= 0 ? 'var(--c-green)' : 'var(--c-negative)' }}>
               Income Growth
             </h3>
             <div className="value" style={{
-              color: yearOverYearGrowth.incomeGrowth >= 0 ? '#38a169' : '#e53e3e'
+              color: yearOverYearGrowth.incomeGrowth >= 0 ? 'var(--c-green)' : 'var(--c-negative)'
             }}>
               {yearOverYearGrowth.incomeGrowth >= 0 ? '+' : ''}{yearOverYearGrowth.incomeGrowth.toFixed(1)}%
             </div>
-            <div style={{ fontSize: '0.85rem', color: '#666', marginTop: '0.5rem' }}>
+            <div style={{ fontSize: '0.85rem', color: 'var(--c-text-2)', marginTop: '0.5rem' }}>
               Year over year
             </div>
           </div>
 
           <div className="stat-card" style={{
-            backgroundColor: yearOverYearGrowth.expenseGrowth <= 0 ? '#f0fff4' : '#fff5f5',
-            borderLeft: `4px solid ${yearOverYearGrowth.expenseGrowth <= 0 ? '#38a169' : '#e53e3e'}`
+            backgroundColor: yearOverYearGrowth.expenseGrowth <= 0 ? 'color-mix(in srgb, var(--c-green) 10%, transparent)' : 'color-mix(in srgb, var(--c-negative) 10%, transparent)',
+            borderLeft: `4px solid ${yearOverYearGrowth.expenseGrowth <= 0 ? 'var(--c-green)' : 'var(--c-negative)'}`
           }}>
-            <h3 style={{ color: yearOverYearGrowth.expenseGrowth <= 0 ? '#2f855a' : '#c53030' }}>
+            <h3 style={{ color: yearOverYearGrowth.expenseGrowth <= 0 ? 'var(--c-green)' : 'var(--c-negative)' }}>
               Expense Growth
             </h3>
             <div className="value" style={{
-              color: yearOverYearGrowth.expenseGrowth <= 0 ? '#38a169' : '#e53e3e'
+              color: yearOverYearGrowth.expenseGrowth <= 0 ? 'var(--c-green)' : 'var(--c-negative)'
             }}>
               {yearOverYearGrowth.expenseGrowth >= 0 ? '+' : ''}{yearOverYearGrowth.expenseGrowth.toFixed(1)}%
             </div>
-            <div style={{ fontSize: '0.85rem', color: '#666', marginTop: '0.5rem' }}>
+            <div style={{ fontSize: '0.85rem', color: 'var(--c-text-2)', marginTop: '0.5rem' }}>
               Year over year
             </div>
           </div>
 
           <div className="stat-card" style={{
-            backgroundColor: yearOverYearGrowth.netGrowth >= 0 ? '#f0fff4' : '#fff5f5',
-            borderLeft: `4px solid ${yearOverYearGrowth.netGrowth >= 0 ? '#38a169' : '#e53e3e'}`
+            backgroundColor: yearOverYearGrowth.netGrowth >= 0 ? 'color-mix(in srgb, var(--c-green) 10%, transparent)' : 'color-mix(in srgb, var(--c-negative) 10%, transparent)',
+            borderLeft: `4px solid ${yearOverYearGrowth.netGrowth >= 0 ? 'var(--c-green)' : 'var(--c-negative)'}`
           }}>
-            <h3 style={{ color: yearOverYearGrowth.netGrowth >= 0 ? '#2f855a' : '#c53030' }}>
+            <h3 style={{ color: yearOverYearGrowth.netGrowth >= 0 ? 'var(--c-green)' : 'var(--c-negative)' }}>
               Net Cash Flow Growth
             </h3>
             <div className="value" style={{
-              color: yearOverYearGrowth.netGrowth >= 0 ? '#38a169' : '#e53e3e'
+              color: yearOverYearGrowth.netGrowth >= 0 ? 'var(--c-green)' : 'var(--c-negative)'
             }}>
               {yearOverYearGrowth.netGrowth >= 0 ? '+' : ''}{yearOverYearGrowth.netGrowth.toFixed(1)}%
             </div>
-            <div style={{ fontSize: '0.85rem', color: '#666', marginTop: '0.5rem' }}>
+            <div style={{ fontSize: '0.85rem', color: 'var(--c-text-2)', marginTop: '0.5rem' }}>
               Year over year
             </div>
           </div>
@@ -317,7 +319,7 @@ export default function Reports() {
           <div className="stat-card">
             <h3>Analysis Period</h3>
             <div className="value">{comparisonYears} years</div>
-            <div style={{ fontSize: '0.85rem', color: '#666', marginTop: '0.5rem' }}>
+            <div style={{ fontSize: '0.85rem', color: 'var(--c-text-2)', marginTop: '0.5rem' }}>
               {format(startDate, 'yyyy')} - {format(endDate, 'yyyy')}
             </div>
           </div>
@@ -329,20 +331,20 @@ export default function Reports() {
           {/* Yearly Overview */}
           <div className="card" style={{ marginBottom: '1.5rem' }}>
             <h2>Yearly Financial Overview</h2>
-            <p style={{ fontSize: '0.9rem', color: '#666', marginBottom: '1rem' }}>
+            <p style={{ fontSize: '0.9rem', color: 'var(--c-text-2)', marginBottom: '1rem' }}>
               Annual income, expenses, and net cash flow comparison
             </p>
             <ResponsiveContainer width="100%" height={400}>
               <ComposedChart data={yearlyComparison}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="year" />
-                <YAxis yAxisId="amount" />
-                <YAxis yAxisId="count" orientation="right" />
+                <CartesianGrid strokeDasharray="3 3" stroke={chart.grid} />
+                <XAxis tick={{ fill: chart.text }} dataKey="year" />
+                <YAxis tick={{ fill: chart.text }} yAxisId="amount" />
+                <YAxis tick={{ fill: chart.text }} yAxisId="count" orientation="right" />
                 <Tooltip content={<CustomTooltip />} />
                 <Legend />
-                <Bar yAxisId="amount" dataKey="income" fill="#38a169" name="Income" />
-                <Bar yAxisId="amount" dataKey="expenses" fill="#e53e3e" name="Expenses" />
-                <Line yAxisId="count" type="monotone" dataKey="transactionCount" stroke="#3182ce" strokeWidth={3} name="Transactions" />
+                <Bar yAxisId="amount" dataKey="income" fill="var(--c-green)" name="Income" />
+                <Bar yAxisId="amount" dataKey="expenses" fill="var(--c-negative)" name="Expenses" />
+                <Line yAxisId="count" type="monotone" dataKey="transactionCount" stroke="var(--c-primary)" strokeWidth={3} name="Transactions" />
               </ComposedChart>
             </ResponsiveContainer>
           </div>
@@ -366,15 +368,15 @@ export default function Reports() {
                 {yearlyComparison.map((year) => (
                   <tr key={year.year}>
                     <td style={{ fontWeight: 'bold' }}>{year.year}</td>
-                    <td style={{ color: '#38a169', fontWeight: '500' }}>
+                    <td style={{ color: 'var(--c-green)', fontWeight: '500' }}>
                       ${formatCurrency(year.income)}
                     </td>
-                    <td style={{ color: '#e53e3e', fontWeight: '500' }}>
+                    <td style={{ color: 'var(--c-negative)', fontWeight: '500' }}>
                       ${formatCurrency(year.expenses)}
                     </td>
                     <td style={{
                       fontWeight: 'bold',
-                      color: year.net >= 0 ? '#38a169' : '#e53e3e'
+                      color: year.net >= 0 ? 'var(--c-green)' : 'var(--c-negative)'
                     }}>
                       ${formatCurrency(year.net)}
                     </td>
@@ -392,19 +394,19 @@ export default function Reports() {
           {/* Monthly Comparison */}
           <div className="card" style={{ marginBottom: '1.5rem' }}>
             <h2>Monthly Income vs Expenses Trends</h2>
-            <p style={{ fontSize: '0.9rem', color: '#666', marginBottom: '1rem' }}>
+            <p style={{ fontSize: '0.9rem', color: 'var(--c-text-2)', marginBottom: '1rem' }}>
               Compare monthly patterns across years
             </p>
             <ResponsiveContainer width="100%" height={400}>
               <LineChart data={seasonalAnalysis}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="month" />
-                <YAxis />
+                <CartesianGrid strokeDasharray="3 3" stroke={chart.grid} />
+                <XAxis tick={{ fill: chart.text }} dataKey="month" />
+                <YAxis tick={{ fill: chart.text }} />
                 <Tooltip content={<CustomTooltip />} />
                 <Legend />
-                <Line type="monotone" dataKey="avgIncome" stroke="#38a169" strokeWidth={3} name="Avg Income" />
-                <Line type="monotone" dataKey="avgExpenses" stroke="#e53e3e" strokeWidth={3} name="Avg Expenses" />
-                <Line type="monotone" dataKey="avgNet" stroke="#3182ce" strokeWidth={3} name="Avg Net" />
+                <Line type="monotone" dataKey="avgIncome" stroke="var(--c-green)" strokeWidth={3} name="Avg Income" />
+                <Line type="monotone" dataKey="avgExpenses" stroke="var(--c-negative)" strokeWidth={3} name="Avg Expenses" />
+                <Line type="monotone" dataKey="avgNet" stroke="var(--c-primary)" strokeWidth={3} name="Avg Net" />
               </LineChart>
             </ResponsiveContainer>
           </div>
@@ -412,26 +414,26 @@ export default function Reports() {
           {/* Multi-Year Monthly Comparison */}
           <div className="card" style={{ marginBottom: '1.5rem' }}>
             <h2>Year-over-Year Monthly Comparison</h2>
-            <p style={{ fontSize: '0.9rem', color: '#666', marginBottom: '1rem' }}>
+            <p style={{ fontSize: '0.9rem', color: 'var(--c-text-2)', marginBottom: '1rem' }}>
               Detailed monthly breakdown by year
             </p>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '1rem' }}>
               {monthlyTrendsByYear.map(({ year, months }) => (
                 <div key={year} style={{
                   padding: '1rem',
-                  border: '1px solid #e0e0e0',
+                  border: '1px solid var(--c-hairline)',
                   borderRadius: '8px',
-                  backgroundColor: '#fafafa'
+                  backgroundColor: 'var(--c-surface-2)'
                 }}>
-                  <h3 style={{ margin: '0 0 1rem 0', color: '#333' }}>{year}</h3>
+                  <h3 style={{ margin: '0 0 1rem 0', color: 'var(--c-text)' }}>{year}</h3>
                   <ResponsiveContainer width="100%" height={200}>
                     <BarChart data={months}>
-                      <CartesianGrid strokeDasharray="3 3" />
-                      <XAxis dataKey="month" />
-                      <YAxis />
+                      <CartesianGrid strokeDasharray="3 3" stroke={chart.grid} />
+                      <XAxis tick={{ fill: chart.text }} dataKey="month" />
+                      <YAxis tick={{ fill: chart.text }} />
                       <Tooltip content={<CustomTooltip />} />
-                      <Bar dataKey="income" fill="#38a169" name="Income" />
-                      <Bar dataKey="expenses" fill="#e53e3e" name="Expenses" />
+                      <Bar dataKey="income" fill="var(--c-green)" name="Income" />
+                      <Bar dataKey="expenses" fill="var(--c-negative)" name="Expenses" />
                     </BarChart>
                   </ResponsiveContainer>
                 </div>
@@ -442,7 +444,7 @@ export default function Reports() {
           {/* Seasonal Analysis Table */}
           <div className="card">
             <h2>Seasonal Analysis</h2>
-            <p style={{ fontSize: '0.9rem', color: '#666', marginBottom: '1rem' }}>
+            <p style={{ fontSize: '0.9rem', color: 'var(--c-text-2)', marginBottom: '1rem' }}>
               Average monthly patterns across all years
             </p>
             <table className="table">
@@ -459,15 +461,15 @@ export default function Reports() {
                 {seasonalAnalysis.map((month) => (
                   <tr key={month.month}>
                     <td style={{ fontWeight: 'bold' }}>{month.month}</td>
-                    <td style={{ color: '#38a169', fontWeight: '500' }}>
+                    <td style={{ color: 'var(--c-green)', fontWeight: '500' }}>
                       ${formatCurrency(month.avgIncome)}
                     </td>
-                    <td style={{ color: '#e53e3e', fontWeight: '500' }}>
+                    <td style={{ color: 'var(--c-negative)', fontWeight: '500' }}>
                       ${formatCurrency(month.avgExpenses)}
                     </td>
                     <td style={{
                       fontWeight: 'bold',
-                      color: month.avgNet >= 0 ? '#38a169' : '#e53e3e'
+                      color: month.avgNet >= 0 ? 'var(--c-green)' : 'var(--c-negative)'
                     }}>
                       ${formatCurrency(month.avgNet)}
                     </td>

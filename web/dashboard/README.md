@@ -1,78 +1,64 @@
-# AI Finance Agent - Dashboard
+# Dashboard
 
-React + TypeScript dashboard for viewing financial transactions.
+Aplicación React + TypeScript para visualizar transacciones, merchants, reportes y control mensual.
 
-## Features
+## Fuente de datos real
 
-- Overview page with KPIs and recent transactions
-- Transactions page with full list and CSV export
-- Merchants page with analytics
-- Responsive design
-- Real-time data from Firebase Data Connect
+- consultas directas a Supabase desde el frontend
+- push notifications con Firebase Cloud Messaging
+- health checks contra el endpoint del ingestor
 
-## Development
+## Desarrollo
 
 ```bash
-# Install dependencies
 npm install
-
-# Start dev server
 npm run dev
+```
 
-# Build for production
+Build de producción:
+
+```bash
 npm run build
 ```
 
-## Environment Variables
+## Variables de entorno
 
-Create `.env.local`:
+Crea `.env.local` con:
 
+```env
+VITE_SUPABASE_URL=https://your-project.supabase.co
+VITE_SUPABASE_ANON_KEY=your-anon-key
+
+VITE_FIREBASE_PROJECT_ID=mail-reader-433802
+VITE_FIREBASE_API_KEY=your-api-key
+VITE_FIREBASE_AUTH_DOMAIN=mail-reader-433802.firebaseapp.com
+VITE_FIREBASE_STORAGE_BUCKET=mail-reader-433802.firebasestorage.app
+VITE_FIREBASE_MESSAGING_SENDER_ID=your-sender-id
+VITE_FIREBASE_APP_ID=your-app-id
+VITE_FIREBASE_VAPID_KEY=your-web-push-vapid-key
+
+VITE_INGESTOR_URL=https://your-ingestor.run.app
 ```
-VITE_API_URL=https://your-api-endpoint.com
-```
+
+`VITE_FIREBASE_*` solo se usa para FCM; la capa de datos del dashboard es Supabase.
 
 ## Deployment
 
-### Firebase Hosting
+El deploy actual es a Firebase Hosting:
 
 ```bash
-# Build
 npm run build
-
-# Deploy to Firebase Hosting
 firebase deploy --only hosting
 ```
 
-### Cloud Run (Static Hosting)
-
-```bash
-# Build
-npm run build
-
-# Create simple static server
-npm install -g serve
-
-# Deploy dist folder to Cloud Run
-# (Use nginx Docker image to serve static files)
-```
-
-## API Integration
-
-The dashboard expects a REST API with these endpoints:
-
-- `GET /api/stats` - Dashboard statistics
-- `GET /api/transactions?limit=N` - List transactions
-- `GET /api/merchants` - List merchants with stats
-- `GET /api/transactions/export` - Export transactions as CSV
-
-These endpoints should be implemented as a thin layer over Firebase Data Connect GraphQL queries.
-
-## Tech Stack
+## Tech stack
 
 - React 18
 - TypeScript
 - Vite
-- TanStack Query (React Query)
+- TanStack Query
 - React Router
-- Recharts (for charts)
-- date-fns (for date formatting)
+- Supabase JS
+- Firebase Cloud Messaging
+- Recharts
+- date-fns

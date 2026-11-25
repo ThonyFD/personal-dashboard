@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { fetchTransactions } from '../api/dataconnect-client'
+import { fetchTransactions } from '../api/supabase-data-client'
 import { useState, useMemo } from 'react'
 import { formatCurrency } from '../utils/format'
 import {
@@ -25,6 +25,7 @@ import {
   isAfter,
   isBefore,
 } from 'date-fns'
+import { useChartColors } from '../theme/AppearanceContext'
 
 // Goal data structure (stored in localStorage for now)
 interface FinancialGoal {
@@ -53,11 +54,11 @@ interface GoalMilestone {
 }
 
 const GOAL_TYPES = {
-  savings: { label: 'Ahorro', icon: '💰', color: '#38a169' },
-  investment: { label: 'Inversión', icon: '📈', color: '#3182ce' },
-  debt_reduction: { label: 'Reducción de Deuda', icon: '📉', color: '#e53e3e' },
-  expense_reduction: { label: 'Reducción de Gastos', icon: '✂️', color: '#dd6b20' },
-  income_target: { label: 'Meta de Ingresos', icon: '🎯', color: '#805ad5' },
+  savings: { label: 'Ahorro', icon: '💰', color: 'var(--c-green)' },
+  investment: { label: 'Inversión', icon: '📈', color: 'var(--c-primary)' },
+  debt_reduction: { label: 'Reducción de Deuda', icon: '📉', color: 'var(--c-negative)' },
+  expense_reduction: { label: 'Reducción de Gastos', icon: '✂️', color: 'var(--c-warning)' },
+  income_target: { label: 'Meta de Ingresos', icon: '🎯', color: 'var(--c-violet)' },
 }
 
 interface GoalWithProgress extends FinancialGoal {
@@ -69,6 +70,7 @@ interface GoalWithProgress extends FinancialGoal {
 }
 
 export default function Goals() {
+  const chart = useChartColors()
   const [showCreateForm, setShowCreateForm] = useState(false)
   const [selectedGoal, setSelectedGoal] = useState<GoalWithProgress | null>(null)
 
@@ -295,8 +297,8 @@ export default function Goals() {
           onClick={() => setShowCreateForm(true)}
           style={{
             padding: '0.5rem 1rem',
-            backgroundColor: '#4CAF50',
-            color: 'white',
+            backgroundColor: 'var(--c-green)',
+            color: 'var(--c-on-accent)',
             border: 'none',
             borderRadius: '4px',
             cursor: 'pointer',
@@ -312,32 +314,32 @@ export default function Goals() {
         <div className="stat-card">
           <h3>Active Goals</h3>
           <div className="value">{activeGoals.length}</div>
-          <div style={{ fontSize: '0.85rem', color: '#666', marginTop: '0.5rem' }}>
+          <div style={{ fontSize: '0.85rem', color: 'var(--c-text-2)', marginTop: '0.5rem' }}>
             In progress
           </div>
         </div>
 
-        <div className="stat-card" style={{ backgroundColor: '#f0fff4', borderLeft: '4px solid #38a169' }}>
-          <h3 style={{ color: '#2f855a' }}>Completed Goals</h3>
-          <div className="value" style={{ color: '#38a169' }}>{completedGoals.length}</div>
-          <div style={{ fontSize: '0.85rem', color: '#666', marginTop: '0.5rem' }}>
+        <div className="stat-card" style={{ backgroundColor: 'color-mix(in srgb, var(--c-green) 10%, transparent)', borderLeft: '4px solid var(--c-green)' }}>
+          <h3 style={{ color: 'var(--c-green)' }}>Completed Goals</h3>
+          <div className="value" style={{ color: 'var(--c-green)' }}>{completedGoals.length}</div>
+          <div style={{ fontSize: '0.85rem', color: 'var(--c-text-2)', marginTop: '0.5rem' }}>
             Achieved
           </div>
         </div>
 
         <div className="stat-card" style={{
-          backgroundColor: overdueGoals.length > 0 ? '#fff5f5' : '#f8f9fa',
-          borderLeft: overdueGoals.length > 0 ? '4px solid #e53e3e' : '4px solid #ddd'
+          backgroundColor: overdueGoals.length > 0 ? 'color-mix(in srgb, var(--c-negative) 10%, transparent)' : 'var(--c-surface-2)',
+          borderLeft: overdueGoals.length > 0 ? '4px solid var(--c-negative)' : '4px solid var(--c-hairline)'
         }}>
-          <h3 style={{ color: overdueGoals.length > 0 ? '#c53030' : '#333' }}>
+          <h3 style={{ color: overdueGoals.length > 0 ? 'var(--c-negative)' : 'var(--c-text)' }}>
             Overdue Goals
           </h3>
           <div className="value" style={{
-            color: overdueGoals.length > 0 ? '#e53e3e' : '#333'
+            color: overdueGoals.length > 0 ? 'var(--c-negative)' : 'var(--c-text)'
           }}>
             {overdueGoals.length}
           </div>
-          <div style={{ fontSize: '0.85rem', color: '#666', marginTop: '0.5rem' }}>
+          <div style={{ fontSize: '0.85rem', color: 'var(--c-text-2)', marginTop: '0.5rem' }}>
             Need attention
           </div>
         </div>
@@ -345,7 +347,7 @@ export default function Goals() {
         <div className="stat-card">
           <h3>Total Goals</h3>
           <div className="value">{goalsWithProgress.length}</div>
-          <div style={{ fontSize: '0.85rem', color: '#666', marginTop: '0.5rem' }}>
+          <div style={{ fontSize: '0.85rem', color: 'var(--c-text-2)', marginTop: '0.5rem' }}>
             All time
           </div>
         </div>
@@ -361,9 +363,9 @@ export default function Goals() {
                 key={goal.id}
                 style={{
                   padding: '1rem',
-                  border: '1px solid #e0e0e0',
+                  border: '1px solid var(--c-hairline)',
                   borderRadius: '8px',
-                  backgroundColor: goal.isOverdue ? '#fff5f5' : '#fafafa',
+                  backgroundColor: goal.isOverdue ? 'color-mix(in srgb, var(--c-negative) 10%, transparent)' : 'var(--c-surface-2)',
                   cursor: 'pointer'
                 }}
                 onClick={() => setSelectedGoal(goal)}
@@ -378,8 +380,8 @@ export default function Goals() {
                     borderRadius: '4px',
                     fontSize: '0.8rem',
                     fontWeight: '500',
-                    backgroundColor: goal.isOverdue ? '#fed7d7' : '#c6f6d5',
-                    color: goal.isOverdue ? '#c53030' : '#2f855a'
+                    backgroundColor: goal.isOverdue ? 'color-mix(in srgb, var(--c-negative) 15%, transparent)' : 'color-mix(in srgb, var(--c-green) 12%, transparent)',
+                    color: goal.isOverdue ? 'var(--c-negative)' : 'var(--c-green)'
                   }}>
                     {goal.percentage.toFixed(1)}% Complete
                   </div>
@@ -393,7 +395,7 @@ export default function Goals() {
                   <div style={{
                     width: '100%',
                     height: '8px',
-                    backgroundColor: '#e0e0e0',
+                    backgroundColor: 'var(--c-hairline)',
                     borderRadius: '4px',
                     overflow: 'hidden'
                   }}>
@@ -407,7 +409,7 @@ export default function Goals() {
                 </div>
 
                 {goal.description && (
-                  <p style={{ fontSize: '0.9rem', color: '#666', margin: 0 }}>
+                  <p style={{ fontSize: '0.9rem', color: 'var(--c-text-2)', margin: 0 }}>
                     {goal.description}
                   </p>
                 )}
@@ -417,7 +419,7 @@ export default function Goals() {
         ) : (
           <div style={{
             textAlign: 'center',
-            color: '#666',
+            color: 'var(--c-text-2)',
             padding: '2rem',
             fontStyle: 'italic'
           }}>
@@ -435,8 +437,8 @@ export default function Goals() {
               onClick={() => setSelectedGoal(null)}
               style={{
                 padding: '0.25rem 0.5rem',
-                border: '1px solid #ddd',
-                backgroundColor: 'white',
+                border: '1px solid var(--c-hairline)',
+                backgroundColor: 'var(--c-surface)',
                 borderRadius: '4px',
                 cursor: 'pointer'
               }}
@@ -446,33 +448,33 @@ export default function Goals() {
           </div>
 
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem', marginBottom: '1.5rem' }}>
-            <div style={{ padding: '1rem', backgroundColor: '#f8f9fa', borderRadius: '8px' }}>
-              <div style={{ fontSize: '0.9rem', color: '#666', marginBottom: '0.25rem' }}>Current Progress</div>
+            <div style={{ padding: '1rem', backgroundColor: 'var(--c-surface-2)', borderRadius: '8px' }}>
+              <div style={{ fontSize: '0.9rem', color: 'var(--c-text-2)', marginBottom: '0.25rem' }}>Current Progress</div>
               <div style={{ fontSize: '1.5rem', fontWeight: 'bold' }}>
                 {formatCurrency(selectedGoal.currentAmount)}
               </div>
             </div>
 
-            <div style={{ padding: '1rem', backgroundColor: '#f8f9fa', borderRadius: '8px' }}>
-              <div style={{ fontSize: '0.9rem', color: '#666', marginBottom: '0.25rem' }}>Target Amount</div>
+            <div style={{ padding: '1rem', backgroundColor: 'var(--c-surface-2)', borderRadius: '8px' }}>
+              <div style={{ fontSize: '0.9rem', color: 'var(--c-text-2)', marginBottom: '0.25rem' }}>Target Amount</div>
               <div style={{ fontSize: '1.5rem', fontWeight: 'bold' }}>
                 {formatCurrency(selectedGoal.targetAmount)}
               </div>
             </div>
 
-            <div style={{ padding: '1rem', backgroundColor: '#f8f9fa', borderRadius: '8px' }}>
-              <div style={{ fontSize: '0.9rem', color: '#666', marginBottom: '0.25rem' }}>Progress</div>
+            <div style={{ padding: '1rem', backgroundColor: 'var(--c-surface-2)', borderRadius: '8px' }}>
+              <div style={{ fontSize: '0.9rem', color: 'var(--c-text-2)', marginBottom: '0.25rem' }}>Progress</div>
               <div style={{ fontSize: '1.5rem', fontWeight: 'bold', color: GOAL_TYPES[selectedGoal.type].color }}>
                 {selectedGoal.percentage.toFixed(1)}%
               </div>
             </div>
 
-            <div style={{ padding: '1rem', backgroundColor: '#f8f9fa', borderRadius: '8px' }}>
-              <div style={{ fontSize: '0.9rem', color: '#666', marginBottom: '0.25rem' }}>Days Remaining</div>
+            <div style={{ padding: '1rem', backgroundColor: 'var(--c-surface-2)', borderRadius: '8px' }}>
+              <div style={{ fontSize: '0.9rem', color: 'var(--c-text-2)', marginBottom: '0.25rem' }}>Days Remaining</div>
               <div style={{
                 fontSize: '1.5rem',
                 fontWeight: 'bold',
-                color: selectedGoal.daysRemaining < 0 ? '#e53e3e' : '#38a169'
+                color: selectedGoal.daysRemaining < 0 ? 'var(--c-negative)' : 'var(--c-green)'
               }}>
                 {selectedGoal.daysRemaining > 0 ? selectedGoal.daysRemaining :
                  selectedGoal.daysRemaining === 0 ? 'Today' : 'Overdue'}
@@ -485,9 +487,9 @@ export default function Goals() {
             <h3>Progress Timeline</h3>
             <ResponsiveContainer width="100%" height={300}>
               <LineChart data={progressTimeline}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="month" />
-                <YAxis />
+                <CartesianGrid strokeDasharray="3 3" stroke={chart.grid} />
+                <XAxis tick={{ fill: chart.text }} dataKey="month" />
+                <YAxis tick={{ fill: chart.text }} />
                 <Tooltip formatter={(value: number) => formatCurrency(value)} />
                 <Legend />
                 <Line
@@ -500,7 +502,7 @@ export default function Goals() {
                 <Line
                   type="monotone"
                   dataKey="progress"
-                  stroke="#8884d8"
+                  stroke="var(--c-violet)"
                   strokeWidth={2}
                   name="Monthly Progress"
                 />
@@ -509,7 +511,7 @@ export default function Goals() {
           </div>
 
           {/* Manual Progress Update */}
-          <div style={{ padding: '1rem', backgroundColor: '#f8f9fa', borderRadius: '8px' }}>
+          <div style={{ padding: '1rem', backgroundColor: 'var(--c-surface-2)', borderRadius: '8px' }}>
             <h4>Update Progress Manually</h4>
             <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
               <input
@@ -517,7 +519,7 @@ export default function Goals() {
                 placeholder="New amount"
                 style={{
                   padding: '0.5rem',
-                  border: '1px solid #ddd',
+                  border: '1px solid var(--c-hairline)',
                   borderRadius: '4px',
                   flex: 1
                 }}
@@ -539,7 +541,7 @@ export default function Goals() {
                 style={{
                   padding: '0.5rem 1rem',
                   backgroundColor: GOAL_TYPES[selectedGoal.type].color,
-                  color: 'white',
+                  color: 'var(--c-on-accent)',
                   border: 'none',
                   borderRadius: '4px',
                   cursor: 'pointer'
@@ -573,9 +575,9 @@ export default function Goals() {
                 key={goal.id}
                 style={{
                   padding: '0.75rem',
-                  border: '1px solid #c6f6d5',
+                  border: '1px solid color-mix(in srgb, var(--c-green) 30%, transparent)',
                   borderRadius: '8px',
-                  backgroundColor: '#f0fff4',
+                  backgroundColor: 'color-mix(in srgb, var(--c-green) 10%, transparent)',
                   display: 'flex',
                   justifyContent: 'space-between',
                   alignItems: 'center'
@@ -585,7 +587,7 @@ export default function Goals() {
                   <span style={{ fontSize: '1.2rem' }}>{GOAL_TYPES[goal.type].icon}</span>
                   <div>
                     <div style={{ fontWeight: '500' }}>{goal.title}</div>
-                    <div style={{ fontSize: '0.8rem', color: '#666' }}>
+                    <div style={{ fontSize: '0.8rem', color: 'var(--c-text-2)' }}>
                       Completed: {formatCurrency(goal.targetAmount)}
                     </div>
                   </div>
@@ -595,8 +597,8 @@ export default function Goals() {
                   borderRadius: '4px',
                   fontSize: '0.8rem',
                   fontWeight: '500',
-                  backgroundColor: '#c6f6d5',
-                  color: '#2f855a'
+                  backgroundColor: 'color-mix(in srgb, var(--c-green) 12%, transparent)',
+                  color: 'var(--c-green)'
                 }}>
                   ✅ Completed
                 </div>
@@ -614,14 +616,14 @@ export default function Goals() {
           left: 0,
           right: 0,
           bottom: 0,
-          backgroundColor: 'rgba(0,0,0,0.5)',
+          backgroundColor: 'color-mix(in srgb, var(--c-scrim) 50%, transparent)',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
           zIndex: 1000
         }}>
           <div style={{
-            backgroundColor: 'white',
+            backgroundColor: 'var(--c-surface)',
             padding: '2rem',
             borderRadius: '8px',
             width: '500px',
@@ -645,7 +647,7 @@ export default function Goals() {
                   style={{
                     width: '100%',
                     padding: '0.5rem',
-                    border: '1px solid #ddd',
+                    border: '1px solid var(--c-hairline)',
                     borderRadius: '4px'
                   }}
                 />
@@ -661,7 +663,7 @@ export default function Goals() {
                   style={{
                     width: '100%',
                     padding: '0.5rem',
-                    border: '1px solid #ddd',
+                    border: '1px solid var(--c-hairline)',
                     borderRadius: '4px',
                     resize: 'vertical'
                   }}
@@ -678,7 +680,7 @@ export default function Goals() {
                   style={{
                     width: '100%',
                     padding: '0.5rem',
-                    border: '1px solid #ddd',
+                    border: '1px solid var(--c-hairline)',
                     borderRadius: '4px'
                   }}
                 >
@@ -703,7 +705,7 @@ export default function Goals() {
                   style={{
                     width: '100%',
                     padding: '0.5rem',
-                    border: '1px solid #ddd',
+                    border: '1px solid var(--c-hairline)',
                     borderRadius: '4px'
                   }}
                 />
@@ -722,7 +724,7 @@ export default function Goals() {
                   style={{
                     width: '100%',
                     padding: '0.5rem',
-                    border: '1px solid #ddd',
+                    border: '1px solid var(--c-hairline)',
                     borderRadius: '4px'
                   }}
                 />
@@ -739,7 +741,7 @@ export default function Goals() {
                   style={{
                     width: '100%',
                     padding: '0.5rem',
-                    border: '1px solid #ddd',
+                    border: '1px solid var(--c-hairline)',
                     borderRadius: '4px'
                   }}
                 />
@@ -751,8 +753,8 @@ export default function Goals() {
                   onClick={() => setShowCreateForm(false)}
                   style={{
                     padding: '0.5rem 1rem',
-                    border: '1px solid #ddd',
-                    backgroundColor: 'white',
+                    border: '1px solid var(--c-hairline)',
+                    backgroundColor: 'var(--c-surface)',
                     borderRadius: '4px',
                     cursor: 'pointer'
                   }}
@@ -764,8 +766,8 @@ export default function Goals() {
                   disabled={saveGoalMutation.isPending}
                   style={{
                     padding: '0.5rem 1rem',
-                    backgroundColor: '#4CAF50',
-                    color: 'white',
+                    backgroundColor: 'var(--c-green)',
+                    color: 'var(--c-on-accent)',
                     border: 'none',
                     borderRadius: '4px',
                     cursor: 'pointer'

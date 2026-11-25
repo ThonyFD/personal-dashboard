@@ -23,6 +23,12 @@ Este documento te guía paso a paso para obtener las credenciales OAuth necesari
    - Click **"SAVE AND CONTINUE"**
    - Click **"BACK TO DASHBOARD"**
 
+4.1. En **Google Auth Platform** → **Audience**:
+   - Cambia **Publishing status** a **"In production"**
+   - Si este proyecto pertenece a una organización Google Workspace y solo lo usarán cuentas internas, puedes usar **"Internal"**
+
+   **Importante:** si dejas el app en **"Testing"** y pides `https://www.googleapis.com/auth/gmail.readonly`, Google puede invalidar el refresh token después de 7 días aunque el código esté bien.
+
 5. Regresa a **Credentials** y click **"+ CREATE CREDENTIALS"** → **"OAuth client ID"**
 
 6. Application type: **"Desktop app"**
@@ -155,6 +161,16 @@ Si no existe, descárgalo de nuevo del paso 1.
 
 **Solución:**
 Usa la opción 2 (Manual code entry) en lugar de la opción 1.
+
+### El refresh token dura solo unos días
+
+Lo más probable es que el OAuth app siga en **Testing**.
+
+**Solución:**
+1. Ve a **Google Auth Platform** → **Audience**
+2. Cambia el app a **"In production"** (o **"Internal"** si aplica)
+3. Genera **un refresh token nuevo**
+4. Actualiza `gmail-oauth-refresh-token` en Secret Manager
 
 ## Seguridad
 

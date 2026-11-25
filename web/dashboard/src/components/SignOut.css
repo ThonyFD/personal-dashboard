@@ -1,0 +1,81 @@
+.signout-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 2000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  background: color-mix(in srgb, var(--c-scrim) 72%, transparent);
+  backdrop-filter: blur(4px);
+}
+
+.signout-dialog {
+  width: 100%;
+  max-width: 380px;
+  padding: 1.5rem;
+  background: var(--c-surface);
+  border: 1px solid var(--c-border-violet);
+  border-radius: 16px;
+  color: var(--c-text);
+  font-family: var(--f-body);
+}
+
+.signout-dialog h2 {
+  margin: 0 0 0.5rem;
+  font-family: var(--f-heading);
+  font-size: 1.15rem;
+}
+
+.signout-dialog p {
+  margin: 0 0 1.25rem;
+  color: var(--c-text-2);
+  line-height: 1.5;
+}
+
+.signout-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.75rem;
+}
+
+.signout-actions button {
+  padding: 0.6rem 1.1rem;
+  border-radius: 8px;
+  font-family: var(--f-body);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.signout-actions button:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.signout-cancel {
+  background: transparent;
+  color: var(--c-text-2);
+  border: 1px solid var(--c-border);
+}
+
+.signout-confirm {
+  background: color-mix(in srgb, var(--c-negative) 10%, transparent);
+  color: var(--c-negative);
+  border: 1px solid color-mix(in srgb, var(--c-negative) 45%, transparent);
+}
+
+.farewell-toast {
+  position: fixed;
+  left: 50%;
+  bottom: 24px;
+  z-index: 2000;
+  transform: translateX(-50%);
+  padding: 0.75rem 1.25rem;
+  background: var(--c-surface);
+  border: 1px solid var(--c-border);
+  border-radius: 999px;
+  color: var(--c-text);
+  font-family: var(--f-body);
+  font-weight: 600;
+  box-shadow: 0 8px 24px color-mix(in srgb, var(--c-scrim) 35%, transparent);
+}

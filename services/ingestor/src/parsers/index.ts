@@ -58,8 +58,6 @@ export class ParserRegistry {
         Logger.info('Email ignored by parser', {
           event: 'email_ignored',
           provider,
-          senderEmail,
-          subject,
         });
         return 'ignored';
       }
@@ -100,10 +98,10 @@ export class ParserRegistry {
     if (regexResult) return regexResult;
 
     // Try LLM fallback if regex parsers didn't match
+    // No sender or subject in these logs: subjects carry amounts and merchants,
+    // and the GitHub Actions logs of this public repo are public.
     Logger.info('Attempting LLM fallback', {
       event: 'llm_fallback_attempt',
-      senderEmail,
-      subject,
     });
 
     const transaction = await this.llmFallback.parse(emailBody, message, senderEmail, subject);
@@ -116,8 +114,6 @@ export class ParserRegistry {
 
     Logger.warn('No parser matched email and LLM fallback failed', {
       event: 'parse_failed_all',
-      senderEmail,
-      subject,
     });
 
     return null;

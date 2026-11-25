@@ -1,0 +1,84 @@
+package com.thonyfd.financedashboard.widget
+
+import com.thonyfd.financedashboard.data.SupabaseConfig
+import com.thonyfd.financedashboard.data.auth.currentUserId
+import com.thonyfd.financedashboard.data.auth.sameAccount
+import android.content.Context
+import androidx.glance.appwidget.updateAll
+import androidx.work.CoroutineWorker
+import androidx.work.ExistingPeriodicWorkPolicy
+import androidx.work.PeriodicWorkRequestBuilder
+import androidx.work.WorkManager
+import androidx.work.WorkerParameters
+import com.thonyfd.financedashboard.data.repository.FinanceRepository
+import java.time.LocalDate
+import java.util.concurrent.TimeUnit
+
+class FinanceWidgetWorker(
+    private val context: Context,
+    workerParams: WorkerParameters
+) : CoroutineWorker(context, workerParams) {
+
+    override suspend fun doWork(): Result {
+        // Cada widget se refresca por separado: un fallo en finanzas no debe dejar hábitos sin actualizar
+        val financeOk = runCatching { refreshFinanceWidgets() }.isSuccess
+        val habitsOk = HabitsWidgetRefresher.refresh(context)
+        HabitsWidget().updateAll(context)
+
+        return if (financeOk && habitsOk) Result.success() else Result.retry()
+    }
+
+    private suspend fun refreshFinanceWidgets() {
+        SupabaseConfig.awaitAuth()
+        if (!widgetIsOwner(context)) {
+            // Non-owner: nothing to fetch, just redraw the "No disponible" state
+            FinanceWidget().updateAll(context)
+            PaymentsWidget().updateAll(context)
+            return
+        }
+        val account = SupabaseConfig.currentUserId()
+        val repo = FinanceRepository()
+        val today = LocalDate.now()
+
+        // 1. Actualizar widget principal con el mes seleccionado
+        val (year, month) = FinanceWidgetStateStore.getSelectedYearMonth(context)
+        val mainData = repo.getWidgetData(year, month)
+        // Account switched while fetching: drop the previous account's data
+        if (!sameAccount(account, SupabaseConfig.currentUserId())) return
+        FinanceWidgetStateStore.saveWidgetData(context, mainData)
+        FinanceWidget().updateAll(context)
+
+        // 2. Actualizar widget de pagos siempre con el mes actual
+        //    Reutiliza los datos si el mes seleccionado ya es el actual
+        val currentData = if (year == today.year && month == today.monthValue) {
+            mainData
+        } else {
+            repo.getWidgetData(today.year, today.monthValue)
+        }
+        if (!sameAccount(account, SupabaseConfig.currentUserId())) return
+        PaymentsWidgetStateStore.saveWidgetData(context, currentData)
+        PaymentsWidget().updateAll(context)
+    }
+
+    companion object {
+        private const val WORK_NAME = "finance_widget_refresh"
+
+        fun schedule(context: Context) {
+            val request = PeriodicWorkRequestBuilder<FinanceWidgetWorker>(
+                repeatInterval = 30,
+                repeatIntervalTimeUnit = TimeUnit.MINUTES
+            ).build()
+
+            WorkManager.getInstance(context).enqueueUniquePeriodicWork(
+                WORK_NAME,
+                ExistingPeriodicWorkPolicy.KEEP,
+                request
+            )
+        }
+
+        fun scheduleImmediate(context: Context) {
+            val request = androidx.work.OneTimeWorkRequestBuilder<FinanceWidgetWorker>().build()
+            WorkManager.getInstance(context).enqueue(request)
+        }
+    }
+}

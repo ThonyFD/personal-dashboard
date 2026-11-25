@@ -79,14 +79,14 @@ export default function SystemHealth() {
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'healthy':
-        return '#10b981'; // green
+        return 'var(--c-green)';
       case 'degraded':
       case 'warning':
-        return '#f59e0b'; // orange
+        return 'var(--c-warning)';
       case 'unhealthy':
-        return '#ef4444'; // red
+        return 'var(--c-negative)'; // red
       default:
-        return '#6b7280'; // gray
+        return 'var(--c-text-3)';
     }
   };
 
@@ -121,8 +121,8 @@ export default function SystemHealth() {
             onClick={handleRefresh}
             style={{
               padding: '0.5rem 1rem',
-              backgroundColor: '#3b82f6',
-              color: 'white',
+              backgroundColor: 'var(--c-primary)',
+              color: 'var(--c-on-accent)',
               border: 'none',
               borderRadius: '4px',
               cursor: 'pointer',
@@ -147,7 +147,7 @@ export default function SystemHealth() {
           <h2 style={{ margin: '0 0 0.5rem 0', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
             {getStatusEmoji(health.status)} Overall Status: {health.status.toUpperCase()}
           </h2>
-          <p style={{ margin: 0, fontSize: '0.9rem', color: '#666' }}>
+          <p style={{ margin: 0, fontSize: '0.9rem', color: 'var(--c-text-2)' }}>
             Last checked: {formatDistanceToNow(new Date(health.timestamp), { addSuffix: true })}
           </p>
         </div>
@@ -162,7 +162,7 @@ export default function SystemHealth() {
             <div
               style={{
                 padding: '1rem',
-                backgroundColor: 'white',
+                backgroundColor: 'var(--c-surface)',
                 border: `2px solid ${getStatusColor(health.checks.database.status)}`,
                 borderRadius: '8px',
               }}
@@ -174,7 +174,7 @@ export default function SystemHealth() {
                 Status: <strong>{health.checks.database.status}</strong>
               </p>
               {health.checks.database.message && (
-                <p style={{ margin: '0.5rem 0 0 0', fontSize: '0.85rem', color: '#666' }}>
+                <p style={{ margin: '0.5rem 0 0 0', fontSize: '0.85rem', color: 'var(--c-text-2)' }}>
                   {health.checks.database.message}
                 </p>
               )}
@@ -184,7 +184,7 @@ export default function SystemHealth() {
             <div
               style={{
                 padding: '1rem',
-                backgroundColor: 'white',
+                backgroundColor: 'var(--c-surface)',
                 border: `2px solid ${getStatusColor(health.checks.lastSync.status)}`,
                 borderRadius: '8px',
               }}
@@ -196,12 +196,12 @@ export default function SystemHealth() {
                 Status: <strong>{health.checks.lastSync.status}</strong>
               </p>
               {health.checks.lastSync.historyId && (
-                <p style={{ margin: '0.5rem 0 0 0', fontSize: '0.85rem', color: '#666' }}>
+                <p style={{ margin: '0.5rem 0 0 0', fontSize: '0.85rem', color: 'var(--c-text-2)' }}>
                   History ID: {health.checks.lastSync.historyId}
                 </p>
               )}
               {health.checks.lastSync.message && (
-                <p style={{ margin: '0.5rem 0 0 0', fontSize: '0.85rem', color: '#ef4444' }}>
+                <p style={{ margin: '0.5rem 0 0 0', fontSize: '0.85rem', color: 'var(--c-negative)' }}>
                   {health.checks.lastSync.message}
                 </p>
               )}
@@ -219,8 +219,8 @@ export default function SystemHealth() {
             <div
               style={{
                 padding: '1rem',
-                backgroundColor: 'white',
-                border: '1px solid #e5e7eb',
+                backgroundColor: 'var(--c-surface)',
+                border: '1px solid var(--c-hairline)',
                 borderRadius: '8px',
               }}
             >
@@ -228,7 +228,7 @@ export default function SystemHealth() {
               <p style={{ fontSize: '2rem', fontWeight: 'bold', margin: '0.5rem 0' }}>
                 {metrics.emails.total.toLocaleString()}
               </p>
-              <div style={{ fontSize: '0.85rem', color: '#666' }}>
+              <div style={{ fontSize: '0.85rem', color: 'var(--c-text-2)' }}>
                 <p style={{ margin: '0.25rem 0' }}>Last 24h: {metrics.emails.last24h}</p>
                 <p style={{ margin: '0.25rem 0' }}>Last 7d: {metrics.emails.last7d}</p>
                 {metrics.emails.latestReceivedAt && (
@@ -243,8 +243,8 @@ export default function SystemHealth() {
             <div
               style={{
                 padding: '1rem',
-                backgroundColor: 'white',
-                border: '1px solid #e5e7eb',
+                backgroundColor: 'var(--c-surface)',
+                border: '1px solid var(--c-hairline)',
                 borderRadius: '8px',
               }}
             >
@@ -252,7 +252,7 @@ export default function SystemHealth() {
               <p style={{ fontSize: '2rem', fontWeight: 'bold', margin: '0.5rem 0' }}>
                 {metrics.transactions.total.toLocaleString()}
               </p>
-              <div style={{ fontSize: '0.85rem', color: '#666' }}>
+              <div style={{ fontSize: '0.85rem', color: 'var(--c-text-2)' }}>
                 <p style={{ margin: '0.25rem 0' }}>Last 24h: {metrics.transactions.last24h}</p>
                 <p style={{ margin: '0.25rem 0' }}>Last 7d: {metrics.transactions.last7d}</p>
                 {metrics.transactions.latestDate && (
@@ -267,8 +267,8 @@ export default function SystemHealth() {
             <div
               style={{
                 padding: '1rem',
-                backgroundColor: 'white',
-                border: '1px solid #e5e7eb',
+                backgroundColor: 'var(--c-surface)',
+                border: '1px solid var(--c-hairline)',
                 borderRadius: '8px',
               }}
             >
@@ -278,7 +278,7 @@ export default function SystemHealth() {
                   <p style={{ fontSize: '1.2rem', fontWeight: 'bold', margin: '0.5rem 0', fontFamily: 'monospace' }}>
                     {metrics.syncState.historyId}
                   </p>
-                  <div style={{ fontSize: '0.85rem', color: '#666' }}>
+                  <div style={{ fontSize: '0.85rem', color: 'var(--c-text-2)' }}>
                     {metrics.syncState.lastSyncedAt && (
                       <p style={{ margin: '0.25rem 0' }}>
                         Last synced: {formatDistanceToNow(new Date(metrics.syncState.lastSyncedAt), { addSuffix: true })}
@@ -288,7 +288,7 @@ export default function SystemHealth() {
                 </>
               )}
               {!metrics.syncState.historyId && (
-                <p style={{ color: '#ef4444', margin: '0.5rem 0' }}>No sync state found</p>
+                <p style={{ color: 'var(--c-negative)', margin: '0.5rem 0' }}>No sync state found</p>
               )}
             </div>
           </div>

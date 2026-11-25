@@ -439,6 +439,8 @@ class HistoricalBackfill {
 
       // Generate idempotency key
       const idempotencyKey = generateIdempotencyKey(
+        provider,
+        transaction.referenceNumber,
         emailId,
         transaction.date,
         transaction.amount,

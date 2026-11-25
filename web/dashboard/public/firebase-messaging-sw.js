@@ -16,26 +16,28 @@ const messaging = firebase.messaging();
 
 // Handle background messages (when app is not in focus)
 messaging.onBackgroundMessage((payload) => {
-  console.log('[SW] Background message received:', payload);
+  // Messages with a notification payload (payment reminders, budget alerts) are
+  // already shown by the FCM SDK with the sender's webpush tag, icon and link.
+  // Showing another one here duplicated every push and forced all of them onto
+  // the payment-reminder tag, so a budget alert replaced the payment reminder.
+  if (payload.notification) return;
 
-  const notificationTitle = payload.notification?.title || 'Recordatorio de Pagos';
-  const notificationOptions = {
-    body: payload.notification?.body || 'Tienes pagos pendientes',
-    icon: '/icon-192.png',
+  // Data-only messages: build the notification from the data fields.
+  const data = payload.data || {};
+  return self.registration.showNotification(data.title || 'Personal Dashboard', {
+    body: data.body || '',
+    icon: '/logo.svg',
     badge: '/badge-72.png',
-    tag: 'payment-reminder',
-    requireInteraction: true,
-    data: {
-      url: payload.fcmOptions?.link || '/monthly-control'
-    }
-  };
-
-  return self.registration.showNotification(notificationTitle, notificationOptions);
+    tag: data.tag || 'payment-reminder',
+    data: { url: data.link || '/monthly-control' },
+  });
 });
 
 // Handle notification clicks
 self.addEventListener('notificationclick', (event) => {
-  console.log('[SW] Notification clicked');
+  // Notifications shown by the FCM SDK carry FCM_MSG; the SDK opens their link.
+  if (event.notification.data && event.notification.data.FCM_MSG) return;
+
   event.notification.close();
 
   const url = event.notification.data?.url || '/monthly-control';

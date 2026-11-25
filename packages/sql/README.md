@@ -1,6 +1,6 @@
 # Database Schema
 
-PostgreSQL database schema for AI Finance Agent via Firebase Data Connect.
+PostgreSQL database schema for AI Finance Agent on Supabase.
 
 ## Tables
 
@@ -32,17 +32,7 @@ Parsed financial transactions extracted from emails.
 
 ## Deployment
 
-For Firebase Data Connect:
-
-```bash
-# Connect to your Firebase project
-firebase use your-project-id
-
-# Deploy schema
-firebase deploy --only dataconnect
-```
-
-For local PostgreSQL testing:
+For Supabase-compatible PostgreSQL:
 
 ```bash
 psql -U your-user -d your-database -f schema.sql
@@ -50,7 +40,7 @@ psql -U your-user -d your-database -f schema.sql
 
 ## Migration Strategy
 
-Schema changes should be made via Firebase Data Connect migrations or manual ALTER statements with careful consideration for:
+Schema changes should be made via migrations or manual ALTER statements with careful consideration for:
 
 - Adding columns with DEFAULT values to avoid locking
 - Creating indexes CONCURRENTLY in production

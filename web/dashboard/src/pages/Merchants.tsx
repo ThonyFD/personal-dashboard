@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { fetchMerchantsPaginated, updateMerchantCategoryById } from '../api/dataconnect-client'
+import { fetchMerchantsPaginated, updateMerchantCategoryById } from '../api/supabase-data-client'
 import { formatCurrency } from '../utils/format'
 import { getCategoryColor, getCategoryIcon } from '../utils/categories'
 import { fetchCategories } from '../api/categories-client'
@@ -137,7 +137,7 @@ export default function Merchants() {
     <div>
       <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', marginBottom: '1rem' }}>
         <h1 style={{ margin: 0, fontSize: '1.5rem' }}>Merchants ({totalCount})</h1>
-        <div style={{ fontSize: '0.85rem', color: '#666' }}>
+        <div style={{ fontSize: '0.85rem', color: 'var(--c-text-2)' }}>
           Click Edit to change merchant category
         </div>
       </div>
@@ -154,7 +154,7 @@ export default function Merchants() {
             onBlur={handleSearchBlur}
             style={{
               padding: '0.5rem',
-              border: '1px solid #ddd',
+              border: '1px solid var(--c-hairline)',
               borderRadius: '4px',
               fontSize: '0.9rem',
               flex: 1
@@ -165,8 +165,8 @@ export default function Merchants() {
             disabled={isSearching}
             style={{
               padding: '0.5rem 1rem',
-              backgroundColor: isSearching ? '#ccc' : '#2196F3',
-              color: 'white',
+              backgroundColor: isSearching ? 'var(--c-muted)' : 'var(--c-primary)',
+              color: 'var(--c-on-accent)',
               border: 'none',
               borderRadius: '4px',
               cursor: isSearching ? 'not-allowed' : 'pointer',
@@ -184,7 +184,7 @@ export default function Merchants() {
                 <span style={{
                   width: '14px',
                   height: '14px',
-                  border: '2px solid #fff',
+                  border: '2px solid var(--c-on-accent)',
                   borderTopColor: 'transparent',
                   borderRadius: '50%',
                   animation: 'spin 0.6s linear infinite'
@@ -205,7 +205,7 @@ export default function Merchants() {
             onChange={(e) => handleCategoryFilterChange(e.target.value)}
             style={{
               padding: '0.5rem',
-              border: '1px solid #ddd',
+              border: '1px solid var(--c-hairline)',
               borderRadius: '4px',
               fontSize: '0.9rem',
               flex: '1 1 auto',
@@ -220,7 +220,7 @@ export default function Merchants() {
             ))}
           </select>
           {updateCategoryMutation.isPending && (
-            <div style={{ color: '#2196F3', fontSize: '0.85rem' }}>
+            <div style={{ color: 'var(--c-primary)', fontSize: '0.85rem' }}>
               Updating...
             </div>
           )}
@@ -251,7 +251,7 @@ export default function Merchants() {
                 <tr key={merchant.id}>
                   <td style={{ fontWeight: 'bold' }}>
                     {merchant.name}
-                    <div style={{ fontSize: '0.75rem', color: '#999', marginTop: '0.25rem' }}>
+                    <div style={{ fontSize: '0.75rem', color: 'var(--c-text-3)', marginTop: '0.25rem' }}>
                       ID: {merchant.id} {!merchant.inDatabase && '(temp)'}
                     </div>
                   </td>
@@ -263,7 +263,7 @@ export default function Merchants() {
                           onChange={(e) => setSelectedCategoryId(parseInt(e.target.value))}
                           style={{
                             padding: '0.25rem 0.5rem',
-                            border: '1px solid #ddd',
+                            border: '1px solid var(--c-hairline)',
                             borderRadius: '4px',
                             fontSize: '0.9rem',
                           }}
@@ -279,8 +279,8 @@ export default function Merchants() {
                           disabled={updateCategoryMutation.isPending}
                           style={{
                             padding: '0.25rem 0.5rem',
-                            backgroundColor: '#4CAF50',
-                            color: 'white',
+                            backgroundColor: 'var(--c-green)',
+                            color: 'var(--c-on-accent)',
                             border: 'none',
                             borderRadius: '4px',
                             cursor: 'pointer',
@@ -293,8 +293,8 @@ export default function Merchants() {
                           onClick={handleCancelEdit}
                           style={{
                             padding: '0.25rem 0.5rem',
-                            backgroundColor: '#f44336',
-                            color: 'white',
+                            backgroundColor: 'var(--c-negative)',
+                            color: 'var(--c-on-accent)',
                             border: 'none',
                             borderRadius: '4px',
                             cursor: 'pointer',
@@ -312,8 +312,8 @@ export default function Merchants() {
                           gap: '0.5rem',
                           padding: '0.25rem 0.75rem',
                           borderRadius: '12px',
-                          backgroundColor: merchant.categoryRef ? merchant.categoryRef.color + '20' : '#95A5A620',
-                          color: merchant.categoryRef ? merchant.categoryRef.color : '#95A5A6',
+                          backgroundColor: merchant.categoryRef ? merchant.categoryRef.color + '20' : 'color-mix(in srgb, var(--c-muted) 12%, transparent)',
+                          color: merchant.categoryRef ? merchant.categoryRef.color : 'var(--c-muted)',
                           fontWeight: '500',
                           fontSize: '0.9rem',
                         }}
@@ -336,8 +336,8 @@ export default function Merchants() {
                         onClick={() => handleEditCategory(merchant.id, merchant.categoryId)}
                         style={{
                           padding: '0.25rem 0.75rem',
-                          backgroundColor: '#2196F3',
-                          color: 'white',
+                          backgroundColor: 'var(--c-primary)',
+                          color: 'var(--c-on-accent)',
                           border: 'none',
                           borderRadius: '4px',
                           cursor: 'pointer',
@@ -347,7 +347,7 @@ export default function Merchants() {
                         Edit
                       </button>
                     ) : !isEditing ? (
-                      <span style={{ fontSize: '0.85rem', color: '#ff9800', fontWeight: '500' }}>
+                      <span style={{ fontSize: '0.85rem', color: 'var(--c-warning)', fontWeight: '500' }}>
                         Not in DB
                       </span>
                     ) : null}
@@ -368,7 +368,7 @@ export default function Merchants() {
             marginTop: '0.75rem',
             padding: '0.75rem'
           }}>
-            <span style={{ fontSize: '0.85rem', color: '#666', textAlign: 'center' }}>
+            <span style={{ fontSize: '0.85rem', color: 'var(--c-text-2)', textAlign: 'center' }}>
               Page {currentPage} {totalPages > 0 ? `of ${totalPages}` : ''} ({totalCount > merchants.length ? `${totalCount}+` : totalCount} merchants)
             </span>
 
@@ -378,9 +378,9 @@ export default function Merchants() {
                 disabled={currentPage === 1}
                 style={{
                   padding: '0.4rem 0.75rem',
-                  border: '1px solid #ddd',
+                  border: '1px solid var(--c-hairline)',
                   borderRadius: '4px',
-                  backgroundColor: currentPage === 1 ? '#f5f5f5' : 'white',
+                  backgroundColor: currentPage === 1 ? 'var(--c-surface-2)' : 'var(--c-surface)',
                   cursor: currentPage === 1 ? 'not-allowed' : 'pointer',
                   fontSize: '0.85rem',
                   opacity: currentPage === 1 ? 0.5 : 1
@@ -394,9 +394,9 @@ export default function Merchants() {
                 disabled={currentPage === totalPages}
                 style={{
                   padding: '0.4rem 0.75rem',
-                  border: '1px solid #ddd',
+                  border: '1px solid var(--c-hairline)',
                   borderRadius: '4px',
-                  backgroundColor: currentPage === totalPages ? '#f5f5f5' : 'white',
+                  backgroundColor: currentPage === totalPages ? 'var(--c-surface-2)' : 'var(--c-surface)',
                   cursor: currentPage === totalPages ? 'not-allowed' : 'pointer',
                   fontSize: '0.85rem',
                   opacity: currentPage === totalPages ? 0.5 : 1

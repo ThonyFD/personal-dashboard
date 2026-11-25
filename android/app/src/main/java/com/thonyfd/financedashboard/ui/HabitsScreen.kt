@@ -1,0 +1,870 @@
+package com.thonyfd.financedashboard.ui
+
+import com.thonyfd.financedashboard.ui.theme.AppTheme
+import androidx.compose.material.icons.outlined.Refresh
+import androidx.compose.material.icons.outlined.Menu
+import androidx.compose.ui.text.style.TextDecoration
+import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.draw.clip
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.itemsIndexed
+import kotlinx.coroutines.CancellationException
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Schedule
+import androidx.compose.material.icons.filled.Repeat
+import androidx.compose.material.icons.filled.Timer
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.Surface
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.ExposedDropdownMenuBox
+import androidx.compose.material3.ExposedDropdownMenuDefaults
+import androidx.compose.material3.Switch
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.onFocusChanged
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
+import com.thonyfd.financedashboard.data.models.HabitDaySummary
+import com.thonyfd.financedashboard.data.models.HabitIcons
+import com.thonyfd.financedashboard.data.models.StreakLevel
+import com.thonyfd.financedashboard.data.models.HabitTemplateRow
+import com.thonyfd.financedashboard.data.models.UserHabitInsert
+import com.thonyfd.financedashboard.data.models.UserHabitRow
+import com.thonyfd.financedashboard.data.repository.HabitRepository
+import com.thonyfd.financedashboard.data.repository.pendingFirst
+import com.thonyfd.financedashboard.widget.HabitsWidget
+import com.thonyfd.financedashboard.widget.HabitsWidgetStateStore
+import androidx.glance.appwidget.updateAll
+import kotlinx.coroutines.launch
+import java.time.LocalDate
+import java.time.format.TextStyle
+import java.util.Locale
+import android.widget.Toast
+import kotlin.math.ceil
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun HabitsScreen(padding: PaddingValues = PaddingValues(), onOpenMenu: (() -> Unit)? = null) {
+    val repo = remember { HabitRepository() }
+    val context = LocalContext.current
+    val scope = rememberCoroutineScope()
+    var habits by remember { mutableStateOf<List<UserHabitRow>>(emptyList()) }
+    var templates by remember { mutableStateOf<List<HabitTemplateRow>>(emptyList()) }
+    var isLoading by remember { mutableStateOf(true) }
+    var completedIds by remember { mutableStateOf<Set<Long>>(emptySet()) }
+    var selectedBlock by remember { mutableStateOf("ALL") }
+    var selectedDate by remember { mutableStateOf(LocalDate.now()) }
+    var editor by remember { mutableStateOf<UserHabitRow?>(null) }
+    var showCreate by remember { mutableStateOf(false) }
+    var refreshing by remember { mutableStateOf(false) }
+    var saving by remember { mutableStateOf(false) }
+    var pendingIds by remember { mutableStateOf<Set<Long>>(emptySet()) }
+    var periodDone by remember { mutableStateOf<Map<Long, Int>>(emptyMap()) }
+    var daySummaries by remember { mutableStateOf<Map<LocalDate, HabitDaySummary>>(emptyMap()) }
+
+    fun load(showResult: Boolean = false) {
+        scope.launch {
+            val firstLoad = habits.isEmpty() && templates.isEmpty()
+            if (firstLoad) isLoading = true
+            if (showResult) refreshing = true
+            try {
+                val dayHabits = repo.getDayHabits(selectedDate)
+                habits = dayHabits.habits
+                periodDone = dayHabits.periodDone
+                daySummaries = repo.getDaySummaries()
+                completedIds = repo.getLogsForDate(selectedDate)
+                    .filter { it.status == "COMPLETED" }
+                    .map { it.userHabitId }
+                    .toSet()
+                templates = repo.getHabitTemplates()
+                if (selectedDate == LocalDate.now()) runCatching {
+                    HabitsWidgetStateStore.saveWidgetData(context, repo.buildWidgetData(selectedDate))
+                    HabitsWidget().updateAll(context)
+                }
+                if (showResult) Toast.makeText(context, "Hábitos actualizados", Toast.LENGTH_SHORT).show()
+            } catch (e: CancellationException) {
+                throw e // tab cambiada o pantalla cerrada: no es un error
+            } catch (e: Exception) {
+                Toast.makeText(context, "No se pudieron actualizar los hábitos", Toast.LENGTH_SHORT).show()
+            } finally {
+                isLoading = false
+                if (showResult) refreshing = false
+            }
+        }
+    }
+
+    LaunchedEffect(selectedDate) { load() }
+
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(AppTheme.colors.bg)
+            .padding(padding)
+    ) {
+        TopAppBar(
+            navigationIcon = { onOpenMenu?.let { AppIconButton(Icons.Outlined.Menu, "Menú", onClick = it) } },
+            title = {
+                Column {
+                    Text(
+                        if (selectedDate == LocalDate.now()) "Hoy" else "${selectedDate.dayOfMonth} de ${selectedDate.month.getDisplayName(TextStyle.FULL, Locale("es"))}",
+                        style = MaterialTheme.typography.titleLarge
+                    )
+                    Text(
+                        if (selectedDate == LocalDate.now()) "Tu rutina diaria" else "Historial de hábitos",
+                        color = AppTheme.colors.textSecondary,
+                        style = MaterialTheme.typography.bodySmall
+                    )
+                }
+            },
+            actions = {
+                AppIconButton(Icons.Outlined.Refresh, "Actualizar", onClick = { if (!refreshing) load(showResult = true) }, loading = refreshing)
+                AppIconButton(Icons.Default.Add, "Nuevo hábito", onClick = { showCreate = true }, tint = AppTheme.colors.accent)
+            },
+            colors = appTopBarColors()
+        )
+
+        if (isLoading) {
+            Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                CircularProgressIndicator(color = AppTheme.colors.accent, strokeWidth = 2.dp, modifier = Modifier.size(32.dp))
+            }
+        } else {
+            val visibleHabits = habits
+                .filter { selectedBlock == "ALL" || it.dayBlock == selectedBlock }
+                .pendingFirst { it.id in completedIds }
+            val completed = habits.count { it.id in completedIds }
+            val progress = if (habits.isEmpty()) 0f else completed.toFloat() / habits.size
+            val today = LocalDate.now()
+            val calendarDates = remember { (-45L..30L).map { today.plusDays(it) } }
+            val calendarState = rememberLazyListState(initialFirstVisibleItemIndex = 42)
+
+            LazyColumn(
+                modifier = Modifier.fillMaxSize(),
+                contentPadding = PaddingValues(start = 20.dp, end = 20.dp, top = 4.dp, bottom = 28.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                item {
+                    LazyRow(
+                        state = calendarState,
+                        horizontalArrangement = Arrangement.spacedBy(6.dp)
+                    ) {
+                        items(calendarDates, key = { it.toEpochDay() }) { date ->
+                            val selected = date == selectedDate
+                            Column(
+                                Modifier
+                                    .width(44.dp)
+                                    .clip(RoundedCornerShape(16.dp))
+                                    .background(if (selected) AppTheme.colors.accent else Color.Transparent)
+                                    .clickable { selectedDate = date }
+                                    .padding(vertical = 8.dp),
+                                horizontalAlignment = Alignment.CenterHorizontally
+                            ) {
+                                Text(
+                                    date.dayOfWeek.getDisplayName(TextStyle.SHORT, Locale("es")).trimEnd('.'),
+                                    color = if (selected) AppTheme.colors.bg else AppTheme.colors.textSecondary,
+                                    style = MaterialTheme.typography.labelSmall
+                                )
+                                Spacer(Modifier.height(4.dp))
+                                Text(
+                                    date.dayOfMonth.toString(),
+                                    color = when {
+                                        selected -> AppTheme.colors.bg
+                                        date > today -> AppTheme.colors.textPassive
+                                        else -> AppTheme.colors.text
+                                    },
+                                    style = AppTheme.moneyStyle,
+                                    fontSize = 17.sp,
+                                    fontWeight = FontWeight.SemiBold
+                                )
+                                Spacer(Modifier.height(4.dp))
+                                DayLevelMarker(
+                                    summary = daySummaries[date],
+                                    isToday = date == today,
+                                    selected = selected
+                                )
+                            }
+                        }
+                    }
+                }
+
+                item {
+                    GroupedPanel {
+                        Row(
+                            Modifier.fillMaxWidth().padding(horizontal = 18.dp, vertical = 18.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Box(Modifier.size(72.dp), contentAlignment = Alignment.Center) {
+                                CircularProgressIndicator(
+                                    progress = { 1f },
+                                    modifier = Modifier.fillMaxSize(),
+                                    color = AppTheme.colors.surfaceRaised,
+                                    strokeWidth = 6.dp
+                                )
+                                CircularProgressIndicator(
+                                    progress = { progress },
+                                    modifier = Modifier.fillMaxSize(),
+                                    color = if (progress >= 1f) AppTheme.colors.positive else AppTheme.colors.accent,
+                                    strokeWidth = 6.dp,
+                                    trackColor = Color.Transparent,
+                                    strokeCap = StrokeCap.Round
+                                )
+                                Text("${(progress * 100).toInt()}%", color = AppTheme.colors.text, style = AppTheme.moneyStyle, fontSize = 18.sp, fontWeight = FontWeight.SemiBold)
+                            }
+                            Column(Modifier.padding(start = 18.dp).weight(1f)) {
+                                Text(
+                                    when {
+                                        habits.isEmpty() -> "Sin hábitos para este día"
+                                        progress >= 1f -> "Día completo"
+                                        completed == 0 -> "Empieza por uno"
+                                        else -> "Vas bien"
+                                    },
+                                    color = AppTheme.colors.text,
+                                    style = MaterialTheme.typography.titleMedium
+                                )
+                                Spacer(Modifier.height(2.dp))
+                                Text("$completed de ${habits.size} completados", color = AppTheme.colors.textSecondary, style = MaterialTheme.typography.bodySmall)
+                                if (habits.isNotEmpty()) {
+                                    Spacer(Modifier.height(8.dp))
+                                    LevelLine(
+                                        completed = completed,
+                                        due = habits.size,
+                                        streak = repo.streakFrom(daySummaries, today).takeIf { selectedDate == today }
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+
+                item {
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        listOf("ALL" to "Todos", "MORNING" to "Mañana", "AFTERNOON" to "Tarde", "EVENING" to "Noche").forEach { (value, label) ->
+                            val selected = selectedBlock == value
+                            Text(
+                                label,
+                                Modifier
+                                    .clip(RoundedCornerShape(50))
+                                    .background(if (selected) AppTheme.colors.text else Color.Transparent)
+                                    .border(1.dp, if (selected) AppTheme.colors.text else AppTheme.colors.hairline, RoundedCornerShape(50))
+                                    .clickable { selectedBlock = value }
+                                    .padding(horizontal = 14.dp, vertical = 7.dp),
+                                color = if (selected) AppTheme.colors.bg else AppTheme.colors.textSecondary,
+                                style = MaterialTheme.typography.labelLarge
+                            )
+                        }
+                    }
+                }
+
+                if (visibleHabits.isEmpty()) {
+                    item {
+                        GroupedPanel { EmptyRow("No hay hábitos en este bloque. Toca + para crear uno.") }
+                    }
+                }
+
+                if (visibleHabits.isNotEmpty()) item {
+                GroupedPanel {
+                visibleHabits.forEachIndexed { index, habit ->
+                    val done = habit.id in completedIds
+                    val accent = habitAccent(habit.colorHex)
+                    key(habit.id) {
+                        if (index > 0) PanelDivider(startIndent = 70.dp)
+                        Row(
+                            Modifier
+                                .fillMaxWidth()
+                                .clickable { editor = habit }
+                                .padding(horizontal = 16.dp, vertical = 14.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Box(
+                                Modifier.size(42.dp).background(accent.copy(alpha = if (done) 0.10f else 0.20f), RoundedCornerShape(14.dp)),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Text(HabitIcons.resolve(habit.iconIdentifier), fontSize = 21.sp)
+                            }
+                            Spacer(Modifier.width(12.dp))
+                            Column(Modifier.weight(1f)) {
+                                Text(
+                                    habit.name,
+                                    color = if (done) AppTheme.colors.textSecondary else AppTheme.colors.text,
+                                    style = MaterialTheme.typography.bodyLarge,
+                                    fontWeight = FontWeight.SemiBold,
+                                    textDecoration = if (done) TextDecoration.LineThrough else null,
+                                    maxLines = 1
+                                )
+                                val doneInPeriod = periodDone[habit.id]
+                                Text(
+                                    if (doneInPeriod != null) periodRemainingLabel(habit, doneInPeriod)
+                                    else "${blockLabel(habit.dayBlock)} · ${habit.targetDurationMinutes} min · ${frequencyLabel(habit.frequencyType)}",
+                                    color = AppTheme.colors.textSecondary,
+                                    style = MaterialTheme.typography.bodySmall,
+                                    maxLines = 1
+                                )
+                            }
+                            periodDone[habit.id]?.let { doneInPeriod ->
+                                Spacer(Modifier.width(8.dp))
+                                PeriodCounter(doneInPeriod, habit.targetCompletionsPerPeriod, accent)
+                            }
+                            Spacer(Modifier.width(10.dp))
+                            CheckCircle(
+                                checked = done,
+                                accent = AppTheme.colors.positive,
+                                loading = habit.id in pendingIds,
+                                onClick = {
+                                    scope.launch {
+                                        completedIds = if (done) completedIds - habit.id else completedIds + habit.id
+                                        pendingIds = pendingIds + habit.id
+                                        runCatching {
+                                            if (done) repo.removeHabitLog(habit.id, selectedDate)
+                                            else repo.toggleHabitLog(habit.id, selectedDate)
+                                        }.onSuccess {
+                                            load()
+                                        }.onFailure {
+                                            completedIds = if (done) completedIds + habit.id else completedIds - habit.id
+                                            Toast.makeText(context, "No se pudo guardar el cambio", Toast.LENGTH_SHORT).show()
+                                        }
+                                        pendingIds = pendingIds - habit.id
+                                    }
+                                }
+                            )
+                        }
+                    }
+                }
+                }
+                }
+            }
+        }
+    }
+
+    if (showCreate) {
+        HabitEditorDialog(
+            title = "Nuevo hábito",
+            templates = templates,
+            onDismiss = { showCreate = false },
+            saving = saving,
+            onSave = { draft ->
+                if (!saving) scope.launch {
+                    saving = true
+                    runCatching { repo.createHabit(draft) }
+                        .onSuccess {
+                            showCreate = false
+                            Toast.makeText(context, "Hábito creado", Toast.LENGTH_SHORT).show()
+                            load()
+                        }
+                        .onFailure { Toast.makeText(context, "No se pudo crear el hábito", Toast.LENGTH_SHORT).show() }
+                    saving = false
+                }
+            }
+        )
+    }
+
+    editor?.let { habit ->
+        HabitEditorDialog(
+            title = "Editar hábito",
+            templates = templates,
+            initial = UserHabitInsert(
+                templateId = habit.templateId,
+                name = habit.name,
+                iconIdentifier = habit.iconIdentifier,
+                colorHex = habit.colorHex,
+                dayBlock = habit.dayBlock,
+                frequencyType = habit.frequencyType,
+                customDaysMask = habit.customDaysMask,
+                targetCompletionsPerPeriod = habit.targetCompletionsPerPeriod,
+                targetDurationMinutes = habit.targetDurationMinutes,
+                sortOrder = habit.sortOrder,
+                isActive = habit.isActive
+            ),
+            onDismiss = { editor = null },
+            saving = saving,
+            onSave = { draft ->
+                if (!saving) scope.launch {
+                    saving = true
+                    runCatching { repo.updateHabit(habit.id, draft) }
+                        .onSuccess {
+                            editor = null
+                            Toast.makeText(context, "Hábito actualizado", Toast.LENGTH_SHORT).show()
+                            load()
+                        }
+                        .onFailure { Toast.makeText(context, "No se pudo actualizar el hábito", Toast.LENGTH_SHORT).show() }
+                    saving = false
+                }
+            }
+        )
+    }
+}
+
+private fun periodRemainingLabel(habit: UserHabitRow, done: Int): String {
+    val period = if (habit.frequencyType == "WEEKLY") "esta semana" else "este mes"
+    val remaining = habit.targetCompletionsPerPeriod - done
+    return if (remaining <= 0) "${frequencyLabel(habit.frequencyType)} · meta cumplida $period"
+    else "${frequencyLabel(habit.frequencyType)} · ${if (remaining == 1) "falta 1" else "faltan $remaining"} $period"
+}
+
+/** Contador "hechas/meta" de un hábito semanal o mensual. */
+@Composable
+private fun PeriodCounter(done: Int, target: Int, accent: Color) {
+    val reached = done >= target
+    Text(
+        "${done.coerceAtMost(target)}/$target",
+        Modifier
+            .background((if (reached) AppTheme.colors.positive else accent).copy(alpha = 0.16f), RoundedCornerShape(50))
+            .padding(horizontal = 9.dp, vertical = 4.dp),
+        color = if (reached) AppTheme.colors.positive else AppTheme.colors.text,
+        style = AppTheme.moneyStyle,
+        fontSize = 12.sp,
+        fontWeight = FontWeight.SemiBold
+    )
+}
+
+/** Marca bajo cada fecha del calendario: color del nivel logrado, anillo vacío si no hubo nivel. */
+@Composable
+private fun DayLevelMarker(summary: HabitDaySummary?, isToday: Boolean, selected: Boolean) {
+    val level = summary?.level
+    val modifier = Modifier.size(6.dp)
+    when {
+        level != null -> Box(
+            modifier
+                .background(Color(level.colorHex), CircleShape)
+                .then(if (selected) Modifier.border(1.dp, AppTheme.colors.bg, CircleShape) else Modifier)
+        )
+        isToday -> Box(modifier.background(if (selected) Color.Transparent else AppTheme.colors.accent, CircleShape))
+        summary != null && summary.due > 0 -> Box(
+            modifier.border(1.dp, if (selected) AppTheme.colors.bg.copy(alpha = 0.5f) else AppTheme.colors.textPassive, CircleShape)
+        )
+        else -> Spacer(modifier)
+    }
+}
+
+/** Nivel del día, cuánto falta para el siguiente y la racha actual. */
+@Composable
+private fun LevelLine(completed: Int, due: Int, streak: Int?) {
+    val level = StreakLevel.of(completed, due)
+    val next = when (level) {
+        null -> StreakLevel.BRONZE to ceil(due * StreakLevel.BRONZE_RATIO).toInt()
+        StreakLevel.BRONZE -> StreakLevel.SILVER to ceil(due * StreakLevel.SILVER_RATIO).toInt()
+        StreakLevel.SILVER -> StreakLevel.GOLD to due
+        StreakLevel.GOLD -> null
+    }
+    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+        Text(
+            level?.let { "${it.emoji} ${it.label}" } ?: "Sin nivel",
+            Modifier
+                .background((level?.let { Color(it.colorHex) } ?: AppTheme.colors.textPassive).copy(alpha = 0.16f), RoundedCornerShape(50))
+                .padding(horizontal = 9.dp, vertical = 3.dp),
+            color = level?.let { Color(it.colorHex) } ?: AppTheme.colors.textSecondary,
+            style = MaterialTheme.typography.labelMedium,
+            fontWeight = FontWeight.SemiBold
+        )
+        val hint = next?.let { (nextLevel, needed) ->
+            val missing = (needed - completed).coerceAtLeast(1)
+            "${if (missing == 1) "falta 1" else "faltan $missing"} para ${nextLevel.label}"
+        }
+        val parts = listOfNotNull(hint, streak?.let { "🔥 $it ${if (it == 1) "día" else "días"}" })
+        if (parts.isNotEmpty()) {
+            Text(parts.joinToString(" · "), color = AppTheme.colors.textSecondary, style = MaterialTheme.typography.bodySmall, maxLines = 1, overflow = TextOverflow.Ellipsis)
+        }
+    }
+}
+
+@Composable
+private fun habitAccent(colorHex: String?): Color =
+    colorHex?.let { runCatching { Color(android.graphics.Color.parseColor(it)) }.getOrNull() } ?: AppTheme.colors.accent
+
+private fun blockLabel(block: String) = when (block) { "MORNING" -> "Mañana"; "AFTERNOON" -> "Tarde"; "EVENING" -> "Noche"; else -> "En cualquier momento" }
+private fun frequencyLabel(value: String) = when (value) { "DAILY" -> "Diario"; "WEEKDAYS" -> "Lunes a viernes"; "WEEKLY" -> "Semanal"; "MONTHLY" -> "Mensual"; else -> "Personalizado" }
+private fun frequencyOptionLabel(value: String) = when (value) { "DAILY" -> "Diario · se completa cada día"; "WEEKDAYS" -> "Laborables · lunes a viernes"; "WEEKLY" -> "Semanal · meta configurable"; "MONTHLY" -> "Mensual · meta configurable"; else -> "Custom · días específicos" }
+
+@Composable
+private fun HabitEditorDialog(
+    title: String,
+    templates: List<HabitTemplateRow>,
+    initial: UserHabitInsert = UserHabitInsert(
+        name = "",
+        iconIdentifier = "focus",
+        colorHex = "#00D9FF",
+        dayBlock = "MORNING",
+        frequencyType = "DAILY",
+        targetDurationMinutes = 10
+    ),
+    onDismiss: () -> Unit,
+    saving: Boolean = false,
+    onSave: (UserHabitInsert) -> Unit
+) {
+    var selectedTemplate by remember { mutableStateOf<HabitTemplateRow?>(null) }
+    var name by remember { mutableStateOf(initial.name) }
+    var block by remember { mutableStateOf(initial.dayBlock) }
+    var frequency by remember { mutableStateOf(initial.frequencyType) }
+    var minutes by remember { mutableIntStateOf(initial.targetDurationMinutes) }
+    var periodTarget by remember { mutableIntStateOf(initial.targetCompletionsPerPeriod) }
+    var customDaysMask by remember { mutableIntStateOf(initial.customDaysMask) }
+    var isActive by remember { mutableStateOf(initial.isActive) }
+    var selectedColor by remember { mutableStateOf(initial.colorHex ?: "#00D9FF") }
+    var iconIdentifier by remember { mutableStateOf(initial.iconIdentifier ?: "focus") }
+    val colors = listOf("#00D9FF", "#39FF14", "#7A5CFF", "#FF70C7", "#FFB84D", "#51E1C2", "#FF5C5C", "#4D8BFF", "#FFE14D", "#B07CFF")
+
+    Dialog(
+        onDismissRequest = onDismiss,
+        properties = DialogProperties(usePlatformDefaultWidth = false, decorFitsSystemWindows = false)
+    ) {
+        Surface(modifier = Modifier.fillMaxSize(), color = AppTheme.colors.bg) {
+            LazyColumn(
+                modifier = Modifier.fillMaxSize(),
+                contentPadding = PaddingValues(start = 20.dp, end = 20.dp, top = 28.dp, bottom = 32.dp),
+                verticalArrangement = Arrangement.spacedBy(18.dp)
+            ) {
+                item {
+                    Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                        IconButton(onClick = onDismiss) { Icon(Icons.Default.Close, "Cerrar", tint = AppTheme.colors.text) }
+                        Text(title, Modifier.weight(1f), color = AppTheme.colors.text, fontWeight = FontWeight.Bold, textAlign = TextAlign.Center)
+                        AppButton(
+                            if (initial.name.isBlank()) "Crear" else "Guardar",
+                            style = AppButtonStyle.Text,
+                            loading = saving,
+                            enabled = name.isNotBlank(),
+                            onClick = {
+                            onSave(
+                                initial.copy(
+                                    templateId = selectedTemplate?.id ?: initial.templateId,
+                                    name = name.trim(),
+                                    iconIdentifier = iconIdentifier,
+                                    colorHex = selectedColor,
+                                    dayBlock = block,
+                                    frequencyType = frequency,
+                                    customDaysMask = customDaysMask,
+                                    targetCompletionsPerPeriod = periodTarget,
+                                    targetDurationMinutes = minutes,
+                                    isActive = isActive
+                                )
+                            )
+                        })
+                    }
+                }
+
+                item {
+                    Column(verticalArrangement = Arrangement.spacedBy(5.dp)) {
+                        Text(if (initial.name.isBlank()) "NUEVO HÁBITO" else "EDITAR HÁBITO", color = AppTheme.colors.accent, fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                        Text(if (initial.name.isBlank()) "Crea una rutina" else "Actualiza la rutina", color = AppTheme.colors.text, fontSize = 24.sp, fontWeight = FontWeight.Bold)
+                        Text("También puedes crear hábitos semanales o mensuales para mantenerlos visibles hasta completarlos dentro del periodo.", color = AppTheme.colors.textSecondary, fontSize = 14.sp)
+                    }
+                }
+
+                item {
+                    HabitSelectField(
+                        label = "Plantilla",
+                        value = selectedTemplate?.let { "${it.category} · ${it.name}" } ?: "Custom",
+                        options = listOf("" to "Custom") + templates.map { it.id.toString() to "${it.category} · ${it.name}" },
+                        onSelect = { id ->
+                            selectedTemplate = templates.firstOrNull { it.id.toString() == id }
+                            selectedTemplate?.let {
+                                name = it.name; minutes = it.defaultDurationMinutes
+                                iconIdentifier = it.iconIdentifier ?: iconIdentifier
+                                selectedColor = it.colorHex ?: selectedColor
+                            }
+                        }
+                    )
+                }
+
+                item {
+                    Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                        HabitTextField("Nombre", name, Modifier.weight(1f), onValueChange = { if (it.length <= 50) name = it })
+                        HabitSelectField("Bloque", blockLabel(block), listOf("MORNING" to "Mañana", "AFTERNOON" to "Tarde", "EVENING" to "Noche"), Modifier.weight(1f)) { block = it }
+                    }
+                }
+
+                item {
+                    Row(horizontalArrangement = Arrangement.spacedBy(12.dp), verticalAlignment = Alignment.Top) {
+                        HabitSelectField(
+                            "Frecuencia", frequencyOptionLabel(frequency),
+                            listOf("DAILY" to "Diario", "WEEKDAYS" to "Laborables", "WEEKLY" to "Semanal · meta configurable", "MONTHLY" to "Mensual · meta configurable", "CUSTOM" to "Custom"),
+                            Modifier.weight(1f)
+                        ) { frequency = it; if (it != "WEEKLY" && it != "MONTHLY") periodTarget = 1 }
+                        if (frequency == "WEEKLY" || frequency == "MONTHLY") {
+                            HabitNumberField("Meta del periodo", periodTarget, 1..(if (frequency == "WEEKLY") 7 else 31), Modifier.weight(1f)) {
+                                periodTarget = it
+                            }
+                        } else Spacer(Modifier.weight(1f))
+                    }
+                }
+
+                if (frequency == "CUSTOM") item {
+                    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Text("Días específicos", color = AppTheme.colors.textSecondary, fontSize = 12.sp)
+                        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                            listOf("L", "M", "X", "J", "V", "S", "D").forEachIndexed { index, day ->
+                                val selected = ((customDaysMask shr index) and 1) == 1
+                                Box(
+                                    Modifier.size(38.dp).clickable { customDaysMask = customDaysMask xor (1 shl index) }
+                                        .background(if (selected) AppTheme.colors.depth else AppTheme.colors.surface, CircleShape),
+                                    contentAlignment = Alignment.Center
+                                ) { Text(day, color = AppTheme.colors.text, fontWeight = FontWeight.Bold) }
+                            }
+                        }
+                    }
+                }
+
+                item {
+                    HabitNumberField("Duración objetivo (min)", minutes, 1..1440, Modifier.fillMaxWidth()) { minutes = it }
+                }
+
+                item {
+                    HabitIconPicker(
+                        selectedId = iconIdentifier,
+                        accent = runCatching { Color(android.graphics.Color.parseColor(selectedColor)) }.getOrDefault(AppTheme.colors.accent),
+                        onSelect = { iconIdentifier = it }
+                    )
+                }
+
+                item {
+                    Column(verticalArrangement = Arrangement.spacedBy(9.dp)) {
+                        Text("Color", color = AppTheme.colors.textSecondary, fontSize = 12.sp)
+                        LazyRow(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                            items(colors) { hex ->
+                                val selected = selectedColor.equals(hex, true)
+                                Box(
+                                    Modifier.size(44.dp).clickable { selectedColor = hex }
+                                        .background(Color(android.graphics.Color.parseColor(hex)), CircleShape)
+                                        .border(if (selected) 4.dp else 1.dp, if (selected) AppTheme.colors.text else Color.Transparent, CircleShape),
+                                    contentAlignment = Alignment.Center
+                                ) { if (selected) Icon(Icons.Default.Check, null, tint = AppTheme.colors.bg) }
+                            }
+                        }
+                    }
+                }
+
+                item { HabitCompletionGuide(frequency, periodTarget) }
+
+                item {
+                    Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                        Switch(checked = isActive, onCheckedChange = { isActive = it })
+                        Text("Activo", Modifier.padding(start = 10.dp), color = AppTheme.colors.text)
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun HabitIconPicker(selectedId: String, accent: Color, onSelect: (String) -> Unit) {
+    val initialCategory = remember {
+        HabitIcons.categories.indexOfFirst { cat -> cat.icons.any { it.id == selectedId } }.coerceAtLeast(0)
+    }
+    var categoryIndex by remember { mutableIntStateOf(initialCategory) }
+    val isCustom = HabitIcons.categories.none { cat -> cat.icons.any { it.id == selectedId } }
+    var customEmoji by remember { mutableStateOf(if (isCustom) selectedId else "") }
+    val category = HabitIcons.categories[categoryIndex]
+
+    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Text("Icono", Modifier.weight(1f), color = AppTheme.colors.textSecondary, fontSize = 12.sp)
+            Box(
+                Modifier.size(44.dp).background(accent.copy(alpha = 0.22f), RoundedCornerShape(14.dp))
+                    .border(1.dp, accent, RoundedCornerShape(14.dp)),
+                contentAlignment = Alignment.Center
+            ) { Text(HabitIcons.resolve(selectedId), fontSize = 22.sp) }
+        }
+        LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            items(HabitIcons.categories.size) { index ->
+                val selected = index == categoryIndex
+                Text(
+                    HabitIcons.categories[index].name,
+                    Modifier
+                        .background(if (selected) AppTheme.colors.accent else AppTheme.colors.surface, RoundedCornerShape(20.dp))
+                        .clickable { categoryIndex = index }
+                        .padding(horizontal = 14.dp, vertical = 8.dp),
+                    color = if (selected) AppTheme.colors.bg else AppTheme.colors.text,
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.SemiBold
+                )
+            }
+        }
+        Column(
+            Modifier.fillMaxWidth().background(AppTheme.colors.surface, RoundedCornerShape(20.dp)).padding(10.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            category.icons.chunked(5).forEach { row ->
+                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    row.forEach { icon ->
+                        val selected = icon.id == selectedId
+                        Column(
+                            Modifier
+                                .weight(1f)
+                                .background(if (selected) accent.copy(alpha = 0.25f) else Color.Transparent, RoundedCornerShape(14.dp))
+                                .border(if (selected) 2.dp else 1.dp, if (selected) accent else AppTheme.colors.surface, RoundedCornerShape(14.dp))
+                                .clickable { onSelect(icon.id); customEmoji = "" }
+                                .padding(vertical = 8.dp),
+                            horizontalAlignment = Alignment.CenterHorizontally
+                        ) {
+                            Text(icon.emoji, fontSize = 24.sp)
+                            Text(icon.label, color = if (selected) AppTheme.colors.text else AppTheme.colors.textSecondary, fontSize = 9.sp, maxLines = 1)
+                        }
+                    }
+                    repeat(5 - row.size) { Spacer(Modifier.weight(1f)) }
+                }
+            }
+        }
+        HabitTextField(
+            "O escribe tu propio emoji",
+            customEmoji,
+            Modifier.fillMaxWidth(),
+            onValueChange = { value ->
+                val trimmed = value.trim()
+                if (trimmed.length <= 16) {
+                    customEmoji = trimmed
+                    if (trimmed.isNotEmpty()) onSelect(trimmed)
+                }
+            }
+        )
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun HabitSelectField(
+    label: String,
+    value: String,
+    options: List<Pair<String, String>>,
+    modifier: Modifier = Modifier,
+    onSelect: (String) -> Unit
+) {
+    var expanded by remember { mutableStateOf(false) }
+    Column(modifier) {
+        Text(label, color = AppTheme.colors.textSecondary, fontSize = 12.sp, modifier = Modifier.padding(bottom = 6.dp))
+        ExposedDropdownMenuBox(expanded = expanded, onExpandedChange = { expanded = !expanded }) {
+            OutlinedTextField(
+                value = value,
+                onValueChange = {},
+                readOnly = true,
+                modifier = Modifier.menuAnchor().fillMaxWidth(),
+                trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded) },
+                singleLine = true,
+                shape = RoundedCornerShape(8.dp),
+                colors = appFieldColors()
+            )
+            ExposedDropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
+                options.forEach { (key, text) ->
+                    DropdownMenuItem(text = { Text(text) }, onClick = { onSelect(key); expanded = false })
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun HabitTextField(label: String, value: String, modifier: Modifier = Modifier, onValueChange: (String) -> Unit) {
+    Column(modifier) {
+        Text(label, color = AppTheme.colors.textSecondary, fontSize = 12.sp, modifier = Modifier.padding(bottom = 6.dp))
+        OutlinedTextField(value = value, onValueChange = onValueChange, modifier = Modifier.fillMaxWidth(), singleLine = true, shape = RoundedCornerShape(8.dp), colors = appFieldColors())
+    }
+}
+
+// Keeps its own text so the user can clear or partially type a number; only valid values reach the caller.
+@Composable
+private fun HabitNumberField(label: String, value: Int, range: IntRange, modifier: Modifier = Modifier, onValueChange: (Int) -> Unit) {
+    var text by remember { mutableStateOf(value.toString()) }
+    LaunchedEffect(value) { if (text.toIntOrNull() != value) text = value.toString() }
+    Column(modifier) {
+        Text(label, color = AppTheme.colors.textSecondary, fontSize = 12.sp, modifier = Modifier.padding(bottom = 6.dp))
+        OutlinedTextField(
+            value = text,
+            onValueChange = { raw ->
+                val digits = raw.filter(Char::isDigit).take(4)
+                val parsed = digits.toIntOrNull()
+                text = if (parsed != null && parsed > range.last) range.last.toString() else digits
+                text.toIntOrNull()?.takeIf { it in range }?.let(onValueChange)
+            },
+            modifier = Modifier.fillMaxWidth().onFocusChanged { state ->
+                if (!state.isFocused && text.toIntOrNull()?.takeIf { it in range } == null) text = value.toString()
+            },
+            singleLine = true,
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+            shape = RoundedCornerShape(8.dp),
+            colors = appFieldColors()
+        )
+    }
+}
+
+@Composable
+private fun HabitCompletionGuide(frequency: String, target: Int) {
+    val chip = when (frequency) { "WEEKLY" -> "VENTANA SEMANAL"; "MONTHLY" -> "VENTANA MENSUAL"; "WEEKDAYS" -> "LUN A VIE"; "CUSTOM" -> "DÍAS ELEGIDOS"; else -> "RESET DIARIO" }
+    val title = when (frequency) {
+        "WEEKLY" -> "Debes completarlo $target veces por semana"
+        "MONTHLY" -> "Debes completarlo $target veces por mes"
+        "WEEKDAYS" -> "Debes completarlo cada día laborable"
+        "CUSTOM" -> "Debes completarlo solo en los días elegidos"
+        else -> "Debes completarlo hoy"
+    }
+    val description = when (frequency) {
+        "WEEKLY" -> "Sigue visible cada día hasta llegar a $target/$target. Después queda resuelto por el resto de la semana."
+        "MONTHLY" -> "Sigue visible hasta llegar a $target/$target dentro del mes actual."
+        "WEEKDAYS" -> "Se evalúa por separado de lunes a viernes."
+        "CUSTOM" -> "Solo aparece en los días marcados en el selector semanal."
+        else -> "Se reinicia al comenzar un nuevo día."
+    }
+    Column(
+        Modifier.fillMaxWidth().background(AppTheme.colors.surface, RoundedCornerShape(20.dp)).border(1.dp, AppTheme.colors.accent.copy(alpha = .35f), RoundedCornerShape(20.dp)).padding(16.dp),
+        verticalArrangement = Arrangement.spacedBy(9.dp)
+    ) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Text("TIPO DE COMPLETITUD", Modifier.weight(1f), color = AppTheme.colors.accent, fontSize = 10.sp, fontWeight = FontWeight.Bold)
+            Text(chip, Modifier.background(AppTheme.colors.surfaceRaised, RoundedCornerShape(20.dp)).padding(horizontal = 10.dp, vertical = 6.dp), color = AppTheme.colors.text, fontSize = 10.sp, fontWeight = FontWeight.Bold)
+        }
+        Text(title, color = AppTheme.colors.text, fontWeight = FontWeight.Bold)
+        Text(description, color = AppTheme.colors.textSecondary, fontSize = 14.sp)
+    }
+}

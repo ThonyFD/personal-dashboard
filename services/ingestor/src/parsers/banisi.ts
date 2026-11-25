@@ -173,7 +173,16 @@ export class BanisiParser extends BaseParser {
       if (!Number.isNaN(d.getTime())) return d;
     }
 
-    // Date-only pattern: "06-10-2025"  (DD-MM-YYYY)
+    // Labeled date without time: "Fecha: 06-10-2025"  (DD-MM-YYYY)
+    // Anchored to the "Fecha:" label so we never pick up an unrelated DD-MM-YYYY
+    // string elsewhere in the email (due dates, footers, account numbers, etc.).
+    const fd = /fecha:\s*(\d{2})-(\d{2})-(\d{4})/i.exec(text);
+    if (fd) {
+      const d = new Date(`${fd[3]}-${fd[2]}-${fd[1]}T00:00:00${PANAMA_TZ_OFFSET}`);
+      if (!Number.isNaN(d.getTime())) return d;
+    }
+
+    // Last-resort unlabeled date pattern: "06-10-2025"  (DD-MM-YYYY)
     const dm = /(\d{2})-(\d{2})-(\d{4})/.exec(text);
     if (dm) {
       const d = new Date(`${dm[3]}-${dm[2]}-${dm[1]}T00:00:00${PANAMA_TZ_OFFSET}`);

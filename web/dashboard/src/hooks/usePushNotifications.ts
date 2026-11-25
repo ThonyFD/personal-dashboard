@@ -1,12 +1,12 @@
 import { useState, useEffect } from 'react';
 import { getToken, deleteToken, onMessage } from 'firebase/messaging';
-import { messaging, VAPID_PUBLIC_KEY } from '../lib/firebase';
+import { messaging, VAPID_PUBLIC_KEY } from '../lib/firebase-messaging';
 import { useAuth } from '../contexts/AuthContext';
 import {
   createPushSubscription,
   deactivatePushSubscription,
   getActivePushSubscriptions,
-} from '../api/dataconnect-client';
+} from '../api/supabase-data-client';
 
 export const usePushNotifications = () => {
   const { user } = useAuth();
@@ -103,12 +103,22 @@ export const usePushNotifications = () => {
       // 6. Listen for foreground messages
       onMessage(messaging, (payload) => {
         console.log('Foreground message received:', payload);
-        // Show browser notification even in foreground
+        // Show browser notification even in foreground. The sender puts tag and
+        // link in data, so a budget alert keeps its own tag and never replaces
+        // a payment reminder.
         if (Notification.permission === 'granted') {
-          new Notification(payload.notification?.title || 'Recordatorio', {
+          const link = payload.data?.link ?? payload.fcmOptions?.link;
+          const notification = new Notification(payload.notification?.title || 'Recordatorio', {
             body: payload.notification?.body,
-            icon: '/icon-192.png',
+            icon: '/logo.svg',
+            tag: payload.data?.tag,
           });
+          if (link) {
+            notification.onclick = () => {
+              window.focus();
+              window.location.assign(link);
+            };
+          }
         }
       });
 

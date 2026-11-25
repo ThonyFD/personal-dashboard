@@ -13,7 +13,7 @@ import {
   toggleManualTransactionPaidStatus,
   type MonthlyIncome,
   type ManualTransaction,
-} from '../api/dataconnect-client'
+} from '../api/supabase-data-client'
 import { fetchCategories, type Category } from '../api/categories-client'
 import { NotificationSettings } from '../components/NotificationSettings'
 
@@ -51,6 +51,7 @@ export default function MonthlyControl() {
   const [isCopying, setIsCopying] = useState(false)
 
   // Filter states
+  const [isIncomesCollapsed, setIsIncomesCollapsed] = useState(true)
   const [filterType, setFilterType] = useState<string>('all')
   const [filterPaymentMethod, setFilterPaymentMethod] = useState<string>('all')
   const [filterPaidStatus, setFilterPaidStatus] = useState<string>('all')
@@ -481,8 +482,14 @@ export default function MonthlyControl() {
 
       {/* Incomes Panel */}
       <div className="incomes-panel card">
-        <h3>INGRESOS DEL MES</h3>
-        <div className="incomes-list">
+        <button
+          onClick={() => setIsIncomesCollapsed(c => !c)}
+          style={{ all: 'unset', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%', font: 'inherit', fontSize: '1rem', fontWeight: 700, letterSpacing: '0.05em', color: 'inherit' }}
+        >
+          INGRESOS DEL MES
+          <span style={{ fontSize: '0.8rem', opacity: 0.6 }}>{isIncomesCollapsed ? '▶' : '▼'}</span>
+        </button>
+        {!isIncomesCollapsed && <><div className="incomes-list">
           {incomes.map(income => {
             const isEditing = editingIncomeId === income.id
 
@@ -559,29 +566,38 @@ export default function MonthlyControl() {
             <span className="amount">${totals.duplicatedTotal.toFixed(2)}</span>
           </div>
         </div>
+        </>}
       </div>
 
       {/* Summary Cards */}
       <div className="summary-cards">
-        <div className="summary-card">
-          <h4>Gastos</h4>
-          <div className="amount">${totals.totalExpenses.toFixed(2)}</div>
+        <div className="summary-metrics-group">
+          <div className="summary-card">
+            <h4>Gastos</h4>
+            <div className="amount">${totals.totalExpenses.toFixed(2)}</div>
+          </div>
+          <div className="summary-card investment">
+            <h4>Inversión</h4>
+            <div className="amount">${totals.totalInvestment.toFixed(2)}</div>
+          </div>
+          <div className="summary-card debt">
+            <h4>Deuda</h4>
+            <div className="amount">${totals.totalDebt.toFixed(2)}</div>
+          </div>
+          <div className="summary-card savings">
+            <h4>Ahorro</h4>
+            <div className="amount">${totals.totalSavings.toFixed(2)}</div>
+          </div>
         </div>
-        <div className="summary-card investment">
-          <h4>Inversión</h4>
-          <div className="amount">${totals.totalInvestment.toFixed(2)}</div>
-        </div>
-        <div className="summary-card debt">
-          <h4>Deuda</h4>
-          <div className="amount">${totals.totalDebt.toFixed(2)}</div>
-        </div>
-        <div className="summary-card savings">
-          <h4>Ahorro</h4>
-          <div className="amount">${totals.totalSavings.toFixed(2)}</div>
-        </div>
-        <div className={`summary-card balance ${totals.finalBalance >= 0 ? 'positive' : 'negative'}`}>
-          <h4>Saldo Final</h4>
-          <div className="amount">${totals.finalBalance.toFixed(2)}</div>
+        <div className="summary-totals-group">
+          <div className={`summary-card balance ${totals.finalBalance >= 0 ? 'positive' : 'negative'}`}>
+            <h4>Saldo Final</h4>
+            <div className="amount">${totals.finalBalance.toFixed(2)}</div>
+          </div>
+          <div className="summary-card total-spent">
+            <h4>Gasto Total</h4>
+            <div className="amount">${totals.totalSpent.toFixed(2)}</div>
+          </div>
         </div>
       </div>
 
@@ -675,7 +691,8 @@ export default function MonthlyControl() {
                 const categoryName = txn.categoryName ?? category?.name
                 const categoryIcon = txn.categoryIcon ?? category?.icon
                 const categoryColor = txn.categoryColor ?? category?.color
-                const tagColor = categoryColor || '#95A5A6'
+                const tagColor = categoryColor || 'var(--c-text-2)'
+                const tagBg = categoryColor ? `${categoryColor}20` : 'color-mix(in srgb, var(--c-text-2) 12%, transparent)'
 
                 if (isEditing) {
                   return (
@@ -701,7 +718,7 @@ export default function MonthlyControl() {
                           gap: '0.3rem',
                           padding: '0.2rem 0.5rem',
                           borderRadius: '4px',
-                          backgroundColor: `${tagColor}20`,
+                          backgroundColor: tagBg,
                           border: `1px solid ${tagColor}`,
                           fontSize: '0.85rem'
                         }}>
@@ -901,7 +918,7 @@ function TransactionForm({ categories, onSave, onCancel }: TransactionFormProps)
   }
 
   return (
-    <form onSubmit={handleSubmit} className="transaction-form" style={{ marginBottom: '1rem', padding: '1rem', border: '1px solid #ddd', borderRadius: '8px' }}>
+    <form onSubmit={handleSubmit} className="transaction-form" style={{ marginBottom: '1rem', padding: '1rem', border: '1px solid var(--c-hairline)', borderRadius: '8px' }}>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem' }}>
         <div>
           <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 'bold' }}>Día</label>

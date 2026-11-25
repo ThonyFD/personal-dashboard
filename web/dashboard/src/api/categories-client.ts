@@ -1,69 +1,32 @@
 import { supabase } from '../lib/supabase';
+import {
+  fetchCategories as _fetchCategories,
+  createCategory as _createCategory,
+  updateCategory as _updateCategory,
+  deleteCategory as _deleteCategory,
+} from '@personal-dashboard/supabase-queries';
 
-export interface Category {
-  id: number;
-  name: string;
-  icon: string;
-  color: string;
-  description: string | null;
-  isDefault: boolean;
-  createdAt: string;
-}
+export type { Category } from '@personal-dashboard/supabase-queries';
 
-export async function fetchCategories(): Promise<Category[]> {
-  const { data, error } = await supabase
-    .from('categories')
-    .select('id, name, icon, color, description, is_default, created_at')
-    .order('name');
+export const fetchCategories = () => _fetchCategories(supabase);
 
-  if (error) throw error;
-
-  return (data ?? []).map((c: any) => ({
-    id: c.id,
-    name: c.name,
-    icon: c.icon,
-    color: c.color,
-    description: c.description,
-    isDefault: c.is_default ?? false,
-    createdAt: c.created_at,
-  }));
-}
-
-export async function createNewCategory(
-  _id: number,  // ignored — Postgres assigns the ID via sequence
+export const createNewCategory = (
+  _id: number, // ignored — Postgres assigns via sequence
   name: string,
   icon: string,
   color: string,
   description?: string,
-  isDefault?: boolean
-): Promise<void> {
-  const { error } = await supabase
-    .from('categories')
-    .insert({ name, icon, color, description: description ?? null, is_default: isDefault ?? false });
+  isDefault?: boolean,
+) => _createCategory(supabase, name, icon, color, description, isDefault);
 
-  if (error) throw error;
-}
-
-export async function updateExistingCategory(
+export const updateExistingCategory = (
   id: number,
-  updates: { name?: string; icon?: string; color?: string; description?: string }
-): Promise<void> {
-  const patch: Record<string, unknown> = {};
-  if (updates.name !== undefined) patch.name = updates.name;
-  if (updates.icon !== undefined) patch.icon = updates.icon;
-  if (updates.color !== undefined) patch.color = updates.color;
-  if (updates.description !== undefined) patch.description = updates.description;
+  updates: { name?: string; icon?: string; color?: string; description?: string },
+) => _updateCategory(supabase, id, updates);
 
-  const { error } = await supabase.from('categories').update(patch).eq('id', id);
-  if (error) throw error;
-}
+export const deleteExistingCategory = (id: number) => _deleteCategory(supabase, id);
 
-export async function deleteExistingCategory(id: number): Promise<void> {
-  const { error } = await supabase.from('categories').delete().eq('id', id);
-  if (error) throw error;
-}
-
-// Kept for backward compatibility — no longer needed with sequences, but callers may still use it
+// Kept for backward compatibility — callers that still reference this can be migrated later
 export async function getNextCategoryId(): Promise<number> {
   const { data, error } = await supabase
     .from('categories')

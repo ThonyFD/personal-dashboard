@@ -1,4 +1,4 @@
-name: Daily Finance Sync
+name: Daily Gmail Sync And Reminders
 
 on:
   schedule:
@@ -12,9 +12,9 @@ on:
         type: number
 
 jobs:
-  # ── 1. Sync emails from Gmail → Supabase ──────────────────────────────────
-  sync-emails:
-    name: Sync Emails
+  # ── 1. Renew Gmail watch ───────────────────────────────────────────────────
+  renew-gmail-watch:
+    name: Renew Gmail Watch
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -38,6 +38,43 @@ jobs:
           workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
           service_account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
 
+      - name: Renew Gmail watch
+        env:
+          GOOGLE_CLOUD_PROJECT: mail-reader-433802
+        run: npx tsx scripts/production/renew-gmail-watch.ts
+
+  # ── 2. Sync emails from Gmail → Supabase ──────────────────────────────────
+  sync-emails:
+    name: Sync Emails
+    runs-on: ubuntu-latest
+    # Shared with frequent-email-sync.yml so two syncs never overlap.
+    concurrency:
+      group: gmail-sync
+      cancel-in-progress: false
+    permissions:
+      contents: read
+      id-token: write
+
+    steps:
+      - uses: actions/checkout@v6.0.2
+
+      - uses: actions/setup-node@v6.3.0
+        with:
+          node-version: '22'
+          cache: 'npm'
+          cache-dependency-path: 'package-lock.json'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Authenticate to Google Cloud
+        id: auth
+        uses: google-github-actions/auth@v3.0.0
+        with:
+          workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
+          token_format: 'access_token'
+
       - name: Run email sync
         env:
           GOOGLE_CLOUD_PROJECT: mail-reader-433802
@@ -45,6 +82,10 @@ jobs:
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           LOOKBACK_DAYS: ${{ inputs.lookback_days }}
+          # Budget alerts: repo variable, 'true' to turn on. Unset means off.
+          BUDGET_ALERTS_ENABLED: ${{ vars.BUDGET_ALERTS_ENABLED }}
+          FIREBASE_ACCESS_TOKEN: ${{ steps.auth.outputs.access_token }}
+          DASHBOARD_URL: ${{ vars.DASHBOARD_URL }}
         run: npx tsx scripts/production/sync-emails-daily.ts
 
       - name: Upload logs on failure
@@ -55,7 +96,7 @@ jobs:
           path: '*.log'
           retention-days: 7
 
-  # ── 2. Send push notifications for pending payments ───────────────────────
+  # ── 3. Send push notifications for pending payments ───────────────────────
   send-notifications:
     name: Send Payment Notifications
     runs-on: ubuntu-latest

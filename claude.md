@@ -1,5 +1,9 @@
 # AI Finance Agent - Technical Specification
 
+> Brand Book visual de referencia: [`design/BRAND_BOOK.md`](./design/BRAND_BOOK.md)
+>
+> Para cualquier trabajo de frontend, UI, marketing site, presentaciones, dashboards visuales o piezas de marca, este repositorio debe tomar el Brand Book como fuente de verdad visual. Si hay una decision de estilo no documentada aqui, resolverla manteniendo la direccion definida en ese Brand Book.
+
 ## 1. Overview
 **Objective:** Build a serverless AI agent that listens to Gmail (including label 'financial'), extracts key data, stores it in Firebase Data Connect (Postgres), and powers a React dashboard.  
 **Chosen architecture:** Gmail Push Notifications → Pub/Sub → Cloud Run (Gen2) → Data Connect → React App.  
@@ -67,6 +71,11 @@ CREATE TABLE transactions (...);
 - Merchants, Categories (optional).
 
 Uses Firebase Data Connect REST/GraphQL queries.
+
+### Visual guidance
+- Follow [`design/BRAND_BOOK.md`](./design/BRAND_BOOK.md) for color, typography, contrast, iconography, mood, and UI styling.
+- Prefer a high-contrast, dark, futuristic product aesthetic over generic dashboard defaults.
+- Reuse the brand palette and supporting visual language consistently across dashboard and marketing surfaces.
 
 ---
 

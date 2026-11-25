@@ -1,5 +1,5 @@
 -- AI Finance Agent Database Schema
--- Target: Firebase Data Connect (PostgreSQL)
+-- Target: Supabase PostgreSQL
 -- Time zone: America/Panama
 
 -- Create enums

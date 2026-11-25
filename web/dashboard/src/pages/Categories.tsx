@@ -154,8 +154,8 @@ export default function Categories() {
     return (
       <div>
         <h1>Category Management</h1>
-        <div className="card" style={{ backgroundColor: '#fee', padding: '1rem', marginBottom: '1rem' }}>
-          <p style={{ color: '#c00', margin: 0 }}>Error: {error}</p>
+        <div className="card" style={{ backgroundColor: 'color-mix(in srgb, var(--c-negative) 10%, transparent)', padding: '1rem', marginBottom: '1rem' }}>
+          <p style={{ color: 'var(--c-negative)', margin: 0 }}>Error: {error}</p>
           <button onClick={loadCategories} style={{ marginTop: '1rem' }}>Retry</button>
         </div>
       </div>
@@ -181,7 +181,7 @@ export default function Categories() {
 
       {/* Show populate button if no categories */}
       {categories.length === 0 && (
-        <div className="card" style={{ marginBottom: '2rem', backgroundColor: '#fff3cd', padding: '1.5rem' }}>
+        <div className="card" style={{ marginBottom: '2rem', backgroundColor: 'color-mix(in srgb, var(--c-warning) 12%, transparent)', padding: '1.5rem' }}>
           <h2 style={{ marginTop: 0 }}>No Categories Found</h2>
           <p>It looks like you haven't created any categories yet. You can either:</p>
           <ul>
@@ -192,8 +192,8 @@ export default function Categories() {
             onClick={handlePopulateDefaults}
             style={{
               padding: '0.75rem 1.5rem',
-              backgroundColor: '#2196F3',
-              color: 'white',
+              backgroundColor: 'var(--c-primary)',
+              color: 'var(--c-on-accent)',
               border: 'none',
               borderRadius: '4px',
               cursor: 'pointer',
@@ -222,7 +222,7 @@ export default function Categories() {
               style={{
                 width: '100%',
                 padding: '0.5rem',
-                border: '1px solid #ddd',
+                border: '1px solid var(--c-hairline)',
                 borderRadius: '4px',
                 fontSize: '0.9rem',
               }}
@@ -242,7 +242,7 @@ export default function Categories() {
                 style={{
                   width: '100%',
                   padding: '0.5rem',
-                  border: '1px solid #ddd',
+                  border: '1px solid var(--c-hairline)',
                   borderRadius: '4px',
                   fontSize: '0.9rem',
                 }}
@@ -259,7 +259,7 @@ export default function Categories() {
                 style={{
                   width: '100%',
                   height: '2.5rem',
-                  border: '1px solid #ddd',
+                  border: '1px solid var(--c-hairline)',
                   borderRadius: '4px',
                   cursor: 'pointer',
                 }}
@@ -278,7 +278,7 @@ export default function Categories() {
               style={{
                 width: '100%',
                 padding: '0.5rem',
-                border: '1px solid #ddd',
+                border: '1px solid var(--c-hairline)',
                 borderRadius: '4px',
                 fontSize: '0.9rem',
               }}
@@ -290,8 +290,8 @@ export default function Categories() {
           disabled={!newCategory.name.trim() || !newCategory.icon.trim()}
           style={{
             padding: '0.5rem 1.5rem',
-            backgroundColor: '#4CAF50',
-            color: 'white',
+            backgroundColor: 'var(--c-green)',
+            color: 'var(--c-on-accent)',
             border: 'none',
             borderRadius: '4px',
             cursor: newCategory.name.trim() && newCategory.icon.trim() ? 'pointer' : 'not-allowed',
@@ -366,8 +366,8 @@ export default function Categories() {
                         style={{
                           flex: 1,
                           padding: '0.25rem',
-                          backgroundColor: '#4CAF50',
-                          color: 'white',
+                          backgroundColor: 'var(--c-green)',
+                          color: 'var(--c-on-accent)',
                           border: 'none',
                           borderRadius: '4px',
                           cursor: 'pointer',
@@ -381,8 +381,8 @@ export default function Categories() {
                         style={{
                           flex: 1,
                           padding: '0.25rem',
-                          backgroundColor: '#999',
-                          color: 'white',
+                          backgroundColor: 'var(--c-muted)',
+                          color: 'var(--c-on-accent)',
                           border: 'none',
                           borderRadius: '4px',
                           cursor: 'pointer',
@@ -412,7 +412,7 @@ export default function Categories() {
                       </span>
                     </div>
                     {category.description && (
-                      <p style={{ fontSize: '0.85rem', color: '#666', margin: '0 0 0.5rem 0' }}>
+                      <p style={{ fontSize: '0.85rem', color: 'var(--c-text-2)', margin: '0 0 0.5rem 0' }}>
                         {category.description}
                       </p>
                     )}
@@ -427,8 +427,8 @@ export default function Categories() {
                         onClick={() => startEdit(category)}
                         style={{
                           padding: '0.25rem 0.5rem',
-                          backgroundColor: '#2196F3',
-                          color: 'white',
+                          backgroundColor: 'var(--c-primary)',
+                          color: 'var(--c-on-accent)',
                           border: 'none',
                           borderRadius: '4px',
                           cursor: 'pointer',
@@ -441,8 +441,8 @@ export default function Categories() {
                         onClick={() => handleDeleteCategory(category)}
                         style={{
                           padding: '0.25rem 0.5rem',
-                          backgroundColor: '#f44336',
-                          color: 'white',
+                          backgroundColor: 'var(--c-negative)',
+                          color: 'var(--c-on-accent)',
                           border: 'none',
                           borderRadius: '4px',
                           cursor: 'pointer',
@@ -470,7 +470,7 @@ export default function Categories() {
       {/* Default Categories Section - Mobile Responsive */}
       <div className="card" style={{ marginBottom: '1.5rem' }}>
         <h2>Default Categories ({defaultCategories.length})</h2>
-        <p style={{ marginBottom: '1rem', color: '#666', fontSize: '0.9rem' }}>
+        <p style={{ marginBottom: '1rem', color: 'var(--c-text-2)', fontSize: '0.9rem' }}>
           These are the built-in categories that come with auto-categorization rules.
           Default categories cannot be deleted, but you can edit their appearance.
         </p>
@@ -532,8 +532,8 @@ export default function Categories() {
                       style={{
                         flex: 1,
                         padding: '0.25rem',
-                        backgroundColor: '#4CAF50',
-                        color: 'white',
+                        backgroundColor: 'var(--c-green)',
+                        color: 'var(--c-on-accent)',
                         border: 'none',
                         borderRadius: '4px',
                         cursor: 'pointer',
@@ -547,8 +547,8 @@ export default function Categories() {
                       style={{
                         flex: 1,
                         padding: '0.25rem',
-                        backgroundColor: '#999',
-                        color: 'white',
+                        backgroundColor: 'var(--c-muted)',
+                        color: 'var(--c-on-accent)',
                         border: 'none',
                         borderRadius: '4px',
                         cursor: 'pointer',
@@ -578,7 +578,7 @@ export default function Categories() {
                     </span>
                   </div>
                   {category.description && (
-                    <p style={{ fontSize: '0.85rem', color: '#666', margin: '0 0 0.5rem 0' }}>
+                    <p style={{ fontSize: '0.85rem', color: 'var(--c-text-2)', margin: '0 0 0.5rem 0' }}>
                       {category.description}
                     </p>
                   )}
@@ -589,8 +589,8 @@ export default function Categories() {
                       top: '0.5rem',
                       right: '0.5rem',
                       padding: '0.25rem 0.5rem',
-                      backgroundColor: '#2196F3',
-                      color: 'white',
+                      backgroundColor: 'var(--c-primary)',
+                      color: 'var(--c-on-accent)',
                       border: 'none',
                       borderRadius: '4px',
                       cursor: 'pointer',
@@ -615,7 +615,7 @@ export default function Categories() {
 
       <div className="card">
         <h2>Category Usage</h2>
-        <p style={{ color: '#666' }}>
+        <p style={{ color: 'var(--c-text-2)' }}>
           Categories are used to organize merchants and transactions. When you create or edit a merchant,
           you can assign it to a category. The dashboard analytics group transactions by category.
         </p>
