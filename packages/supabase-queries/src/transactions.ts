@@ -92,6 +92,7 @@ const V_TXN_SELECT = [
   'merchant_normalized_name', 'merchant_category_id',
   'category_id', 'category_name', 'category_icon', 'category_color',
   'email_sender', 'email_subject', 'email_received_at',
+  'merchant_is_own_account',
 ].join(', ');
 
 export function mapTransactionRow(row: any): Transaction {
@@ -119,6 +120,7 @@ export function mapTransactionRow(row: any): Transaction {
                 color: row.category_color,
               }
             : undefined,
+          isOwnAccount: row.merchant_is_own_account === true,
         }
       : undefined,
     email: {
