@@ -34,6 +34,10 @@ export class ParserRegistry {
     return undefined;
   }
 
+  wantsHtmlBody(provider: string | undefined): boolean {
+    return this.parsers.some((parser) => parser.name === provider && parser.wantsHtmlBody);
+  }
+
   // Run the matching regex parser. Returns the parsed result, or 'ignored'
   // when a parser claims the email but flags it as a non-transaction (so the
   // caller skips the LLM fallback), or null when no parser produced a result.

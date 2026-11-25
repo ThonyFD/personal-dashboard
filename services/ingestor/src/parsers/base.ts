@@ -6,6 +6,10 @@ export interface ParserConfig {
   senderPatterns: RegExp[];
   subjectPatterns: RegExp[];
   bodyPatterns: RegExp[];
+  // Set for providers that send HTML-only emails and whose parser needs the
+  // full HTML body; otherwise the pipeline hands over only the Gmail snippet,
+  // which is truncated before the amount.
+  htmlBodyFallback?: boolean;
 }
 
 // America/Panama is UTC-5 year-round (no DST).
@@ -31,6 +35,14 @@ export abstract class BaseParser {
       pattern.test(subject.toLowerCase())
     );
     return senderMatches || subjectMatches;
+  }
+
+  get name(): string {
+    return this.config.name;
+  }
+
+  get wantsHtmlBody(): boolean {
+    return this.config.htmlBodyFallback === true;
   }
 
   abstract parse(emailBody: string, message: GmailMessage): ParsedTransaction | null;
