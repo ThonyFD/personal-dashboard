@@ -27,6 +27,7 @@ import TermsOfService from './pages/TermsOfService'
 import PrivacyPolicy from './pages/PrivacyPolicy'
 import HomePage from './pages/HomePage'
 import AlertBanner from './components/AlertBanner'
+import { useForegroundPush } from './hooks/usePushNotifications'
 import { AppearanceProvider } from './theme/AppearanceContext'
 import './App.css'
 
@@ -185,6 +186,8 @@ function AppContent() {
   const location = useLocation()
   const navigate = useNavigate()
   const { isOwner } = useAuth()
+  // Pushes that arrive while the dashboard is open, on any page.
+  useForegroundPush(isOwner)
   const isFinanceSection = location.pathname.startsWith('/finance')
   const showFarewell = Boolean((location.state as typeof FAREWELL_STATE | null)?.farewell)
   // Clears the flag so a reload or back navigation does not show the toast again.
