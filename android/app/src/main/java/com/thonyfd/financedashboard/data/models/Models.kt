@@ -17,6 +17,8 @@ data class Transaction(
     val description: String? = null,
     @SerialName("category_name") val categoryName: String? = null,
     @SerialName("category_icon") val categoryIcon: String? = null,
+    // Transfer between the owner's own accounts: belongs to no category.
+    @SerialName("merchant_is_own_account") val merchantIsOwnAccount: Boolean = false,
 )
 
 data class UpcomingPayment(

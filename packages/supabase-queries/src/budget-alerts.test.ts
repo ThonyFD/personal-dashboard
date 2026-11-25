@@ -231,6 +231,12 @@ describe('buildBudgetAlert skips', () => {
     expect(buildBudgetAlert(txn({ txnType: 'INCOME' }), settings(), budget())).toEqual({ send: false, reason: 'type' });
   });
 
+  it('skips own-account transfers, even big ones from a frozen card', () => {
+    const own = txn({ txnType: 'TRANSFER', amount: 900, cardLast4: '1111', categoryId: null, isOwnAccount: true });
+    expect(buildBudgetAlert(own, settings(), undefined)).toEqual({ send: false, reason: 'own_account' });
+    expect(buildBudgetAlert({ ...own, txnType: 'PURCHASE' }, settings(), budget())).toEqual({ send: false, reason: 'own_account' });
+  });
+
   it('a big transfer to a person without a budgeted category sends nothing', () => {
     const result = buildBudgetAlert(txn({ txnType: 'TRANSFER', amount: 500, cardLast4: null, categoryId: null }), settings(), undefined);
     expect(result).toEqual({ send: false, reason: 'no_rule' });

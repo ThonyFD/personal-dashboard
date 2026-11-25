@@ -11,6 +11,7 @@ import {
   fetchMerchants as _fetchMerchants,
   fetchMerchantsPaginated as _fetchMerchantsPaginated,
   updateMerchantCategory as _updateMerchantCategory,
+  markMerchantOwnAccount as _markMerchantOwnAccount,
   fetchMonthlyIncomes as _fetchMonthlyIncomes,
   fetchMonthlyIncomesInRange as _fetchMonthlyIncomesInRange,
   createMonthlyIncome as _createMonthlyIncome,
@@ -140,6 +141,9 @@ export const fetchMerchants = () => _fetchMerchants(supabase);
 
 export const updateMerchantCategoryById = (merchantId: number, categoryId: number) =>
   _updateMerchantCategory(supabase, merchantId, categoryId);
+
+export const markMerchantOwnAccountById = (merchantId: number) =>
+  _markMerchantOwnAccount(supabase, merchantId);
 
 // ─── Stats (web-only) ─────────────────────────────────────────────────────────
 

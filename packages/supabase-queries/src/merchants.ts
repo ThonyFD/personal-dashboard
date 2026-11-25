@@ -17,6 +17,7 @@ function mapMerchantRow(m: any): Merchant {
     transaction_count: m.transaction_count ?? 0,
     total_amount: m.total_amount != null ? Number(m.total_amount) : 0,
     inDatabase: true,
+    isOwnAccount: m.is_own_account === true,
   };
 }
 
@@ -67,9 +68,26 @@ export async function updateMerchantCategory(
   merchantId: number,
   categoryId: number,
 ): Promise<void> {
+  // A merchant with a category is not an own account
+  // (CHECK merchants_own_account_no_category).
   const { error } = await client
     .from('merchants')
-    .update({ category_id: categoryId })
+    .update({ category_id: categoryId, is_own_account: false })
+    .eq('id', merchantId);
+  if (error) throw error;
+}
+
+/**
+ * Marks a merchant as one of the owner's own accounts: its transfers stop
+ * counting against budgets and category reports, so it loses its category.
+ */
+export async function markMerchantOwnAccount(
+  client: SupabaseClient,
+  merchantId: number,
+): Promise<void> {
+  const { error } = await client
+    .from('merchants')
+    .update({ category_id: null, is_own_account: true })
     .eq('id', merchantId);
   if (error) throw error;
 }
