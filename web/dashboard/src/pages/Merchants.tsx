@@ -1,9 +1,13 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { fetchMerchantsPaginated, updateMerchantCategoryById } from '../api/supabase-data-client'
+import { fetchMerchantsPaginated, markMerchantOwnAccountById, updateMerchantCategoryById } from '../api/supabase-data-client'
 import { formatCurrency } from '../utils/format'
 import { getCategoryColor, getCategoryIcon } from '../utils/categories'
 import { fetchCategories } from '../api/categories-client'
 import { useState, useEffect } from 'react'
+
+// Select value for "own account": transfers between the owner's own accounts,
+// which count against no budget and belong to no category.
+const OWN_ACCOUNT = -1
 
 export default function Merchants() {
   const [editingMerchant, setEditingMerchant] = useState<number | null>(null)
@@ -43,7 +47,9 @@ export default function Merchants() {
 
   const updateCategoryMutation = useMutation({
     mutationFn: ({ merchantId, categoryId }: { merchantId: number; categoryId: number }) =>
-      updateMerchantCategoryById(merchantId, categoryId),
+      categoryId === OWN_ACCOUNT
+        ? markMerchantOwnAccountById(merchantId)
+        : updateMerchantCategoryById(merchantId, categoryId),
     onMutate: async ({ merchantId, categoryId }) => {
       // Cancel any outgoing refetches
       await queryClient.cancelQueries({ queryKey: ['merchants', currentPage, searchTerm, categoryFilter] })
@@ -62,8 +68,9 @@ export default function Merchants() {
           merchants: old.merchants.map((merchant: any) =>
             merchant.id === merchantId ? {
               ...merchant,
-              categoryId,
-              categoryRef: category
+              categoryId: categoryId === OWN_ACCOUNT ? null : categoryId,
+              categoryRef: category,
+              isOwnAccount: categoryId === OWN_ACCOUNT,
             } : merchant
           )
         }
@@ -87,9 +94,9 @@ export default function Merchants() {
     },
   })
 
-  const handleEditCategory = (merchantId: number, currentCategoryId: number | null) => {
+  const handleEditCategory = (merchantId: number, currentCategoryId: number | null, isOwnAccount?: boolean) => {
     setEditingMerchant(merchantId)
-    setSelectedCategoryId(currentCategoryId || 15) // Default to "Other" (ID: 15)
+    setSelectedCategoryId(isOwnAccount ? OWN_ACCOUNT : currentCategoryId || 15) // Default to "Other" (ID: 15)
   }
 
   const handleSaveCategory = (merchantId: number) => {
@@ -273,6 +280,7 @@ export default function Merchants() {
                               {cat.icon} {cat.name}
                             </option>
                           ))}
+                          <option value={OWN_ACCOUNT}>🔁 Own account (not spending)</option>
                         </select>
                         <button
                           onClick={() => handleSaveCategory(merchant.id)}
@@ -318,8 +326,8 @@ export default function Merchants() {
                           fontSize: '0.9rem',
                         }}
                       >
-                        <span>{merchant.categoryRef ? merchant.categoryRef.icon : '📦'}</span>
-                        <span>{merchant.categoryRef ? merchant.categoryRef.name : 'Uncategorized'}</span>
+                        <span>{merchant.isOwnAccount ? '🔁' : merchant.categoryRef ? merchant.categoryRef.icon : '📦'}</span>
+                        <span>{merchant.isOwnAccount ? 'Own account' : merchant.categoryRef ? merchant.categoryRef.name : 'Uncategorized'}</span>
                       </div>
                     )}
                   </td>
@@ -333,7 +341,7 @@ export default function Merchants() {
                   <td>
                     {!isEditing && merchant.inDatabase ? (
                       <button
-                        onClick={() => handleEditCategory(merchant.id, merchant.categoryId)}
+                        onClick={() => handleEditCategory(merchant.id, merchant.categoryId, merchant.isOwnAccount)}
                         style={{
                           padding: '0.25rem 0.75rem',
                           backgroundColor: 'var(--c-primary)',

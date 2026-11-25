@@ -132,7 +132,7 @@ export async function fetchAlertTransaction(
 ): Promise<AlertTransactionRow | null> {
   const { data, error } = await client
     .from('v_transactions')
-    .select('id, amount, txn_type, txn_date, merchant_name, card_last4, merchant_category_id')
+    .select('id, amount, txn_type, txn_date, merchant_name, card_last4, merchant_category_id, merchant_is_own_account')
     .eq('id', id)
     .maybeSingle();
   if (error) throw error;
@@ -146,6 +146,7 @@ export async function fetchAlertTransaction(
     merchantName: r.merchant_name ?? null,
     cardLast4: r.card_last4 ?? null,
     categoryId: r.merchant_category_id == null ? null : Number(r.merchant_category_id),
+    isOwnAccount: r.merchant_is_own_account === true,
   };
 }
 

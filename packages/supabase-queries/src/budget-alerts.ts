@@ -25,6 +25,8 @@ export interface AlertTransaction {
   cardLast4: string | null;
   /** Category of the transaction's merchant, null when uncategorized. */
   categoryId: number | null;
+  /** Transfer between the owner's own accounts: never alerts. */
+  isOwnAccount?: boolean;
 }
 
 /** One row of budget_status(), already including the transaction being alerted. */
@@ -54,7 +56,7 @@ export interface BudgetAlertMessage {
 
 export type BudgetAlertResult =
   | { send: true; message: BudgetAlertMessage }
-  | { send: false; reason: 'disabled' | 'type' | 'no_rule' };
+  | { send: false; reason: 'disabled' | 'type' | 'own_account' | 'no_rule' };
 
 export type EligibilityResult =
   | { eligible: true }
@@ -195,6 +197,8 @@ export function buildBudgetAlert(
 ): BudgetAlertResult {
   if (!settings.alertsEnabled) return { send: false, reason: 'disabled' };
   if (!isAlertableType(txn.txnType)) return { send: false, reason: 'type' };
+  // Money moved between the owner's own accounts is not spending.
+  if (txn.isOwnAccount) return { send: false, reason: 'own_account' };
 
   const merchant = txn.merchantName?.trim() || 'comercio sin nombre';
   const amount = formatUsd(txn.amount);

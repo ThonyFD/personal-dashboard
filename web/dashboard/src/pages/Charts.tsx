@@ -69,6 +69,8 @@ export default function Charts() {
     const categories = new Map<string, number>()
 
     allTransactions.forEach(txn => {
+      // Transfers between the owner's own accounts belong to no category.
+      if (txn.merchant?.isOwnAccount) return
       const category = txn.merchant?.categoryRef?.name || 'Uncategorized'
       categories.set(category, (categories.get(category) || 0) + txn.amount)
     })

@@ -21,6 +21,8 @@ export interface Transaction {
     name: string;
     categoryId: number | null;
     categoryRef?: CategoryRef;
+    /** Transfer between the owner's own accounts: not spending, no category. */
+    isOwnAccount?: boolean;
   };
   email: {
     sender_email: string;
@@ -58,6 +60,8 @@ export interface Merchant {
   transaction_count: number | null;
   total_amount: number | null;
   inDatabase?: boolean;
+  /** Transfer between the owner's own accounts: not spending, no category. */
+  isOwnAccount?: boolean;
 }
 
 export interface Category {

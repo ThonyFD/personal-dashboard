@@ -38,6 +38,7 @@ export {
   fetchMerchants,
   fetchMerchantsPaginated,
   updateMerchantCategory,
+  markMerchantOwnAccount,
 } from './merchants.js';
 
 export {
