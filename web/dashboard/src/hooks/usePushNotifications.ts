@@ -1,12 +1,54 @@
 import { useState, useEffect } from 'react';
 import { getToken, deleteToken, onMessage } from 'firebase/messaging';
 import { messaging, VAPID_PUBLIC_KEY } from '../lib/firebase-messaging';
+import { foregroundNotification, subscriptionsForToken } from '../lib/push-device';
 import { useAuth } from '../contexts/AuthContext';
 import {
   createPushSubscription,
   deactivatePushSubscription,
   getActivePushSubscriptions,
 } from '../api/supabase-data-client';
+
+const SW_PATH = '/firebase-messaging-sw.js';
+
+const pushSupported = () => 'Notification' in window && 'serviceWorker' in navigator;
+
+// FCM token of this browser. getToken returns it from cache after the first call.
+async function deviceToken(): Promise<string> {
+  const registration = await navigator.serviceWorker.register(SW_PATH);
+  await navigator.serviceWorker.ready;
+  return getToken(messaging, {
+    vapidKey: VAPID_PUBLIC_KEY,
+    serviceWorkerRegistration: registration,
+  });
+}
+
+/**
+ * Shows pushes that arrive while the dashboard has focus, on every page. It goes
+ * through the service worker registration because Android Chrome has no
+ * Notification constructor.
+ */
+export const useForegroundPush = (enabled: boolean) => {
+  useEffect(() => {
+    if (!enabled || !pushSupported()) return;
+    let stopListening: (() => void) | undefined;
+    try {
+      stopListening = onMessage(messaging, async (payload) => {
+        if (Notification.permission !== 'granted') return;
+        try {
+          const registration = await navigator.serviceWorker.ready;
+          const { title, options } = foregroundNotification(payload);
+          await registration.showNotification(title, options);
+        } catch (err) {
+          console.error('Error showing foreground notification:', err);
+        }
+      });
+    } catch (err) {
+      console.error('Error listening for foreground messages:', err);
+    }
+    return stopListening;
+  }, [enabled]);
+};
 
 export const usePushNotifications = () => {
   const { user } = useAuth();
@@ -18,7 +60,7 @@ export const usePushNotifications = () => {
 
   // Check browser support
   useEffect(() => {
-    if (!('Notification' in window) || !('serviceWorker' in navigator)) {
+    if (!pushSupported()) {
       setIsSupported(false);
       console.warn('Browser does not support notifications or service workers');
     }
@@ -27,23 +69,36 @@ export const usePushNotifications = () => {
     }
   }, []);
 
-  // Check existing subscription
+  // Subscribed means this device, not any device of the user.
   useEffect(() => {
-    const checkSubscription = async () => {
-      if (!user?.email) return;
+    const userEmail = user?.email;
+    if (!userEmail || !pushSupported()) return;
+    let cancelled = false;
 
+    const checkSubscription = async () => {
+      // Without permission this device holds no subscription, and asking for a
+      // token now would prompt the user.
+      if (Notification.permission !== 'granted') {
+        setIsSubscribed(false);
+        return;
+      }
       try {
-        const result = await getActivePushSubscriptions({ userEmail: user.email });
-        const hasActiveSubscription = result.data.pushSubscriptions.length > 0;
-        setIsSubscribed(hasActiveSubscription);
-        console.log('Subscription check:', hasActiveSubscription ? 'Active' : 'Inactive');
+        const [token, result] = await Promise.all([
+          deviceToken(),
+          getActivePushSubscriptions({ userEmail }),
+        ]);
+        const mine = subscriptionsForToken(result.data.pushSubscriptions, token);
+        if (!cancelled) setIsSubscribed(mine.length > 0);
       } catch (err) {
         console.error('Error checking subscription:', err);
       }
     };
 
     checkSubscription();
-  }, [user]);
+    return () => {
+      cancelled = true;
+    };
+  }, [user?.email]);
 
   const subscribe = async () => {
     if (!user?.email) {
@@ -60,70 +115,30 @@ export const usePushNotifications = () => {
     setError(null);
 
     try {
-      console.log('Starting subscription process...');
-
-      // 1. Register service worker
-      console.log('Registering service worker...');
-      const registration = await navigator.serviceWorker.register('/firebase-messaging-sw.js');
-      await navigator.serviceWorker.ready;
-      console.log('Service worker registered successfully');
-
-      // 2. Request permission
-      console.log('Requesting notification permission...');
+      // Asked first, while the click still counts as a user gesture.
       const perm = await Notification.requestPermission();
       setPermission(perm);
-      console.log('Notification permission:', perm);
-
       if (perm !== 'granted') {
         throw new Error('Permiso de notificaciones denegado');
       }
 
-      // 3. Get FCM token
-      console.log('Getting FCM token...');
-      const token = await getToken(messaging, {
-        vapidKey: VAPID_PUBLIC_KEY,
-        serviceWorkerRegistration: registration,
-      });
-
+      const token = await deviceToken();
       if (!token) {
         throw new Error('No se pudo obtener el token de FCM');
       }
-      console.log('FCM token obtained:', token.substring(0, 20) + '...');
 
-      // 4. Save to database
-      console.log('Saving subscription to database...');
-      await createPushSubscription({
-        userEmail: user.email,
-        endpoint: token,
-        keys: JSON.stringify({ fcmToken: token }),
-        userAgent: navigator.userAgent,
-      });
-      console.log('Subscription saved successfully');
-
-      // 6. Listen for foreground messages
-      onMessage(messaging, (payload) => {
-        console.log('Foreground message received:', payload);
-        // Show browser notification even in foreground. The sender puts tag and
-        // link in data, so a budget alert keeps its own tag and never replaces
-        // a payment reminder.
-        if (Notification.permission === 'granted') {
-          const link = payload.data?.link ?? payload.fcmOptions?.link;
-          const notification = new Notification(payload.notification?.title || 'Recordatorio', {
-            body: payload.notification?.body,
-            icon: '/logo.svg',
-            tag: payload.data?.tag,
-          });
-          if (link) {
-            notification.onclick = () => {
-              window.focus();
-              window.location.assign(link);
-            };
-          }
-        }
-      });
+      // One row per device: activating again on the same browser adds nothing.
+      const result = await getActivePushSubscriptions({ userEmail: user.email });
+      if (subscriptionsForToken(result.data.pushSubscriptions, token).length === 0) {
+        await createPushSubscription({
+          userEmail: user.email,
+          endpoint: token,
+          keys: JSON.stringify({ fcmToken: token }),
+          userAgent: navigator.userAgent,
+        });
+      }
 
       setIsSubscribed(true);
-      console.log('Successfully subscribed to push notifications');
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Error desconocido';
       setError(message);
@@ -133,6 +148,7 @@ export const usePushNotifications = () => {
     }
   };
 
+  // Turns off this device only. The user's other devices keep their subscription.
   const unsubscribe = async () => {
     if (!user?.email) {
       setError('Debes estar autenticado');
@@ -143,28 +159,13 @@ export const usePushNotifications = () => {
     setError(null);
 
     try {
-      console.log('Starting unsubscribe process...');
-
-      // 1. Delete FCM token
-      console.log('Deleting FCM token...');
-      await deleteToken(messaging);
-      console.log('FCM token deleted');
-
-      // 2. Deactivate all user's subscriptions in database
-      console.log('Fetching active subscriptions...');
+      const token = await deviceToken();
       const result = await getActivePushSubscriptions({ userEmail: user.email });
-      const subscriptions = result.data.pushSubscriptions;
-      console.log(`Found ${subscriptions.length} subscriptions to deactivate`);
+      const mine = subscriptionsForToken(result.data.pushSubscriptions, token);
+      await Promise.all(mine.map((sub) => deactivatePushSubscription({ id: sub.id })));
 
-      await Promise.all(
-        subscriptions.map((sub) => {
-          console.log('Deactivating subscription ID:', sub.id);
-          return deactivatePushSubscription({ id: sub.id });
-        })
-      );
-
+      await deleteToken(messaging);
       setIsSubscribed(false);
-      console.log('Successfully unsubscribed from push notifications');
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Error desconocido';
       setError(message);
