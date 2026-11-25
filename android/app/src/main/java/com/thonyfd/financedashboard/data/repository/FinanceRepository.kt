@@ -54,7 +54,8 @@ class FinanceRepository {
             .replaceFirstChar { it.uppercase() }
 
         val monthlySpend = monthlyTxns.sumOf { it.amount }
-        val topCategories = computeTopCategories(monthlyTxns)
+        // Transfers between the owner's own accounts belong to no category.
+        val topCategories = computeTopCategories(monthlyTxns.filter { !it.merchantIsOwnAccount })
         val updatedAt = DateTimeFormatter.ofPattern("HH:mm").format(java.time.LocalTime.now())
 
         val manualTxns = fetchAllManualTransactions(year, month)
