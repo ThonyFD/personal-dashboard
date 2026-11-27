@@ -60,9 +60,27 @@ export interface Merchant {
   categoryRef?: CategoryRef;
   transaction_count: number | null;
   total_amount: number | null;
+  /** total_amount / transaction_count, 0 without transactions. */
+  avg_amount?: number;
+  /** Newest txn_date (YYYY-MM-DD), null without transactions. */
+  last_txn_date?: string | null;
   inDatabase?: boolean;
   /** Transfer between the owner's own accounts: not spending, no category. */
   isOwnAccount?: boolean;
+}
+
+/** Columns of the Merchants table the user can sort by. */
+export type MerchantSortKey =
+  | 'name'
+  | 'category'
+  | 'transaction_count'
+  | 'total_amount'
+  | 'avg_amount'
+  | 'last_txn_date';
+
+export interface MerchantSort {
+  key: MerchantSortKey;
+  ascending: boolean;
 }
 
 export interface Category {
