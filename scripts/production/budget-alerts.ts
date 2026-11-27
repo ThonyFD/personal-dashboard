@@ -156,6 +156,7 @@ export async function processBudgetAlerts(
         body: message.body,
         tag: `budget-alert-${transactionId}`,
         link: `${dashboardUrl}/finance/budgets`,
+        channel: 'budget_alerts',
       });
 
       if (push.sent === 0) {

@@ -29,6 +29,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.thonyfd.financedashboard.push.PushRepository
 import com.thonyfd.financedashboard.data.SupabaseConfig
 import com.thonyfd.financedashboard.data.auth.AuthGateState
 import com.thonyfd.financedashboard.data.auth.NETWORK_ERROR_MESSAGE
@@ -73,6 +74,8 @@ fun LoginGate(content: @Composable (isOwner: Boolean) -> Unit) {
             gate == AuthGateState.LoggedOut && AccountTracker.get(context) != null -> {
                 clearAllAccountCaches(context)
                 AccountTracker.set(context, null)
+                // Finance pushes must not keep reaching a phone nobody is signed in to.
+                PushRepository.cleanupAfterSessionLoss(context)
             }
         }
     }

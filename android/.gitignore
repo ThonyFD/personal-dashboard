@@ -10,3 +10,6 @@
 .cxx
 local.properties
 *.hprof
+
+# Firebase config: values live in local.properties, never in the repo (public)
+google-services.json
