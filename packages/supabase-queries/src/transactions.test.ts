@@ -87,4 +87,20 @@ describe('fetchTransactionSummary', () => {
     expect(summary.totalCount).toBe(3);
     expect(summary.topMerchant).toBe('FRIEND');
   });
+
+  it('is spending: income is left out and refunds are subtracted', async () => {
+    const income = { merchant_name: 'FRIEND', amount: 300, txn_type: 'INCOME', merchant_is_own_account: false };
+    const { client } = rowsClient([cafe, friend, refund, income, own]);
+    const summary = await fetchTransactionSummary(client);
+    // 12 + 40 spent, minus the 5 refund; no income, no own transfer.
+    expect(summary.totalAmount).toBe(47);
+    expect(summary.totalCount).toBe(5);
+  });
+
+  it('a card payment flagged as own account does not count twice', async () => {
+    const cardPayment = { merchant_name: 'CARD PAYMENT', amount: 1000, txn_type: 'PAYMENT', merchant_is_own_account: true };
+    const bill = { merchant_name: 'PHONE', amount: 20, txn_type: 'PAYMENT', merchant_is_own_account: false };
+    const { client } = rowsClient([cafe, cardPayment, bill]);
+    expect((await fetchTransactionSummary(client)).totalAmount).toBe(32);
+  });
 });

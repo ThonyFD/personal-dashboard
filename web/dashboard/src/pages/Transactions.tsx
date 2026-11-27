@@ -603,10 +603,10 @@ export default function Transactions() {
 
         <div className="stats-grid" style={{ marginBottom: '1rem' }}>
           <div className="stat-card">
-            <h3>Total Amount</h3>
+            <h3>Total Spent</h3>
             <div className="value">${formatCurrency(summaryData?.totalAmount ?? 0)}</div>
             <div style={{ fontSize: '0.85rem', color: 'var(--c-text-2)', marginTop: '0.5rem' }}>
-              Suma de montos para el filtro actual
+              Gasto del filtro actual, menos devoluciones. Sin ingresos ni cuentas propias
             </div>
           </div>
 
