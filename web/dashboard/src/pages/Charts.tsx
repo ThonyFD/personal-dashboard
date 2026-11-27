@@ -43,6 +43,8 @@ export default function Charts() {
     const trends = new Map<string, { date: string; payment: number; purchase: number; total: number }>()
 
     allTransactions.forEach(txn => {
+      // Transfers between own accounts are not spending.
+      if (txn.merchant?.isOwnAccount) return
       const date = startOfDay(parseISO(txn.txn_date))
       const dateKey = format(date, 'yyyy-MM-dd')
 
@@ -88,6 +90,7 @@ export default function Charts() {
     const merchants = new Map<string, number>()
 
     allTransactions.forEach(txn => {
+      if (txn.merchant?.isOwnAccount) return
       const merchant = txn.merchant_name || 'Unknown'
       merchants.set(merchant, (merchants.get(merchant) || 0) + txn.amount)
     })
@@ -126,6 +129,7 @@ export default function Charts() {
     const providers = new Map<string, number>()
 
     allTransactions.forEach(txn => {
+      if (txn.merchant?.isOwnAccount) return
       providers.set(txn.provider, (providers.get(txn.provider) || 0) + txn.amount)
     })
 
