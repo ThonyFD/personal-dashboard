@@ -21,6 +21,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.thonyfd.financedashboard.data.models.Transaction
+import com.thonyfd.financedashboard.data.models.isManualProvider
+import androidx.compose.foundation.clickable
 import com.thonyfd.financedashboard.data.repository.FinanceRepository
 import kotlinx.coroutines.launch
 import java.time.YearMonth
@@ -49,6 +51,7 @@ fun CategoryDetailScreen(
     var isLoading by remember { mutableStateOf(true) }
     var hasLoaded by remember { mutableStateOf(false) }
     var error by remember { mutableStateOf<String?>(null) }
+    var manualToDelete by remember { mutableStateOf<Transaction?>(null) }
 
     fun load() {
         scope.launch {
@@ -73,6 +76,18 @@ fun CategoryDetailScreen(
     }
 
     LaunchedEffect(yearMonth) { load() }
+
+    manualToDelete?.let { txn ->
+        DeleteManualTransferDialog(
+            txn = txn,
+            onDismiss = { manualToDelete = null },
+            onDeleted = {
+                manualToDelete = null
+                Toast.makeText(context, "Entrada manual eliminada", Toast.LENGTH_SHORT).show()
+                load()
+            }
+        )
+    }
 
     val monthLabel = yearMonth.atDay(1)
         .format(DateTimeFormatter.ofPattern("MMMM yyyy", Locale("es")))
@@ -160,7 +175,7 @@ fun CategoryDetailScreen(
                     itemsIndexed(transactions, key = { _, it -> it.id }) { index, txn ->
                         Column(Modifier.panelSegment(index, transactions.size)) {
                             if (index > 0) PanelDivider(startIndent = 16.dp)
-                            CategoryTransactionCard(txn)
+                            CategoryTransactionCard(txn, onClick = if (isManualProvider(txn.provider)) ({ manualToDelete = txn }) else null)
                         }
                     }
                 }
@@ -170,9 +185,11 @@ fun CategoryDetailScreen(
 }
 
 @Composable
-private fun CategoryTransactionCard(txn: Transaction) {
+private fun CategoryTransactionCard(txn: Transaction, onClick: (() -> Unit)? = null) {
     Row(
-        modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 13.dp),
+        modifier = Modifier.fillMaxWidth()
+            .then(if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier)
+            .padding(horizontal = 16.dp, vertical = 13.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
         Column(modifier = Modifier.weight(1f)) {
@@ -185,7 +202,12 @@ private fun CategoryTransactionCard(txn: Transaction) {
             )
             Spacer(Modifier.height(2.dp))
             Text(
-                listOfNotNull(txn.txnDate.take(10), txn.cardLast4?.let { "•••$it" }, txn.description?.takeIf { it.isNotBlank() })
+                listOfNotNull(
+                    txn.txnDate.take(10),
+                    txn.cardLast4?.let { "•••$it" },
+                    "Manual".takeIf { isManualProvider(txn.provider) },
+                    txn.description?.takeIf { it.isNotBlank() }
+                )
                     .joinToString(" · "),
                 color = AppTheme.colors.textSecondary,
                 style = MaterialTheme.typography.bodySmall,

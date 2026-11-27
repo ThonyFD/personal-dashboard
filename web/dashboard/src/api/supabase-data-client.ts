@@ -8,6 +8,8 @@ import {
   fetchTransactionDetail as _fetchTransactionDetail,
   fetchTransactionFilterOptions as _fetchTransactionFilterOptions,
   exportTransactionsCSV as _exportTransactionsCSV,
+  recordManualTransfer as _recordManualTransfer,
+  deleteManualTransfer as _deleteManualTransfer,
   fetchMerchants as _fetchMerchants,
   fetchMerchantsPaginated as _fetchMerchantsPaginated,
   updateMerchantCategory as _updateMerchantCategory,
@@ -127,6 +129,13 @@ export const exportTransactionsCSV = (
   endDate?: string,
   filters: import('@personal-dashboard/supabase-queries').TransactionFilters = {},
 ) => _exportTransactionsCSV(supabase, startDate, endDate, filters);
+
+/** Bank-app transfer that sends no email, typed in by the owner. */
+export const recordManualTransfer = (
+  input: import('@personal-dashboard/supabase-queries').ManualTransferInput,
+) => _recordManualTransfer(supabase, input);
+
+export const deleteManualTransfer = (id: number) => _deleteManualTransfer(supabase, id);
 
 // ─── Merchants ────────────────────────────────────────────────────────────────
 

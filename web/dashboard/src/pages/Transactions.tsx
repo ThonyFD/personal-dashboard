@@ -11,6 +11,7 @@ import {
 } from '../api/supabase-data-client'
 import { formatCurrency, formatSignedAmount, amountColor } from '../utils/format'
 import { TransactionDetailModal } from '../components/TransactionDetailModal'
+import { ManualTransferForm } from '../components/ManualTransferForm'
 
 const DEFAULT_INCOME_PERIOD = format(new Date(), 'yyyy-MM')
 const DEFAULT_START_DATE = format(startOfMonth(new Date()), 'yyyy-MM-dd')
@@ -46,6 +47,8 @@ export default function Transactions() {
   const [incomeFeedback, setIncomeFeedback] = useState<string | null>(null)
   const [incomeError, setIncomeError] = useState<string | null>(null)
   const [selectedTxnId, setSelectedTxnId] = useState<number | null>(null)
+  const [showTransferForm, setShowTransferForm] = useState(false)
+  const [transferFeedback, setTransferFeedback] = useState<string | null>(null)
 
   const deferredSearchTerm = useDeferredValue(searchTerm)
 
@@ -212,6 +215,24 @@ export default function Transactions() {
             {showIncomeForm ? 'Cerrar ingreso' : 'Registrar ingreso'}
           </button>
           <button
+            onClick={() => {
+              setShowTransferForm(current => !current)
+              setTransferFeedback(null)
+            }}
+            style={{
+              padding: '0.5rem 1rem',
+              cursor: 'pointer',
+              backgroundColor: showTransferForm ? 'var(--c-muted)' : 'var(--c-primary)',
+              color: 'var(--c-on-accent)',
+              border: 'none',
+              borderRadius: '4px',
+              fontSize: '0.9rem',
+              whiteSpace: 'nowrap',
+            }}
+          >
+            {showTransferForm ? 'Cerrar transferencia' : 'Registrar transferencia'}
+          </button>
+          <button
             onClick={handleExport}
             disabled={isExporting}
             style={{
@@ -354,6 +375,34 @@ export default function Transactions() {
           </form>
         )}
       </div>
+
+      {(showTransferForm || transferFeedback) && (
+        <div className="card" style={{ marginBottom: '1rem' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '0.75rem', flexWrap: 'wrap' }}>
+            <div>
+              <h2 style={{ margin: 0, fontSize: '1.1rem', fontFamily: 'var(--f-heading)' }}>Registrar transferencia manual</h2>
+              <div style={{ color: 'var(--c-text-2)', fontSize: '0.85rem', marginTop: '0.35rem' }}>
+                Para transferencias que no mandan correo. Cuenta en la categoría y el presupuesto del comercio, sin aviso push.
+              </div>
+            </div>
+            {transferFeedback && (
+              <div role="status" style={{ color: 'var(--c-green)', fontSize: '0.85rem', fontWeight: 500 }}>
+                {transferFeedback}
+              </div>
+            )}
+          </div>
+
+          {showTransferForm && (
+            <ManualTransferForm
+              onSaved={(message) => {
+                setTransferFeedback(message)
+                setShowTransferForm(false)
+              }}
+              onCancel={() => setShowTransferForm(false)}
+            />
+          )}
+        </div>
+      )}
 
       <div className="card" style={{ marginBottom: '1rem' }}>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '0.75rem' }}>

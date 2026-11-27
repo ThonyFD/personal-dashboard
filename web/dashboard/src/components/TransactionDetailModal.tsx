@@ -1,5 +1,8 @@
-import { useQuery } from '@tanstack/react-query'
-import { fetchTransactionDetail } from '../api/supabase-data-client'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useEffect, useState } from 'react'
+import { isManualTransaction } from '@personal-dashboard/supabase-queries'
+import { deleteManualTransfer, fetchTransactionDetail } from '../api/supabase-data-client'
+import { MANUAL_TRANSFER_STALE_QUERIES } from '../lib/manual-transfer'
 import { formatSignedAmount, amountColor } from '../utils/format'
 
 interface TransactionDetailModalProps {
@@ -41,6 +44,21 @@ export function TransactionDetailModal({ transactionId, onClose }: TransactionDe
     queryKey: ['transaction-detail', transactionId],
     queryFn: () => fetchTransactionDetail(transactionId as number),
     enabled: transactionId !== null,
+  })
+
+  const queryClient = useQueryClient()
+  const [confirmDelete, setConfirmDelete] = useState(false)
+  useEffect(() => setConfirmDelete(false), [transactionId])
+
+  // Only manual entries can be deleted: ingested rows would come back on the next sync.
+  const deleteMutation = useMutation({
+    mutationFn: deleteManualTransfer,
+    onSuccess: () => {
+      for (const key of MANUAL_TRANSFER_STALE_QUERIES) {
+        void queryClient.invalidateQueries({ queryKey: [key] })
+      }
+      onClose()
+    },
   })
 
   if (transactionId === null) return null
@@ -152,6 +170,59 @@ export function TransactionDetailModal({ transactionId, onClose }: TransactionDe
               )
             })}
         </div>
+
+        {data && isManualTransaction(data.provider as string | null) && (
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'flex-end',
+              gap: '0.5rem',
+              flexWrap: 'wrap',
+              padding: '0.9rem 1.4rem',
+              borderTop: '1px solid color-mix(in srgb, var(--c-text) 8%, transparent)',
+            }}
+          >
+            {deleteMutation.isError && (
+              <span role="alert" style={{ color: 'var(--c-negative)', fontSize: '0.82rem', marginRight: 'auto' }}>
+                No se pudo eliminar.
+              </span>
+            )}
+            {confirmDelete && (
+              <button
+                type="button"
+                onClick={() => setConfirmDelete(false)}
+                style={{
+                  padding: '0.45rem 0.9rem',
+                  cursor: 'pointer',
+                  backgroundColor: 'var(--c-surface)',
+                  color: 'var(--c-text-2)',
+                  border: '1px solid var(--c-hairline)',
+                  borderRadius: '6px',
+                  fontSize: '0.85rem',
+                }}
+              >
+                Cancelar
+              </button>
+            )}
+            <button
+              type="button"
+              disabled={deleteMutation.isPending}
+              onClick={() => (confirmDelete ? deleteMutation.mutate(transactionId) : setConfirmDelete(true))}
+              style={{
+                padding: '0.45rem 0.9rem',
+                cursor: deleteMutation.isPending ? 'not-allowed' : 'pointer',
+                backgroundColor: confirmDelete ? 'var(--c-negative)' : 'transparent',
+                color: confirmDelete ? 'var(--c-on-accent)' : 'var(--c-negative)',
+                border: '1px solid var(--c-negative)',
+                borderRadius: '6px',
+                fontSize: '0.85rem',
+              }}
+            >
+              {deleteMutation.isPending ? 'Eliminando...' : confirmDelete ? 'Sí, eliminar' : 'Eliminar entrada manual'}
+            </button>
+          </div>
+        )}
       </div>
     </div>
   )

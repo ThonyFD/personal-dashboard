@@ -36,6 +36,14 @@ export {
   isSpending,
 } from './transactions.js';
 
+export type { ManualTransferInput } from './manual-transfers.js';
+export {
+  MANUAL_PROVIDER,
+  deleteManualTransfer,
+  isManualTransaction,
+  recordManualTransfer,
+} from './manual-transfers.js';
+
 export {
   fetchMerchants,
   fetchMerchantsPaginated,
