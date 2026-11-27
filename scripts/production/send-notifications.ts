@@ -64,6 +64,7 @@ async function run(): Promise<void> {
     body,
     tag: 'payment-reminder',
     link: `${DASHBOARD_URL}/monthly-control`,
+    channel: 'payment_reminders',
     requireInteraction: true,
   });
 

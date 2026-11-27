@@ -42,6 +42,7 @@ describe('processBudgetAlerts', () => {
       body: '$62.00 de $200.00 · te quedan $138.00 para 10 días',
       tag: 'budget-alert-7',
       link: 'https://example.test/finance/budgets',
+      channel: 'budget_alerts',
     });
   });
 
