@@ -47,7 +47,7 @@ import {
   computeTopMerchant,
   computeBusiestMerchant,
   computeStreak,
-  DEBIT_TYPES,
+  isSpending,
   getHabitCompletionSummary,
   getHabitCompletionLog,
   isHabitDueOnDate,
@@ -163,7 +163,8 @@ export async function fetchStats(startDate?: string, endDate?: string): Promise<
       purchase_amount += txn.amount;
       purchase_count += 1;
     }
-    if (DEBIT_TYPES.has(txn.txn_type)) {
+    // Own-account transfers are not spending.
+    if (isSpending(txn)) {
       total_spent_amount += txn.amount;
       total_spent_count += 1;
     }
@@ -179,7 +180,7 @@ export async function fetchStats(startDate?: string, endDate?: string): Promise<
     const monthTxns = allTransactions.filter(txn => new Date(txn.txn_date) >= firstDayOfMonth);
     this_month_transactions = monthTxns.length;
     this_month_amount = monthTxns.reduce((sum, txn) =>
-      DEBIT_TYPES.has(txn.txn_type) ? sum + txn.amount : sum, 0);
+      isSpending(txn) ? sum + txn.amount : sum, 0);
   } else {
     this_month_amount = total_amount;
     this_month_transactions = total_transactions;

@@ -53,9 +53,11 @@ class FinanceRepository {
             .format(DateTimeFormatter.ofPattern("MMMM yyyy", Locale("es")))
             .replaceFirstChar { it.uppercase() }
 
-        val monthlySpend = monthlyTxns.sumOf { it.amount }
-        // Transfers between the owner's own accounts belong to no category.
-        val topCategories = computeTopCategories(monthlyTxns.filter { !it.merchantIsOwnAccount })
+        // Transfers between the owner's own accounts are not spending: they stay in
+        // the recent list but count in no total and no category.
+        val spendingTxns = monthlyTxns.filter { !it.merchantIsOwnAccount }
+        val monthlySpend = spendingTxns.sumOf { it.amount }
+        val topCategories = computeTopCategories(spendingTxns)
         val updatedAt = DateTimeFormatter.ofPattern("HH:mm").format(java.time.LocalTime.now())
 
         val manualTxns = fetchAllManualTransactions(year, month)
@@ -166,6 +168,7 @@ class FinanceRepository {
             }
             .decodeList<Transaction>()
             .filter { it.txnType.uppercase() !in nonExpenseTypes }
+            .filter { !it.merchantIsOwnAccount }
             .filter { resolveTransactionCategory(it).first == categoryName }
     }
 
