@@ -1,5 +1,18 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
-import type { Merchant } from './types.js';
+import type { Merchant, MerchantSort, MerchantSortKey } from './types.js';
+
+/** Most used merchants first, the order the page had before sorting existed. */
+export const DEFAULT_MERCHANT_SORT: MerchantSort = { key: 'transaction_count', ascending: false };
+
+/** v_merchant_stats column behind each sortable Merchants column. */
+const SORT_COLUMNS: Record<MerchantSortKey, string> = {
+  name: 'name',
+  category: 'category_ref_name',
+  transaction_count: 'transaction_count',
+  total_amount: 'total_amount',
+  avg_amount: 'avg_amount',
+  last_txn_date: 'last_txn_date',
+};
 
 function mapMerchantRow(m: any): Merchant {
   return {
@@ -16,6 +29,8 @@ function mapMerchantRow(m: any): Merchant {
       : undefined,
     transaction_count: m.transaction_count ?? 0,
     total_amount: m.total_amount != null ? Number(m.total_amount) : 0,
+    avg_amount: m.avg_amount != null ? Number(m.avg_amount) : 0,
+    last_txn_date: m.last_txn_date ?? null,
     inDatabase: true,
     isOwnAccount: m.is_own_account === true,
   };
@@ -27,13 +42,17 @@ export async function fetchMerchantsPaginated(
   pageSize = 50,
   searchTerm = '',
   categoryFilter = '',
+  sort: MerchantSort = DEFAULT_MERCHANT_SORT,
 ): Promise<{ merchants: Merchant[]; totalCount: number; totalPages: number }> {
   const offset = (page - 1) * pageSize;
 
+  // Merchants without a value (no category, no transactions) go last in both
+  // directions; id breaks ties so pages never repeat or skip a row.
   let query = client
     .from('v_merchant_stats')
     .select('*', { count: 'exact' })
-    .order('transaction_count', { ascending: false })
+    .order(SORT_COLUMNS[sort.key], { ascending: sort.ascending, nullsFirst: false })
+    .order('id', { ascending: true })
     .range(offset, offset + pageSize - 1);
 
   if (searchTerm) query = query.ilike('name', `%${searchTerm}%`);

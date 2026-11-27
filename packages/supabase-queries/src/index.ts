@@ -4,6 +4,8 @@ export type {
   PaginatedTransactionsResult,
   TransactionSummary,
   Merchant,
+  MerchantSort,
+  MerchantSortKey,
   Category,
   CategoryRef,
   MonthlyIncome,
@@ -45,6 +47,7 @@ export {
 } from './manual-transfers.js';
 
 export {
+  DEFAULT_MERCHANT_SORT,
   fetchMerchants,
   fetchMerchantsPaginated,
   updateMerchantCategory,
