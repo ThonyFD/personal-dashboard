@@ -39,3 +39,18 @@ suspend fun refreshTokenIfEnabled(flagOn: Boolean, token: String, register: susp
 
 /** A widget deep link (explicit tab) wins; otherwise the tag of the push that was tapped. */
 fun openTabFromIntent(openTabExtra: Int?, pushTag: String?): Int? = openTabExtra ?: tabForPushTag(pushTag)
+
+private val URL_PATTERN = Regex("""https?://\S+""")
+
+/**
+ * Safe one-line description of a push failure for Log. supabase-kt puts the URL and the
+ * request headers (with the bearer token) after the first line, so only that line is kept.
+ * Network errors name the URL in that line, and its filter holds the FCM token
+ * (endpoint=eq.<token>), so URLs are replaced too.
+ */
+fun pushErrorSummary(error: Throwable): String {
+    val name = error.javaClass.simpleName
+    val firstLine = error.message?.lineSequence()?.firstOrNull()?.trim()
+        ?.replace(URL_PATTERN, "<url>")?.take(160)
+    return if (firstLine.isNullOrEmpty()) name else "$name: $firstLine"
+}

@@ -92,4 +92,26 @@ class PushRoutingTest {
     fun nothingWhenNeither() {
         assertNull(openTabFromIntent(null, null))
     }
+
+    @Test
+    fun errorSummaryKeepsClassAndFirstLineOnly() {
+        val error = IllegalStateException("new row violates row-level security policy\nURL: https://x\nHeaders: [Authorization=Bearer secret]")
+        assertEquals("IllegalStateException: new row violates row-level security policy", pushErrorSummary(error))
+    }
+
+    @Test
+    fun errorSummaryTruncatesLongMessages() {
+        assertEquals("IllegalStateException: " + "a".repeat(160), pushErrorSummary(IllegalStateException("a".repeat(500))))
+    }
+
+    @Test
+    fun errorSummaryWithoutMessage() {
+        assertEquals("IllegalStateException", pushErrorSummary(IllegalStateException()))
+    }
+
+    @Test
+    fun errorSummaryRedactsUrlsThatCarryTheToken() {
+        val error = IllegalStateException("HTTP request to https://x.supabase.co/rest/v1/push_subscriptions?endpoint=eq.secret-token (GET) failed with message: timeout")
+        assertEquals("IllegalStateException: HTTP request to <url> (GET) failed with message: timeout", pushErrorSummary(error))
+    }
 }

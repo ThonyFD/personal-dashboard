@@ -3,6 +3,7 @@ package com.thonyfd.financedashboard.ui
 import android.Manifest
 import android.content.pm.PackageManager
 import android.os.Build
+import android.util.Log
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -29,6 +30,7 @@ import androidx.core.content.ContextCompat
 import com.thonyfd.financedashboard.push.PushRepository
 import com.thonyfd.financedashboard.push.PushSetup
 import com.thonyfd.financedashboard.push.needsNotificationPermission
+import com.thonyfd.financedashboard.push.pushErrorSummary
 import com.thonyfd.financedashboard.ui.theme.AppTheme
 import kotlinx.coroutines.launch
 
@@ -46,7 +48,9 @@ fun PushMenuItem(isOwner: Boolean, drawerOpen: Boolean) {
     var busy by remember { mutableStateOf(false) }
 
     suspend fun readServerState() {
-        enabled = runCatching { PushRepository.isEnabledOnThisDevice() }.getOrDefault(false)
+        enabled = runCatching { PushRepository.isEnabledOnThisDevice() }
+            .onFailure { Log.w("Push", "Push state read failed: ${pushErrorSummary(it)}") }
+            .getOrDefault(false)
     }
 
     fun change(action: suspend () -> Unit, successMessage: String, target: Boolean) {
@@ -58,6 +62,7 @@ fun PushMenuItem(isOwner: Boolean, drawerOpen: Boolean) {
                     Toast.makeText(context, successMessage, Toast.LENGTH_SHORT).show()
                 }
                 .onFailure {
+                    Log.w("Push", "Push switch failed: ${pushErrorSummary(it)}")
                     readServerState()
                     Toast.makeText(context, "No se pudo cambiar las notificaciones", Toast.LENGTH_SHORT).show()
                 }
