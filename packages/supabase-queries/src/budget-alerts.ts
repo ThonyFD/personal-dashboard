@@ -27,6 +27,8 @@ export interface AlertTransaction {
   categoryId: number | null;
   /** Transfer between the owner's own accounts: never alerts. */
   isOwnAccount?: boolean;
+  /** Typed in by the owner (provider 'manual'): they already know, never alerts. */
+  isManual?: boolean;
 }
 
 /** One row of budget_status(), already including the transaction being alerted. */
@@ -56,7 +58,7 @@ export interface BudgetAlertMessage {
 
 export type BudgetAlertResult =
   | { send: true; message: BudgetAlertMessage }
-  | { send: false; reason: 'disabled' | 'type' | 'own_account' | 'no_rule' };
+  | { send: false; reason: 'disabled' | 'type' | 'own_account' | 'manual' | 'no_rule' };
 
 export type EligibilityResult =
   | { eligible: true }
@@ -199,6 +201,8 @@ export function buildBudgetAlert(
   if (!isAlertableType(txn.txnType)) return { send: false, reason: 'type' };
   // Money moved between the owner's own accounts is not spending.
   if (txn.isOwnAccount) return { send: false, reason: 'own_account' };
+  // The owner just typed it in, and a push would put it on the lock screen.
+  if (txn.isManual) return { send: false, reason: 'manual' };
 
   const merchant = txn.merchantName?.trim() || 'comercio sin nombre';
   const amount = formatUsd(txn.amount);
