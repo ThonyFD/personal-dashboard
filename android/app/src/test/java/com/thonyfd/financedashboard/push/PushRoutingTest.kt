@@ -5,6 +5,7 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
+import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.runBlocking
 import org.junit.Test
 
@@ -113,5 +114,45 @@ class PushRoutingTest {
     fun errorSummaryRedactsUrlsThatCarryTheToken() {
         val error = IllegalStateException("HTTP request to https://x.supabase.co/rest/v1/push_subscriptions?endpoint=eq.secret-token (GET) failed with message: timeout")
         assertEquals("IllegalStateException: HTTP request to <url> (GET) failed with message: timeout", pushErrorSummary(error))
+    }
+
+    // Sign out must stop pushes even offline: deleting the FCM token needs no session,
+    // and the sender turns the row off once FCM rejects the dead token.
+    @Test
+    fun signOutDeletesTokenEvenWhenTheRowUpdateFails() = runBlocking {
+        var deleted = false
+        var pending: Boolean? = null
+        signOutCleanup(
+            disableRow = { throw IllegalStateException("offline") },
+            deleteToken = { deleted = true },
+            setDeletePending = { pending = it }
+        )
+        assertTrue(deleted)
+        assertEquals(false, pending)
+    }
+
+    @Test
+    fun failedTokenDeleteStaysPendingForRetry() = runBlocking {
+        var pending: Boolean? = null
+        signOutCleanup(
+            disableRow = {},
+            deleteToken = { throw IllegalStateException("offline") },
+            setDeletePending = { pending = it }
+        )
+        assertEquals(true, pending)
+    }
+
+    @Test
+    fun hangingCallsDoNotBlockSignOut() = runBlocking {
+        var pending: Boolean? = null
+        val started = System.currentTimeMillis()
+        signOutCleanup(
+            disableRow = { awaitCancellation() },
+            deleteToken = { awaitCancellation() },
+            setDeletePending = { pending = it },
+            timeoutMs = 50
+        )
+        assertTrue(System.currentTimeMillis() - started < 2_000)
+        assertEquals(true, pending)
     }
 }

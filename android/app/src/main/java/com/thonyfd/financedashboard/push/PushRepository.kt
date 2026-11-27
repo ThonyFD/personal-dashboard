@@ -75,10 +75,15 @@ suspend fun <T> Task<T>.awaitResult(): T = suspendCancellableCoroutine { cont ->
 object PushRepository {
     private const val PREFS_NAME = "push"
     private const val KEY_ENABLED = "enabled"
+    private const val KEY_DELETE_PENDING = "token_delete_pending"
     private const val TABLE = "push_subscriptions"
 
     private val supabase get() = SupabaseConfig.client
 
+    // The registration-token API is deprecated since firebase-messaging 25.1 in favour of
+    // installation IDs, which need the FCM v2 send API. The sender (firebase-admin) still
+    // sends to tokens, so the app keeps the token API (see FinancePushService.onNewToken).
+    @Suppress("DEPRECATION")
     private suspend fun currentToken(): String = FirebaseMessaging.getInstance().token.awaitResult()
 
     suspend fun isEnabledOnThisDevice(): Boolean {
@@ -111,6 +116,8 @@ object PushRepository {
             is RegistrationPlan.Activate -> supabase.from(TABLE).update(row) { filter { eq("id", plan.id) } }
         }
         setFlag(context, true)
+        // A delete left pending by an offline sign out must not kill this new registration.
+        setDeletePending(context, false)
         Log.i("Push", "Push enabled on this device")
     }
 
@@ -124,14 +131,36 @@ object PushRepository {
         Log.i("Push", "Push disabled on this device")
     }
 
-    /** Before sign out: turn this phone off and drop its token. Never throws. */
+    /**
+     * Before sign out from the menu, while the session still exists. Runs whatever the local
+     * flag says: the server row may be on even when the flag is off. Never throws.
+     */
     suspend fun disableOnSignOut(context: Context) {
-        if (!PushSetup.isAvailable || !isFlagOn(context)) return
-        runCatching { disable(context) }
-            .onFailure { Log.w("Push", "Could not disable push on sign out: ${it.javaClass.simpleName}") }
+        if (!PushSetup.isAvailable) return
+        signOutCleanup(
+            disableRow = { disable(context) },
+            deleteToken = ::deleteToken,
+            setDeletePending = { setDeletePending(context, it) }
+        )
         setFlag(context, false)
-        runCatching { FirebaseMessaging.getInstance().deleteToken().awaitResult() }
-            .onFailure { Log.w("Push", "Could not delete the FCM token: ${it.javaClass.simpleName}") }
+    }
+
+    /** Session lost without the menu (expired or revoked): no session left, so token only. */
+    suspend fun cleanupAfterSessionLoss(context: Context) {
+        if (!PushSetup.isAvailable) return
+        signOutCleanup(disableRow = {}, deleteToken = ::deleteToken, setDeletePending = { setDeletePending(context, it) })
+        setFlag(context, false)
+    }
+
+    /** App start: finish a token delete that failed at sign out (offline). */
+    suspend fun retryPendingTokenDelete(context: Context) {
+        if (!PushSetup.isAvailable || !isDeletePending(context)) return
+        signOutCleanup(disableRow = {}, deleteToken = ::deleteToken, setDeletePending = { setDeletePending(context, it) })
+    }
+
+    @Suppress("DEPRECATION") // same token API as currentToken()
+    private suspend fun deleteToken() {
+        FirebaseMessaging.getInstance().deleteToken().awaitResult<Void?>()
     }
 
     fun isFlagOn(context: Context): Boolean =
@@ -139,5 +168,12 @@ object PushRepository {
 
     private fun setFlag(context: Context, value: Boolean) {
         context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE).edit().putBoolean(KEY_ENABLED, value).apply()
+    }
+
+    private fun isDeletePending(context: Context): Boolean =
+        context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE).getBoolean(KEY_DELETE_PENDING, false)
+
+    private fun setDeletePending(context: Context, value: Boolean) {
+        context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE).edit().putBoolean(KEY_DELETE_PENDING, value).apply()
     }
 }

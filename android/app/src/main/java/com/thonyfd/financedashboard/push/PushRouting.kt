@@ -1,6 +1,7 @@
 package com.thonyfd.financedashboard.push
 
 import com.thonyfd.financedashboard.ui.AppTab
+import kotlinx.coroutines.withTimeoutOrNull
 
 // Channel ids and tags shared with scripts/production/lib/push.ts. Changing one
 // here means changing it in the sender too.
@@ -53,4 +54,22 @@ fun pushErrorSummary(error: Throwable): String {
     val firstLine = error.message?.lineSequence()?.firstOrNull()?.trim()
         ?.replace(URL_PATTERN, "<url>")?.take(160)
     return if (firstLine.isNullOrEmpty()) name else "$name: $firstLine"
+}
+
+/**
+ * Stops pushes to this phone when the account leaves it, online or not. The row update needs
+ * the session and the network, so it is best effort. Deleting the FCM token needs neither:
+ * once it is gone the sender gets "not registered" and turns the row off by itself. A delete
+ * that fails or hangs stays pending and is retried on the next app start.
+ */
+suspend fun signOutCleanup(
+    disableRow: suspend () -> Unit,
+    deleteToken: suspend () -> Unit,
+    setDeletePending: (Boolean) -> Unit,
+    timeoutMs: Long = 5_000
+) {
+    runCatching { withTimeoutOrNull(timeoutMs) { disableRow() } }
+    setDeletePending(true)
+    val deleted = runCatching { withTimeoutOrNull(timeoutMs) { deleteToken(); true } == true }.getOrDefault(false)
+    if (deleted) setDeletePending(false)
 }
