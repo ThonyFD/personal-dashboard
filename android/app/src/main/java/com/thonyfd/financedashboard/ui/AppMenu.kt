@@ -31,6 +31,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.thonyfd.financedashboard.data.SupabaseConfig
 import com.thonyfd.financedashboard.data.auth.signOutWithFallback
+import com.thonyfd.financedashboard.push.PushRepository
 import com.thonyfd.financedashboard.ui.theme.AppTheme
 import io.github.jan.supabase.auth.auth
 import kotlinx.coroutines.launch
@@ -81,6 +82,7 @@ fun AppMenuDrawer(drawerState: DrawerState, isOwner: Boolean, content: @Composab
                         unselectedIconColor = AppTheme.colors.accent
                     )
                 )
+                PushMenuItem(isOwner = isOwner, drawerOpen = drawerState.isOpen)
                 NavigationDrawerItem(
                     label = { Text("Cerrar sesión") },
                     icon = { Icon(Icons.AutoMirrored.Outlined.Logout, null) },
@@ -128,6 +130,8 @@ fun AppMenuDrawer(drawerState: DrawerState, isOwner: Boolean, content: @Composab
                     onClick = {
                         scope.launch {
                             signingOut = true
+                            // Needs the session, so it runs before sign out clears it.
+                            PushRepository.disableOnSignOut(context)
                             val auth = SupabaseConfig.client.auth
                             signOutWithFallback(signOut = { auth.signOut() }, clearSession = { auth.clearSession() })
                             Toast.makeText(context, "¡Vuelve pronto!", Toast.LENGTH_SHORT).show()
