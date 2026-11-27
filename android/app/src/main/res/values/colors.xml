@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Brand accent (default skin), tints the push small icon. -->
+    <color name="notification_accent">#00D9FF</color>
+</resources>

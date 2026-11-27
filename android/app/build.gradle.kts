@@ -34,6 +34,10 @@ android {
         buildConfigField("String", "SUPABASE_ANON_KEY", "\"${localProperties["SUPABASE_ANON_KEY"] ?: ""}\"")
         // Web OAuth client ID used as serverClientId for native Google sign-in
         buildConfigField("String", "GOOGLE_WEB_CLIENT_ID", "\"${localProperties["GOOGLE_WEB_CLIENT_ID"] ?: ""}\"")
+        // Firebase values for native push. Optional: without them push stays off.
+        for (key in listOf("FIREBASE_APP_ID", "FIREBASE_API_KEY", "FIREBASE_SENDER_ID", "FIREBASE_PROJECT_ID")) {
+            buildConfigField("String", key, "\"${localProperties[key] ?: ""}\"")
+        }
     }
 
     buildTypes {
@@ -91,6 +95,10 @@ dependencies {
 
     // Serialization
     implementation(libs.kotlinx.serialization.json)
+
+    // Firebase Cloud Messaging
+    implementation(platform(libs.firebase.bom))
+    implementation(libs.firebase.messaging)
 
     // Testing
     testImplementation(libs.junit)

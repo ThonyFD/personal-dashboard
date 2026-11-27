@@ -1,0 +1,60 @@
+package com.thonyfd.financedashboard.push
+
+import com.thonyfd.financedashboard.ui.AppTab
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
+import org.junit.Test
+
+class PushRoutingTest {
+
+    @Test
+    fun paymentReminderGoesToPaymentsChannel() {
+        assertEquals(CHANNEL_PAYMENTS, channelForTag("payment-reminder"))
+    }
+
+    @Test
+    fun budgetAlertGoesToBudgetChannel() {
+        assertEquals(CHANNEL_BUDGET, channelForTag("budget-alert-42"))
+    }
+
+    @Test
+    fun unknownOrMissingTagFallsBackToBudget() {
+        assertEquals(CHANNEL_BUDGET, channelForTag(null))
+        assertEquals(CHANNEL_BUDGET, channelForTag("other"))
+    }
+
+    @Test
+    fun paymentReminderOpensControl() {
+        assertEquals(AppTab.Control.ordinal, tabForPushTag("payment-reminder"))
+    }
+
+    @Test
+    fun budgetAlertOpensInicio() {
+        assertEquals(AppTab.Inicio.ordinal, tabForPushTag("budget-alert-42"))
+    }
+
+    @Test
+    fun unknownTagOpensNoTab() {
+        assertNull(tabForPushTag(null))
+        assertNull(tabForPushTag(""))
+        assertNull(tabForPushTag("budget"))
+    }
+
+    @Test
+    fun firebaseNeedsAllFourValues() {
+        assertTrue(isFirebaseConfigured("1:2:android:3", "key", "720071149950", "proj"))
+        assertFalse(isFirebaseConfigured("", "key", "720071149950", "proj"))
+        assertFalse(isFirebaseConfigured("1:2:android:3", " ", "720071149950", "proj"))
+        assertFalse(isFirebaseConfigured("1:2:android:3", "key", "", "proj"))
+        assertFalse(isFirebaseConfigured("1:2:android:3", "key", "720071149950", ""))
+    }
+
+    @Test
+    fun permissionOnlyAskedOn13AndUpWhenMissing() {
+        assertTrue(needsNotificationPermission(33, granted = false))
+        assertFalse(needsNotificationPermission(33, granted = true))
+        assertFalse(needsNotificationPermission(32, granted = false))
+    }
+}
