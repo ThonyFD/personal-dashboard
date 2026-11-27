@@ -32,6 +32,8 @@ export {
   computeTopMerchant,
   computeBusiestMerchant,
   DEBIT_TYPES,
+  isOwnAccountTransfer,
+  isSpending,
 } from './transactions.js';
 
 export {

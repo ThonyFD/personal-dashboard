@@ -10,21 +10,42 @@ import type {
 // every "top merchant" / "total spent" calculation so all channels rank consistently.
 export const DEBIT_TYPES = new Set(['PURCHASE', 'PAYMENT', 'TRANSFER', 'WITHDRAWAL', 'FEE']);
 
-interface TopMerchantRow {
+// A mapped Transaction (merchant.isOwnAccount) or a raw v_transactions row
+// (merchant_is_own_account).
+interface SpendRow {
+  txn_type: string;
+  merchant?: { isOwnAccount?: boolean } | null;
+  merchant_is_own_account?: boolean | null;
+}
+
+// Transfer between the owner's own accounts (merchants.is_own_account): money
+// that moved, not money spent.
+export function isOwnAccountTransfer(txn: SpendRow): boolean {
+  return txn.merchant?.isOwnAccount === true || txn.merchant_is_own_account === true;
+}
+
+// Money spent: a debit type that is not a transfer between own accounts. The one
+// rule for every "spent" total, so own transfers never inflate any of them.
+export function isSpending(txn: SpendRow): boolean {
+  return DEBIT_TYPES.has(txn.txn_type) && !isOwnAccountTransfer(txn);
+}
+
+interface TopMerchantRow extends SpendRow {
   merchant_name: string | null;
   amount: number | string | null;
-  txn_type: string;
 }
 
 // Aggregates transactions by merchant: tx count + amount spent (debit only).
+// Own accounts are not merchants, so they never rank.
 function aggregateMerchants(rows: TopMerchantRow[]): Map<string, { count: number; amount: number }> {
   const merchantMap = new Map<string, { count: number; amount: number }>();
 
   for (const row of rows) {
+    if (isOwnAccountTransfer(row)) continue;
     const name = row.merchant_name ?? 'Unknown';
     const entry = merchantMap.get(name) ?? { count: 0, amount: 0 };
     entry.count += 1;
-    if (DEBIT_TYPES.has(row.txn_type)) entry.amount += Number(row.amount) || 0;
+    if (isSpending(row)) entry.amount += Number(row.amount) || 0;
     merchantMap.set(name, entry);
   }
 
@@ -251,14 +272,16 @@ export async function fetchTransactionSummary(
 ): Promise<TransactionSummary> {
   const rows = await fetchRowsInBatches(
     client,
-    'merchant_name, amount, txn_type',
+    'merchant_name, amount, txn_type, merchant_is_own_account',
     filters,
     startDate,
     endDate,
   );
 
+  // Own-account transfers stay in the list and the count, not in the amount.
   let totalAmount = 0;
   for (const row of rows) {
+    if (isOwnAccountTransfer(row)) continue;
     totalAmount += Number(row.amount) || 0;
   }
 
