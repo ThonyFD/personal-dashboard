@@ -9,8 +9,7 @@ Sistema que monitorea Gmail para extraer transacciones financieras, las persiste
 ## Arquitectura
 
 ```text
-Gmail push -> Pub/Sub -> Cloud Run ingestor -> Supabase
-                    \-> GitHub Actions (renew watch, sync defensivo, reminders)
+Gmail -> GitHub Actions (sync cada 15 min, alertas de presupuesto, reminders) -> Supabase
 Dashboard React -> Supabase + Firebase Cloud Messaging
 ```
 
@@ -32,7 +31,7 @@ personal-dashboard/
 ├── web/dashboard/     # Frontend React + Vite
 ├── scripts/           # Automatizaciones de producción y mantenimiento
 ├── ops/               # OAuth y backfills operativos
-└── .github/workflows/ # Renew watch, sync y reminders
+└── .github/workflows/ # Sync, alertas de presupuesto y reminders
 ```
 
 ## Stack real

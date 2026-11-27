@@ -16,7 +16,6 @@ scripts/
 
 | Script | Uso |
 |--------|-----|
-| `production/renew-gmail-watch.ts` | renueva el watch de Gmail |
 | `production/sync-emails-daily.ts` | sync defensivo Gmail -> Supabase |
 | `production/send-notifications.ts` | envía recordatorios push |
 | `production/run-daily-sync.sh` | wrapper local para el sync |
