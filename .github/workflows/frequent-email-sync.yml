@@ -2,8 +2,8 @@ name: Frequent Gmail Sync And Budget Alerts
 
 # Near real-time ingestion: syncs Gmail every 15 minutes and, when the repo
 # variable BUDGET_ALERTS_ENABLED is 'true', sends a budget alert for each new
-# purchase. The daily workflow still renews the Gmail watch and sends the
-# payment reminders. GitHub may delay scheduled runs by a few minutes.
+# purchase. The daily workflow sends the payment reminders. GitHub may delay
+# scheduled runs by a few minutes.
 #
 # Logs of this public repo are public: the sync logs only ids and counts.
 
