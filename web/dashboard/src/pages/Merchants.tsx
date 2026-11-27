@@ -1,5 +1,12 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { fetchMerchantsPaginated, markMerchantOwnAccountById, updateMerchantCategoryById } from '../api/supabase-data-client'
+import { format, parse } from 'date-fns'
+import {
+  DEFAULT_MERCHANT_SORT,
+  fetchMerchantsPaginated,
+  markMerchantOwnAccountById,
+  updateMerchantCategoryById,
+} from '../api/supabase-data-client'
+import type { MerchantSort, MerchantSortKey } from '../api/supabase-data-client'
 import { formatCurrency } from '../utils/format'
 import { getCategoryColor, getCategoryIcon } from '../utils/categories'
 import { fetchCategories } from '../api/categories-client'
@@ -8,6 +15,48 @@ import { useState, useEffect } from 'react'
 // Select value for "own account": transfers between the owner's own accounts,
 // which count against no budget and belong to no category.
 const OWN_ACCOUNT = -1
+
+// Text columns start A to Z; numbers and dates start with the biggest / newest.
+const FIRST_DIRECTION_ASCENDING: Record<MerchantSortKey, boolean> = {
+  name: true,
+  category: true,
+  transaction_count: false,
+  total_amount: false,
+  avg_amount: false,
+  last_txn_date: false,
+}
+
+function SortableHeader({
+  label,
+  sortKey,
+  sort,
+  onSort,
+}: {
+  label: string
+  sortKey: MerchantSortKey
+  sort: MerchantSort
+  onSort: (key: MerchantSortKey) => void
+}) {
+  const active = sort.key === sortKey
+  return (
+    <th aria-sort={active ? (sort.ascending ? 'ascending' : 'descending') : 'none'}>
+      <button
+        type="button"
+        className={`th-sort${active ? ' th-sort--active' : ''}`}
+        onClick={() => onSort(sortKey)}
+      >
+        <span>{label}</span>
+        <span className="th-sort__arrow" aria-hidden="true">
+          {active ? (sort.ascending ? '▲' : '▼') : '↕'}
+        </span>
+      </button>
+    </th>
+  )
+}
+
+function formatTxnDate(date: string | null | undefined): string {
+  return date ? format(parse(date, 'yyyy-MM-dd', new Date()), 'MMM dd, yyyy') : '-'
+}
 
 export default function Merchants() {
   const [editingMerchant, setEditingMerchant] = useState<number | null>(null)
@@ -18,21 +67,25 @@ export default function Merchants() {
   const [categoryFilter, setCategoryFilter] = useState('')
   const [pageSize] = useState(50)
   const [isSearching, setIsSearching] = useState(false)
+  const [sort, setSort] = useState<MerchantSort>(DEFAULT_MERCHANT_SORT)
 
   const queryClient = useQueryClient()
+  const merchantsQueryKey = ['merchants', currentPage, searchTerm, categoryFilter, sort.key, sort.ascending]
 
   const { data: paginatedData, isLoading, error } = useQuery({
-    queryKey: ['merchants', currentPage, searchTerm, categoryFilter],
+    queryKey: merchantsQueryKey,
     queryFn: async () => {
       setIsSearching(true)
       try {
-        const result = await fetchMerchantsPaginated(currentPage, pageSize, searchTerm, categoryFilter)
+        const result = await fetchMerchantsPaginated(currentPage, pageSize, searchTerm, categoryFilter, sort)
         return result
       } finally {
         setIsSearching(false)
       }
     },
     staleTime: 5 * 60 * 1000, // 5 minutes
+    // Keep the table on screen while another page or order loads.
+    placeholderData: previousData => previousData,
   })
 
   const { data: categories = [] } = useQuery({
@@ -52,16 +105,16 @@ export default function Merchants() {
         : updateMerchantCategoryById(merchantId, categoryId),
     onMutate: async ({ merchantId, categoryId }) => {
       // Cancel any outgoing refetches
-      await queryClient.cancelQueries({ queryKey: ['merchants', currentPage, searchTerm, categoryFilter] })
+      await queryClient.cancelQueries({ queryKey: merchantsQueryKey })
 
       // Snapshot the previous value
-      const previousData = queryClient.getQueryData(['merchants', currentPage, searchTerm, categoryFilter])
+      const previousData = queryClient.getQueryData(merchantsQueryKey)
 
       // Find the category object
       const category = categories.find(c => c.id === categoryId)
 
       // Optimistically update the cache
-      queryClient.setQueryData(['merchants', currentPage, searchTerm, categoryFilter], (old: any) => {
+      queryClient.setQueryData(merchantsQueryKey, (old: any) => {
         if (!old) return old
         return {
           ...old,
@@ -87,7 +140,7 @@ export default function Merchants() {
     onError: (error, _variables, context) => {
       // If the mutation fails, use the context returned from onMutate to roll back
       if (context?.previousData) {
-        queryClient.setQueryData(['merchants', currentPage, searchTerm, categoryFilter], context.previousData)
+        queryClient.setQueryData(merchantsQueryKey, context.previousData)
       }
       console.error('Failed to update category:', error)
       alert('Failed to update category. Please try again.')
@@ -135,6 +188,17 @@ export default function Merchants() {
   const handleCategoryFilterChange = (category: string) => {
     setCategoryFilter(category)
     setCurrentPage(1) // Reset to first page when filtering
+  }
+
+  const handleSort = (key: MerchantSortKey) => {
+    setSort((prev) =>
+      prev.key === key
+        ? { key, ascending: !prev.ascending }
+        : { key, ascending: FIRST_DIRECTION_ASCENDING[key] }
+    )
+    setCurrentPage(1) // A new order starts from the top
+    setEditingMerchant(null)
+    setSelectedCategoryId(15)
   }
 
   if (isLoading) return <div className="loading">Loading merchants...</div>
@@ -238,20 +302,17 @@ export default function Merchants() {
         <table className="table">
           <thead>
             <tr>
-              <th>Merchant</th>
-              <th>Category</th>
-              <th>Transactions</th>
-              <th>Total Amount</th>
-              <th>Avg per Transaction</th>
+              <SortableHeader label="Merchant" sortKey="name" sort={sort} onSort={handleSort} />
+              <SortableHeader label="Category" sortKey="category" sort={sort} onSort={handleSort} />
+              <SortableHeader label="Transactions" sortKey="transaction_count" sort={sort} onSort={handleSort} />
+              <SortableHeader label="Total Amount" sortKey="total_amount" sort={sort} onSort={handleSort} />
+              <SortableHeader label="Avg per Transaction" sortKey="avg_amount" sort={sort} onSort={handleSort} />
+              <SortableHeader label="Last Transaction" sortKey="last_txn_date" sort={sort} onSort={handleSort} />
               <th>Actions</th>
             </tr>
           </thead>
           <tbody>
             {merchants.map((merchant) => {
-              const avgAmount = (merchant.transaction_count || 0) > 0
-                ? (merchant.total_amount || 0) / (merchant.transaction_count || 1)
-                : 0;
-
               const isEditing = editingMerchant === merchant.id;
 
               return (
@@ -336,7 +397,10 @@ export default function Merchants() {
                     ${formatCurrency(merchant.total_amount || 0)}
                   </td>
                   <td>
-                    ${formatCurrency(avgAmount)}
+                    ${formatCurrency(merchant.avg_amount || 0)}
+                  </td>
+                  <td style={{ whiteSpace: 'nowrap' }}>
+                    {formatTxnDate(merchant.last_txn_date)}
                   </td>
                   <td>
                     {!isEditing && merchant.inDatabase ? (

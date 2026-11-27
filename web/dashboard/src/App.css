@@ -687,6 +687,43 @@
   z-index: 10;
 }
 
+/* Sortable header: the whole label is the button. */
+.th-sort {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0;
+  border: none;
+  background: none;
+  font: inherit;
+  color: inherit;
+  text-transform: inherit;
+  letter-spacing: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.th-sort:hover,
+.th-sort--active {
+  color: var(--c-text);
+}
+
+.th-sort:focus-visible {
+  outline: 2px solid var(--c-primary);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
+.th-sort__arrow {
+  font-size: 0.65rem;
+  opacity: 0.45;
+}
+
+.th-sort--active .th-sort__arrow {
+  color: var(--c-primary);
+  opacity: 1;
+}
+
 .table tbody tr {
   color: var(--c-text-2);
   transition: background-color 0.15s ease;

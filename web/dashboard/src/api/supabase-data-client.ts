@@ -55,7 +55,9 @@ import {
   isHabitDueOnDate,
   isHabitCompletedOnDate,
   pendingFirst,
+  DEFAULT_MERCHANT_SORT,
 } from '@personal-dashboard/supabase-queries';
+import type { MerchantSort } from '@personal-dashboard/supabase-queries';
 
 // Re-export types consumed by web components
 export type {
@@ -64,6 +66,8 @@ export type {
   PaginatedTransactionsResult,
   TransactionSummary,
   Merchant,
+  MerchantSort,
+  MerchantSortKey,
   MonthlyIncome,
   ManualTransaction,
   DayBlock,
@@ -144,7 +148,10 @@ export const fetchMerchantsPaginated = (
   pageSize = 50,
   searchTerm = '',
   categoryFilter = '',
-) => _fetchMerchantsPaginated(supabase, page, pageSize, searchTerm, categoryFilter);
+  sort: MerchantSort = DEFAULT_MERCHANT_SORT,
+) => _fetchMerchantsPaginated(supabase, page, pageSize, searchTerm, categoryFilter, sort);
+
+export { DEFAULT_MERCHANT_SORT };
 
 export const fetchMerchants = () => _fetchMerchants(supabase);
 
