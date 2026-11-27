@@ -1,5 +1,6 @@
 package com.thonyfd.financedashboard.ui
 
+import com.thonyfd.financedashboard.push.openTabFromIntent
 import com.thonyfd.financedashboard.ui.theme.AppTheme
 import kotlinx.coroutines.CancellationException
 import android.content.Intent
@@ -99,8 +100,12 @@ class MainActivity : ComponentActivity() {
         )
     }
 
-    private fun parseTabFromIntent(intent: Intent?): Int? =
-        intent?.takeIf { it.hasExtra(EXTRA_OPEN_TAB) }?.getIntExtra(EXTRA_OPEN_TAB, TAB_DASHBOARD)
+    // A tapped push that arrived in the background opens this activity with the
+    // message data (including "tag") as string extras.
+    private fun parseTabFromIntent(intent: Intent?): Int? = openTabFromIntent(
+        openTabExtra = intent?.takeIf { it.hasExtra(EXTRA_OPEN_TAB) }?.getIntExtra(EXTRA_OPEN_TAB, TAB_DASHBOARD),
+        pushTag = intent?.getStringExtra("tag")
+    )
 
     companion object {
         const val EXTRA_OPEN_TAB = "OPEN_TAB"

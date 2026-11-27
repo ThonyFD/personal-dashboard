@@ -7,4 +7,6 @@
     <string name="widget_description">Monitorea tus gastos, pagos próximos y transacciones recientes</string>
     <string name="payments_widget_description">Pagos pendientes, próximos y vencidos del mes actual</string>
     <string name="habits_widget_description">Hábitos de hoy, progreso diario y racha actual</string>
+    <!-- Must match CHANNEL_BUDGET in PushRouting.kt -->
+    <string name="default_notification_channel_id" translatable="false">budget_alerts</string>
 </resources>
