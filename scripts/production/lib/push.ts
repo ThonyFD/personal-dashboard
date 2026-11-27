@@ -36,7 +36,7 @@ export interface PushResult {
   deactivated: number;
 }
 
-function ensureFirebase(): void {
+export function ensureFirebase(): void {
   if (getApps().length > 0) return;
   initializeApp({
     projectId: process.env.GOOGLE_CLOUD_PROJECT || 'mail-reader-433802',
