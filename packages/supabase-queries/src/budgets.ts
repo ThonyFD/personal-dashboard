@@ -1,5 +1,6 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { AlertSettings, AlertTransaction, BudgetAlertMessage, BudgetStatus } from './budget-alerts.js';
+import { isManualTransaction } from './manual-transfers.js';
 
 export interface Budget {
   id: number;
@@ -132,7 +133,7 @@ export async function fetchAlertTransaction(
 ): Promise<AlertTransactionRow | null> {
   const { data, error } = await client
     .from('v_transactions')
-    .select('id, amount, txn_type, txn_date, merchant_name, card_last4, merchant_category_id, merchant_is_own_account')
+    .select('id, amount, txn_type, txn_date, merchant_name, card_last4, merchant_category_id, merchant_is_own_account, provider')
     .eq('id', id)
     .maybeSingle();
   if (error) throw error;
@@ -147,6 +148,7 @@ export async function fetchAlertTransaction(
     cardLast4: r.card_last4 ?? null,
     categoryId: r.merchant_category_id == null ? null : Number(r.merchant_category_id),
     isOwnAccount: r.merchant_is_own_account === true,
+    isManual: isManualTransaction(r.provider),
   };
 }
 

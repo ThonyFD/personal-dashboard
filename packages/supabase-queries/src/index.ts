@@ -32,7 +32,17 @@ export {
   computeTopMerchant,
   computeBusiestMerchant,
   DEBIT_TYPES,
+  isOwnAccountTransfer,
+  isSpending,
 } from './transactions.js';
+
+export type { ManualTransferInput } from './manual-transfers.js';
+export {
+  MANUAL_PROVIDER,
+  deleteManualTransfer,
+  isManualTransaction,
+  recordManualTransfer,
+} from './manual-transfers.js';
 
 export {
   fetchMerchants,

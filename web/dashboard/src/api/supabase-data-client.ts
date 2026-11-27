@@ -8,6 +8,8 @@ import {
   fetchTransactionDetail as _fetchTransactionDetail,
   fetchTransactionFilterOptions as _fetchTransactionFilterOptions,
   exportTransactionsCSV as _exportTransactionsCSV,
+  recordManualTransfer as _recordManualTransfer,
+  deleteManualTransfer as _deleteManualTransfer,
   fetchMerchants as _fetchMerchants,
   fetchMerchantsPaginated as _fetchMerchantsPaginated,
   updateMerchantCategory as _updateMerchantCategory,
@@ -47,7 +49,7 @@ import {
   computeTopMerchant,
   computeBusiestMerchant,
   computeStreak,
-  DEBIT_TYPES,
+  isSpending,
   getHabitCompletionSummary,
   getHabitCompletionLog,
   isHabitDueOnDate,
@@ -128,6 +130,13 @@ export const exportTransactionsCSV = (
   filters: import('@personal-dashboard/supabase-queries').TransactionFilters = {},
 ) => _exportTransactionsCSV(supabase, startDate, endDate, filters);
 
+/** Bank-app transfer that sends no email, typed in by the owner. */
+export const recordManualTransfer = (
+  input: import('@personal-dashboard/supabase-queries').ManualTransferInput,
+) => _recordManualTransfer(supabase, input);
+
+export const deleteManualTransfer = (id: number) => _deleteManualTransfer(supabase, id);
+
 // ─── Merchants ────────────────────────────────────────────────────────────────
 
 export const fetchMerchantsPaginated = (
@@ -163,7 +172,8 @@ export async function fetchStats(startDate?: string, endDate?: string): Promise<
       purchase_amount += txn.amount;
       purchase_count += 1;
     }
-    if (DEBIT_TYPES.has(txn.txn_type)) {
+    // Own-account transfers are not spending.
+    if (isSpending(txn)) {
       total_spent_amount += txn.amount;
       total_spent_count += 1;
     }
@@ -179,7 +189,7 @@ export async function fetchStats(startDate?: string, endDate?: string): Promise<
     const monthTxns = allTransactions.filter(txn => new Date(txn.txn_date) >= firstDayOfMonth);
     this_month_transactions = monthTxns.length;
     this_month_amount = monthTxns.reduce((sum, txn) =>
-      DEBIT_TYPES.has(txn.txn_type) ? sum + txn.amount : sum, 0);
+      isSpending(txn) ? sum + txn.amount : sum, 0);
   } else {
     this_month_amount = total_amount;
     this_month_transactions = total_transactions;

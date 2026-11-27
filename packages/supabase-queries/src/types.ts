@@ -24,10 +24,11 @@ export interface Transaction {
     /** Transfer between the owner's own accounts: not spending, no category. */
     isOwnAccount?: boolean;
   };
+  /** All null for a manual entry (provider 'manual'), which has no email. */
   email: {
-    sender_email: string;
+    sender_email: string | null;
     subject: string | null;
-    received_at: string;
+    received_at: string | null;
   };
 }
 
