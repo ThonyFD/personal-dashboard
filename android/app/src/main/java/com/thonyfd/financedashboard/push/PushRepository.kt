@@ -38,6 +38,19 @@ fun subscriptionRow(token: String, email: String, deviceModel: String): PushSubs
         isActive = true
     )
 
+/**
+ * Prod push_subscriptions has no UNIQUE on endpoint (only the id primary key, unlike
+ * packages/sql/schema.sql), so registration cannot upsert ON CONFLICT: it looks the token
+ * up and either inserts a row or reactivates the oldest one with that token.
+ */
+sealed interface RegistrationPlan {
+    data object Insert : RegistrationPlan
+    data class Activate(val id: Long) : RegistrationPlan
+}
+
+fun registrationPlan(existingIds: List<Long>): RegistrationPlan =
+    existingIds.minOrNull()?.let { RegistrationPlan.Activate(it) } ?: RegistrationPlan.Insert
+
 @Serializable
 private data class SubscriptionId(val id: Long)
 
@@ -88,8 +101,14 @@ object PushRepository {
     suspend fun register(context: Context, token: String) {
         SupabaseConfig.awaitAuth()
         val email = supabase.auth.currentUserOrNull()?.email ?: throw IllegalStateException("No session")
-        supabase.from(TABLE).upsert(subscriptionRow(token, email, Build.MODEL)) {
-            onConflict = "endpoint"
+        val row = subscriptionRow(token, email, Build.MODEL)
+        val existingIds = supabase.from(TABLE)
+            .select(Columns.list("id")) { filter { eq("endpoint", token) } }
+            .decodeList<SubscriptionId>()
+            .map { it.id }
+        when (val plan = registrationPlan(existingIds)) {
+            RegistrationPlan.Insert -> supabase.from(TABLE).insert(row)
+            is RegistrationPlan.Activate -> supabase.from(TABLE).update(row) { filter { eq("id", plan.id) } }
         }
         setFlag(context, true)
         Log.i("Push", "Push enabled on this device")

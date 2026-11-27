@@ -25,4 +25,16 @@ class PushRepositoryTest {
             json
         )
     }
+
+    // Prod push_subscriptions has no UNIQUE on endpoint (only the id primary key), so
+    // registration cannot use ON CONFLICT: it looks the token up first.
+    @Test
+    fun newTokenIsInserted() {
+        assertEquals(RegistrationPlan.Insert, registrationPlan(emptyList()))
+    }
+
+    @Test
+    fun knownTokenReactivatesItsOldestRow() {
+        assertEquals(RegistrationPlan.Activate(4L), registrationPlan(listOf(9L, 4L, 7L)))
+    }
 }
