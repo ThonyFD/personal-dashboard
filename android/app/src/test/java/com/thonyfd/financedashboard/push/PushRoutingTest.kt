@@ -5,6 +5,7 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
+import kotlinx.coroutines.runBlocking
 import org.junit.Test
 
 class PushRoutingTest {
@@ -56,5 +57,39 @@ class PushRoutingTest {
         assertTrue(needsNotificationPermission(33, granted = false))
         assertFalse(needsNotificationPermission(33, granted = true))
         assertFalse(needsNotificationPermission(32, granted = false))
+    }
+
+    @Test
+    fun tokenRefreshSkippedWhenFlagOff() = runBlocking {
+        var called = false
+        assertFalse(refreshTokenIfEnabled(flagOn = false, token = "t") { called = true })
+        assertFalse(called)
+    }
+
+    @Test
+    fun tokenRefreshFailureDoesNotEscape() = runBlocking {
+        assertFalse(refreshTokenIfEnabled(flagOn = true, token = "t") { throw IllegalStateException("No session") })
+    }
+
+    @Test
+    fun tokenRefreshRegistersWhenFlagOn() = runBlocking {
+        var got: String? = null
+        assertTrue(refreshTokenIfEnabled(flagOn = true, token = "t") { got = it })
+        assertEquals("t", got)
+    }
+
+    @Test
+    fun explicitTabExtraWinsOverPushTag() {
+        assertEquals(3, openTabFromIntent(3, "payment-reminder"))
+    }
+
+    @Test
+    fun pushTagUsedWhenNoTabExtra() {
+        assertEquals(AppTab.Control.ordinal, openTabFromIntent(null, "payment-reminder"))
+    }
+
+    @Test
+    fun nothingWhenNeither() {
+        assertNull(openTabFromIntent(null, null))
     }
 }

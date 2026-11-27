@@ -26,3 +26,16 @@ fun isFirebaseConfigured(appId: String, apiKey: String, senderId: String, projec
 
 /** POST_NOTIFICATIONS is a runtime permission from Android 13 (API 33). */
 fun needsNotificationPermission(sdkInt: Int, granted: Boolean): Boolean = sdkInt >= 33 && !granted
+
+/**
+ * FCM rotated this phone's token. Re-register only if the owner turned push on here.
+ * Never throws: when signed out or offline it returns false and the flag stays on, so
+ * turning the switch on again from the menu fixes the row.
+ */
+suspend fun refreshTokenIfEnabled(flagOn: Boolean, token: String, register: suspend (String) -> Unit): Boolean {
+    if (!flagOn) return false
+    return runCatching { register(token) }.isSuccess
+}
+
+/** A widget deep link (explicit tab) wins; otherwise the tag of the push that was tapped. */
+fun openTabFromIntent(openTabExtra: Int?, pushTag: String?): Int? = openTabExtra ?: tabForPushTag(pushTag)

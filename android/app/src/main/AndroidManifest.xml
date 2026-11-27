@@ -36,6 +36,15 @@
             </intent-filter>
         </activity>
 
+        <!-- Native push (FCM): rotated tokens and foreground notifications -->
+        <service
+            android:name=".push.FinancePushService"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="com.google.firebase.MESSAGING_EVENT" />
+            </intent-filter>
+        </service>
+
         <!-- Widget Receiver -->
         <receiver
             android:name=".widget.FinanceWidgetReceiver"
