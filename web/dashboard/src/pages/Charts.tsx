@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 import { fetchTransactions } from '../api/supabase-data-client'
+import { isSpending } from '@personal-dashboard/supabase-queries'
 import { useState, useMemo } from 'react'
 import { getDateRange, type PeriodType } from '../utils/dateRange'
 import {
@@ -58,7 +59,8 @@ export default function Charts() {
       } else if (txn.txn_type === 'PURCHASE') {
         day.purchase += txn.amount
       }
-      day.total += txn.amount
+      // Income is not spending.
+      if (isSpending(txn)) day.total += txn.amount
     })
 
     return Array.from(trends.values()).sort((a, b) => a.date.localeCompare(b.date))
@@ -90,7 +92,7 @@ export default function Charts() {
     const merchants = new Map<string, number>()
 
     allTransactions.forEach(txn => {
-      if (txn.merchant?.isOwnAccount) return
+      if (!isSpending(txn)) return
       const merchant = txn.merchant_name || 'Unknown'
       merchants.set(merchant, (merchants.get(merchant) || 0) + txn.amount)
     })
@@ -109,6 +111,8 @@ export default function Charts() {
     let purchase = 0
 
     allTransactions.forEach(txn => {
+      // Card payments are own-account transfers: the purchases already count.
+      if (txn.merchant?.isOwnAccount) return
       if (txn.txn_type === 'PAYMENT') {
         payment += txn.amount
       } else if (txn.txn_type === 'PURCHASE') {

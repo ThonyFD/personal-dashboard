@@ -47,6 +47,7 @@ export interface PaginatedTransactionsResult {
 
 export interface TransactionSummary {
   totalCount: number;
+  /** Spent in the filter: debit types minus refunds, without income or own-account transfers. */
   totalAmount: number;
   topMerchant: string | null;
   topMerchantAmount: number;
