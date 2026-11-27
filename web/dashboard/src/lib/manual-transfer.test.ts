@@ -1,5 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import { readLastMerchantId, resolveMerchant, saveLastMerchantId } from './manual-transfer';
+import {
+  MANUAL_TRANSFER_STALE_QUERIES,
+  readLastMerchantId,
+  resolveMerchant,
+  saveLastMerchantId,
+} from './manual-transfer';
 
 function memoryStorage(initial: Record<string, string> = {}) {
   const data = { ...initial };
@@ -53,5 +58,15 @@ describe('resolveMerchant', () => {
   it('is null for a name that is not in the list', () => {
     expect(resolveMerchant(merchants, 'K')).toBeNull();
     expect(resolveMerchant(merchants, '')).toBeNull();
+  });
+});
+
+describe('MANUAL_TRANSFER_STALE_QUERIES', () => {
+  it('covers every cached view a manual transfer changes', () => {
+    // Lists and totals, Overview stats, budget status, and the merchant stats
+    // that the update_merchant_stats trigger rewrites (Merchants page and form list).
+    for (const key of ['transactions', 'transaction-summary', 'stats', 'budget-status', 'merchants', 'merchants-all']) {
+      expect(MANUAL_TRANSFER_STALE_QUERIES).toContain(key);
+    }
   });
 });

@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useEffect, useState } from 'react'
 import { isManualTransaction } from '@personal-dashboard/supabase-queries'
 import { deleteManualTransfer, fetchTransactionDetail } from '../api/supabase-data-client'
+import { MANUAL_TRANSFER_STALE_QUERIES } from '../lib/manual-transfer'
 import { formatSignedAmount, amountColor } from '../utils/format'
 
 interface TransactionDetailModalProps {
@@ -53,7 +54,7 @@ export function TransactionDetailModal({ transactionId, onClose }: TransactionDe
   const deleteMutation = useMutation({
     mutationFn: deleteManualTransfer,
     onSuccess: () => {
-      for (const key of ['transactions', 'transaction-summary', 'transaction-filter-options', 'budget-status', 'merchants-all']) {
+      for (const key of MANUAL_TRANSFER_STALE_QUERIES) {
         void queryClient.invalidateQueries({ queryKey: [key] })
       }
       onClose()

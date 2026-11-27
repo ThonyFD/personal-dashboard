@@ -2,7 +2,13 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useEffect, useState } from 'react'
 import { formatUsd, panamaDate } from '@personal-dashboard/supabase-queries'
 import { fetchMerchants, recordManualTransfer } from '../api/supabase-data-client'
-import { browserStorage, readLastMerchantId, resolveMerchant, saveLastMerchantId } from '../lib/manual-transfer'
+import {
+  MANUAL_TRANSFER_STALE_QUERIES,
+  browserStorage,
+  readLastMerchantId,
+  resolveMerchant,
+  saveLastMerchantId,
+} from '../lib/manual-transfer'
 
 // Bank-app transfers that send no email. Saved as a TRANSFER of the chosen
 // merchant, so it counts in that merchant's category and budget. No push alert.
@@ -54,7 +60,7 @@ export function ManualTransferForm({ onSaved, onCancel }: ManualTransferFormProp
     mutationFn: recordManualTransfer,
     onSuccess: (_id, variables) => {
       saveLastMerchantId(browserStorage(), variables.merchantId)
-      for (const key of ['transactions', 'transaction-summary', 'transaction-filter-options', 'budget-status', 'merchants-all']) {
+      for (const key of MANUAL_TRANSFER_STALE_QUERIES) {
         void queryClient.invalidateQueries({ queryKey: [key] })
       }
       onSaved(`Transferencia de ${formatUsd(variables.amount)} a ${variables.merchantName} guardada.`)

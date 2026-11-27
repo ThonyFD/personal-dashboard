@@ -4,6 +4,19 @@
 
 const LAST_MERCHANT_KEY = 'manual-transfer:last-merchant';
 
+// React Query keys (prefixes) whose data changes when a manual transfer is saved
+// or deleted: lists and totals, Overview stats, budget status, and the merchant
+// counts and totals that the update_merchant_stats trigger rewrites.
+export const MANUAL_TRANSFER_STALE_QUERIES = [
+  'transactions',
+  'transaction-summary',
+  'transaction-filter-options',
+  'stats',
+  'budget-status',
+  'merchants',
+  'merchants-all',
+] as const;
+
 type KeyValueStorage = Pick<Storage, 'getItem' | 'setItem'>;
 
 export function browserStorage(): KeyValueStorage | null {
