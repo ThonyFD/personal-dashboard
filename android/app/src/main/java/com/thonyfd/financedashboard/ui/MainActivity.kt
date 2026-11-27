@@ -36,6 +36,7 @@ import com.thonyfd.financedashboard.data.models.CategorySpend
 import com.thonyfd.financedashboard.data.models.Transaction
 import com.thonyfd.financedashboard.data.models.UpcomingPayment
 import com.thonyfd.financedashboard.data.models.WidgetData
+import com.thonyfd.financedashboard.data.models.isManualProvider
 import com.thonyfd.financedashboard.data.repository.FinanceRepository
 import com.thonyfd.financedashboard.ui.theme.AppearanceTheme
 import com.thonyfd.financedashboard.ui.theme.FinanceDashboardTheme
@@ -195,6 +196,8 @@ fun DashboardTab(padding: PaddingValues, onOpenMenu: () -> Unit = {}, onCategory
     var isLoading by remember { mutableStateOf(true) }
     var error by remember { mutableStateOf<String?>(null) }
     var refreshing by remember { mutableStateOf(false) }
+    var showTransferDialog by remember { mutableStateOf(false) }
+    var manualToDelete by remember { mutableStateOf<Transaction?>(null) }
 
     fun load(showResult: Boolean = false) {
         if (refreshing) return
@@ -219,6 +222,32 @@ fun DashboardTab(padding: PaddingValues, onOpenMenu: () -> Unit = {}, onCategory
 
     LaunchedEffect(Unit) { load() }
 
+    fun afterManualChange(message: String) {
+        Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
+        load()
+        FinanceWidgetWorker.scheduleImmediate(context)
+    }
+
+    if (showTransferDialog) {
+        ManualTransferDialog(
+            onDismiss = { showTransferDialog = false },
+            onSaved = { message ->
+                showTransferDialog = false
+                afterManualChange(message)
+            }
+        )
+    }
+    manualToDelete?.let { txn ->
+        DeleteManualTransferDialog(
+            txn = txn,
+            onDismiss = { manualToDelete = null },
+            onDeleted = {
+                manualToDelete = null
+                afterManualChange("Entrada manual eliminada")
+            }
+        )
+    }
+
     Column(modifier = Modifier.fillMaxSize().padding(padding)) {
         TopAppBar(
             navigationIcon = { AppIconButton(Icons.Outlined.Menu, "Menú", onClick = onOpenMenu) },
@@ -233,6 +262,7 @@ fun DashboardTab(padding: PaddingValues, onOpenMenu: () -> Unit = {}, onCategory
                 }
             },
             actions = {
+                AppIconButton(Icons.Default.Add, "Registrar transferencia", onClick = { showTransferDialog = true })
                 AppIconButton(Icons.Outlined.Refresh, "Actualizar", onClick = { load(showResult = true) }, loading = refreshing && data != null)
             },
             colors = TopAppBarDefaults.topAppBarColors(
@@ -255,13 +285,17 @@ fun DashboardTab(padding: PaddingValues, onOpenMenu: () -> Unit = {}, onCategory
                     AppButton("Reintentar", onClick = { load(showResult = true) }, style = AppButtonStyle.Secondary, loading = refreshing)
                 }
             }
-            data != null -> DashboardContent(data!!, onCategoryClick)
+            data != null -> DashboardContent(data!!, onCategoryClick, onManualClick = { manualToDelete = it })
         }
     }
 }
 
 @Composable
-private fun DashboardContent(data: WidgetData, onCategoryClick: (CategorySpend) -> Unit) {
+private fun DashboardContent(
+    data: WidgetData,
+    onCategoryClick: (CategorySpend) -> Unit,
+    onManualClick: (Transaction) -> Unit
+) {
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
         contentPadding = PaddingValues(start = 20.dp, end = 20.dp, top = 4.dp, bottom = 28.dp),
@@ -303,7 +337,12 @@ private fun DashboardContent(data: WidgetData, onCategoryClick: (CategorySpend) 
                 } else {
                     data.recentTransactions.forEachIndexed { index, txn ->
                         if (index > 0) PanelDivider()
-                        TransactionRow(txn)
+                        // Manual entries open the delete dialog; ingested rows are read-only.
+                        if (isManualProvider(txn.provider)) {
+                            Box(Modifier.clickable { onManualClick(txn) }) { TransactionRow(txn) }
+                        } else {
+                            TransactionRow(txn)
+                        }
                     }
                 }
             }
@@ -428,7 +467,7 @@ private fun TransactionRow(txn: Transaction) {
         title = name,
         subtitle = shortDate(txn.txnDate),
         amount = "−$${String.format("%,.2f", txn.amount)}",
-        detail = null,
+        detail = if (isManualProvider(txn.provider)) "Manual" else null,
         detailColor = AppTheme.colors.textSecondary
     )
 }
