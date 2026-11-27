@@ -135,7 +135,12 @@ export default function Merchants() {
     onSuccess: () => {
       setEditingMerchant(null)
       setSelectedCategoryId(15) // Reset to "Other"
-      // Don't invalidate - optimistic update already updated the cache
+    },
+    onSettled: () => {
+      // The optimistic update only touched the page on screen. Every other
+      // cached page and sort order still has the old category, and sorting by
+      // category moves the merchant, so refetch them all from the server.
+      queryClient.invalidateQueries({ queryKey: ['merchants'] })
     },
     onError: (error, _variables, context) => {
       // If the mutation fails, use the context returned from onMutate to roll back
