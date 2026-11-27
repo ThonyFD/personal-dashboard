@@ -278,12 +278,16 @@ export async function fetchTransactionSummary(
     endDate,
   );
 
-  // Own-account transfers stay in the list and the count, not in the amount.
+  // The amount is what was spent: debit types minus refunds. Income and transfers
+  // between own accounts (card payments included) stay in the list and the count,
+  // not in the amount, so nothing is counted twice.
   let totalAmount = 0;
   for (const row of rows) {
-    if (isOwnAccountTransfer(row)) continue;
-    totalAmount += Number(row.amount) || 0;
+    const amount = Number(row.amount) || 0;
+    if (isSpending(row)) totalAmount += amount;
+    else if (row.txn_type === 'REFUND' && !isOwnAccountTransfer(row)) totalAmount -= amount;
   }
+  totalAmount = Math.round(totalAmount * 100) / 100;
 
   const { topMerchant, topMerchantAmount, topMerchantCount } = computeTopMerchant(rows);
 
