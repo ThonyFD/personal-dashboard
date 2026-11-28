@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { format, parse, startOfMonth } from 'date-fns'
 import { useDeferredValue, useEffect, useMemo, useState } from 'react'
+import { useLocation, useSearchParams } from 'react-router-dom'
 import {
   createMonthlyIncome,
   exportTransactionsCSV,
@@ -31,13 +32,30 @@ const INITIAL_INCOME_FORM: IncomeFormState = {
   notes: '',
 }
 
+/** Router state the Merchants table sends with its link, for the filter chip. */
+export interface MerchantLinkState {
+  merchantName?: string
+}
+
+/** `?merchant=<id>`: a positive integer, anything else means no merchant filter. */
+function parseMerchantId(value: string | null): number | undefined {
+  const id = Number(value)
+  return Number.isInteger(id) && id > 0 ? id : undefined
+}
+
 export default function Transactions() {
   const queryClient = useQueryClient()
+  const location = useLocation()
+  const [searchParams, setSearchParams] = useSearchParams()
+  const merchantId = parseMerchantId(searchParams.get('merchant'))
+  const merchantName = (location.state as MerchantLinkState | null)?.merchantName
   const [searchTerm, setSearchTerm] = useState('')
   const [typeFilter, setTypeFilter] = useState<string>('all')
   const [channelFilter, setChannelFilter] = useState<string>('all')
   const [providerFilter, setProviderFilter] = useState<string>('all')
-  const [startDate, setStartDate] = useState(DEFAULT_START_DATE)
+  // A merchant link opens its whole history: in the current month alone most
+  // merchants would show nothing. An empty start date means no lower bound.
+  const [startDate, setStartDate] = useState(merchantId ? '' : DEFAULT_START_DATE)
   const [endDate, setEndDate] = useState(DEFAULT_END_DATE)
   const [currentPage, setCurrentPage] = useState(1)
   const [itemsPerPage, setItemsPerPage] = useState(10)
@@ -58,8 +76,9 @@ export default function Transactions() {
       typeFilter,
       channelFilter,
       providerFilter,
+      merchantId,
     }),
-    [deferredSearchTerm, typeFilter, channelFilter, providerFilter]
+    [deferredSearchTerm, typeFilter, channelFilter, providerFilter, merchantId]
   )
 
   const {
@@ -178,6 +197,13 @@ export default function Transactions() {
     if (nextEndDate < startDate) {
       setStartDate(nextEndDate)
     }
+    setCurrentPage(1)
+  }
+
+  const handleClearMerchant = () => {
+    setSearchParams({}, { replace: true })
+    // The whole history came with the merchant link; dates the user picked stay.
+    if (startDate === '') setStartDate(DEFAULT_START_DATE)
     setCurrentPage(1)
   }
 
@@ -406,6 +432,16 @@ export default function Transactions() {
 
       <div className="card" style={{ marginBottom: '1rem' }}>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '0.75rem' }}>
+          {merchantId && (
+            <div className="filter-chip" role="status">
+              <span>
+                Merchant: <strong>{merchantName ?? transactions[0]?.merchant_name ?? `#${merchantId}`}</strong>
+              </span>
+              <button type="button" onClick={handleClearMerchant} aria-label="Clear merchant filter">
+                ✕
+              </button>
+            </div>
+          )}
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '0.75rem' }}>
             <div>
               <label style={{ display: 'block', marginBottom: '0.4rem', fontWeight: '500', fontSize: '0.9rem' }}>
@@ -536,7 +572,7 @@ export default function Transactions() {
         <div style={{ marginTop: '0.75rem', color: 'var(--c-text-2)', fontSize: '0.85rem', textAlign: 'center' }}>
           {isFetching || isSummaryFetching || isMonthlyIncomesFetching
             ? 'Updating filtered results...'
-            : `Showing ${transactions.length} of ${totalCount} transactions and ${visibleMonthlyIncomes.length} manual incomes from ${startDate} to ${endDate}`}
+            : `Showing ${transactions.length} of ${totalCount} transactions and ${visibleMonthlyIncomes.length} manual incomes from ${startDate || 'the beginning'} to ${endDate}`}
         </div>
       </div>
 

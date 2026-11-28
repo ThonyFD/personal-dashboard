@@ -3,7 +3,9 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 import {
   computeBusiestMerchant,
   computeTopMerchant,
+  exportTransactionsCSV,
   fetchTransactionSummary,
+  fetchTransactionsPaginated,
   isOwnAccountTransfer,
   isSpending,
   mapTransactionRow,
@@ -102,5 +104,44 @@ describe('fetchTransactionSummary', () => {
     const bill = { merchant_name: 'PHONE', amount: 20, txn_type: 'PAYMENT', merchant_is_own_account: false };
     const { client } = rowsClient([cafe, cardPayment, bill]);
     expect((await fetchTransactionSummary(client)).totalAmount).toBe(32);
+  });
+});
+
+describe('merchant filter', () => {
+  // Records every eq() so the test sees which columns were filtered.
+  function eqClient() {
+    const eqs: unknown[][] = [];
+    const builder: any = new Proxy(
+      {},
+      {
+        get: (_target, prop) => {
+          if (prop === 'then') return (resolve: (v: unknown) => void) => resolve({ data: [], error: null, count: 0 });
+          if (prop === 'eq') return (...args: unknown[]) => {
+            eqs.push(args);
+            return builder;
+          };
+          return () => builder;
+        },
+      },
+    );
+    return { client: { from: () => builder } as unknown as SupabaseClient, eqs };
+  }
+
+  it('filters the list, the summary and the export by merchant id', async () => {
+    for (const run of [
+      (c: SupabaseClient) => fetchTransactionsPaginated(c, 1, 10, { merchantId: 42 }),
+      (c: SupabaseClient) => fetchTransactionSummary(c, { merchantId: 42 }),
+      (c: SupabaseClient) => exportTransactionsCSV(c, undefined, undefined, { merchantId: 42 }),
+    ]) {
+      const { client, eqs } = eqClient();
+      await run(client);
+      expect(eqs).toContainEqual(['merchant_id', 42]);
+    }
+  });
+
+  it('adds no merchant filter without a merchant id', async () => {
+    const { client, eqs } = eqClient();
+    await fetchTransactionsPaginated(client, 1, 10, { searchTerm: 'x' });
+    expect(eqs.some(([column]) => column === 'merchant_id')).toBe(false);
   });
 });

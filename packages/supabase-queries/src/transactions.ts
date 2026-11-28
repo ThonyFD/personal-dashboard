@@ -172,6 +172,9 @@ function applyFilters(query: any, filters: TransactionFilters = {}) {
   if (filters.providerFilter && filters.providerFilter !== 'all') {
     query = query.eq('provider', filters.providerFilter);
   }
+  if (filters.merchantId != null) {
+    query = query.eq('merchant_id', filters.merchantId);
+  }
   return query;
 }
 

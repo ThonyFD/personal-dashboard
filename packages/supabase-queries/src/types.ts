@@ -37,6 +37,8 @@ export interface TransactionFilters {
   typeFilter?: string;
   channelFilter?: string;
   providerFilter?: string;
+  /** Exact merchants.id, e.g. from a click on the Merchants table. */
+  merchantId?: number;
 }
 
 export interface PaginatedTransactionsResult {
