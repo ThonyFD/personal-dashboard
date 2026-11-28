@@ -687,6 +687,66 @@
   z-index: 10;
 }
 
+/* Merchant name in the Merchants table: opens its transactions. */
+.merchant-link {
+  color: var(--c-text);
+  text-decoration: none;
+}
+
+.merchant-link:hover {
+  color: var(--c-primary);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.merchant-link:focus-visible {
+  outline: 2px solid var(--c-primary);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
+/* Active filter that did not come from the form (e.g. a merchant link). */
+.filter-chip {
+  display: inline-flex;
+  align-items: center;
+  justify-self: start;
+  gap: 0.5rem;
+  padding: 0.3rem 0.4rem 0.3rem 0.75rem;
+  border: 1px solid color-mix(in srgb, var(--c-primary) 35%, transparent);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--c-primary) 8%, transparent);
+  color: var(--c-text-2);
+  font-size: 0.85rem;
+}
+
+.filter-chip strong {
+  color: var(--c-text);
+}
+
+.filter-chip button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.5rem;
+  height: 1.5rem;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background: none;
+  color: var(--c-text-2);
+  cursor: pointer;
+}
+
+.filter-chip button:hover {
+  color: var(--c-text);
+  background: color-mix(in srgb, var(--c-primary) 15%, transparent);
+}
+
+.filter-chip button:focus-visible {
+  outline: 2px solid var(--c-primary);
+  outline-offset: 1px;
+}
+
 /* Sortable header: the whole label is the button. */
 .th-sort {
   display: inline-flex;

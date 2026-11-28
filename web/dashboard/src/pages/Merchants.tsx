@@ -1,5 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { format, parse } from 'date-fns'
+import { Link } from 'react-router-dom'
+import type { MerchantLinkState } from './Transactions'
 import {
   DEFAULT_MERCHANT_SORT,
   fetchMerchantsPaginated,
@@ -323,7 +325,18 @@ export default function Merchants() {
               return (
                 <tr key={merchant.id}>
                   <td style={{ fontWeight: 'bold' }}>
-                    {merchant.name}
+                    {merchant.inDatabase ? (
+                      <Link
+                        className="merchant-link"
+                        to={`/finance/transactions?merchant=${merchant.id}`}
+                        state={{ merchantName: merchant.name } satisfies MerchantLinkState}
+                        title="Show this merchant's transactions"
+                      >
+                        {merchant.name}
+                      </Link>
+                    ) : (
+                      merchant.name
+                    )}
                     <div style={{ fontSize: '0.75rem', color: 'var(--c-text-3)', marginTop: '0.25rem' }}>
                       ID: {merchant.id} {!merchant.inDatabase && '(temp)'}
                     </div>
